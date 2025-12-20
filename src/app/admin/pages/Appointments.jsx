@@ -290,105 +290,300 @@ const Appointments = () => {
             {/* Appointments List */}
             <div className="grid-cols-1">
                 {upcomingAppointments.length > 0 ? (
-                    upcomingAppointments.map(apt => (
-                        <div key={apt.id} className="card">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.75rem' }}>
-                                        {getServiceName(apt.serviceId)}
-                                    </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)' }}>
-                                            <User size={16} />
-                                            <span>{apt.customerName}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)' }}>
-                                            <Phone size={16} />
-                                            <span>{apt.customerPhone}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)' }}>
-                                            <Clock size={16} />
-                                            <span>
-                                                {apt.appointmentDate?.toDate ? apt.appointmentDate.toDate().toLocaleDateString() : new Date(apt.appointmentDate).toLocaleDateString()} at {apt.appointmentTime}
-                                            </span>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)' }}>
-                                            <User size={16} />
-                                            <span>{getStaffName(apt.staffId || apt.stylistId)}</span>
+                    upcomingAppointments.map(apt => {
+                        const appointmentDate = apt.appointmentDate?.toDate ? apt.appointmentDate.toDate() : new Date(apt.appointmentDate);
+                        const isToday = new Date(appointmentDate).toDateString() === new Date().toDateString();
+                        
+                        return (
+                            <div 
+                                key={apt.id} 
+                                className="card"
+                                style={{
+                                    marginBottom: '1.5rem',
+                                    border: '1px solid var(--border)',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: isToday ? '0 4px 12px rgba(0, 0, 0, 0.08)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                {/* Header with status indicator */}
+                                <div style={{
+                                    padding: '1rem 1.5rem',
+                                    borderBottom: '1px solid var(--border)',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    background: isToday ? 'rgba(16, 185, 129, 0.02)' : 'var(--background)'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                                        {/* Status indicator dot */}
+                                        <div style={{
+                                            width: '12px',
+                                            height: '12px',
+                                            borderRadius: '50%',
+                                            background: apt.status === 'confirmed' ? 'var(--success)' : apt.status === 'completed' ? 'var(--info)' : 'var(--danger)',
+                                            flexShrink: 0
+                                        }} />
+                                        
+                                        {/* Service and time */}
+                                        <div>
+                                            <div style={{ 
+                                                fontSize: '1.25rem', 
+                                                fontWeight: 700, 
+                                                color: 'var(--foreground)',
+                                                marginBottom: '0.25rem'
+                                            }}>
+                                                {getServiceName(apt.serviceId)}
+                                            </div>
+                                            <div style={{ 
+                                                fontSize: '0.875rem', 
+                                                color: 'var(--muted-foreground)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem'
+                                            }}>
+                                                <Clock size={14} />
+                                                {appointmentDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })} at {apt.appointmentTime}
+                                            </div>
                                         </div>
                                     </div>
 
+                                    {/* Status badge */}
+                                    <span style={{
+                                        padding: '0.4rem 1rem',
+                                        borderRadius: '6px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                        letterSpacing: '0.5px',
+                                        background: apt.status === 'confirmed' ? 'rgba(16, 185, 129, 0.1)' : apt.status === 'completed' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(244, 114, 97, 0.1)',
+                                        color: apt.status === 'confirmed' ? 'var(--success)' : apt.status === 'completed' ? 'var(--info)' : 'var(--danger)',
+                                        textTransform: 'uppercase',
+                                        minWidth: 'fit-content'
+                                    }}>
+                                        {apt.status?.charAt(0).toUpperCase() + apt.status?.slice(1) || 'Pending'}
+                                    </span>
+                                </div>
+
+                                {/* Content */}
+                                <div style={{ padding: '1.5rem' }}>
+                                    {/* Customer and Staff Grid */}
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: '1fr 1fr',
+                                        gap: '2rem',
+                                        marginBottom: '1.5rem'
+                                    }}>
+                                        {/* Customer Section */}
+                                        <div>
+                                            <div style={{ 
+                                                fontSize: '0.75rem', 
+                                                fontWeight: 700,
+                                                color: 'var(--muted-foreground)',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.5px',
+                                                marginBottom: '0.75rem'
+                                            }}>Customer</div>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.75rem',
+                                                marginBottom: '0.5rem'
+                                            }}>
+                                                <User size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                                                <div>
+                                                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--foreground)' }}>
+                                                        {apt.customerName}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.75rem',
+                                                marginTop: '0.5rem'
+                                            }}>
+                                                <Phone size={16} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
+                                                <span style={{ fontSize: '0.875rem', color: 'var(--foreground)' }}>
+                                                    {apt.customerPhone}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Staff Section */}
+                                        <div>
+                                            <div style={{ 
+                                                fontSize: '0.75rem', 
+                                                fontWeight: 700,
+                                                color: 'var(--muted-foreground)',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.5px',
+                                                marginBottom: '0.75rem'
+                                            }}>Assigned Stylist</div>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.75rem'
+                                            }}>
+                                                <div style={{
+                                                    width: '32px',
+                                                    height: '32px',
+                                                    borderRadius: '6px',
+                                                    background: 'var(--primary)',
+                                                    opacity: 0.1,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    flexShrink: 0
+                                                }}>
+                                                    <User size={16} style={{ color: 'var(--primary)' }} />
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--foreground)' }}>
+                                                        {getStaffName(apt.staffId || apt.stylistId)}
+                                                    </div>
+                                                    {apt.staff?.role && (
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
+                                                            {apt.staff.role}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Notes */}
                                     {apt.notes && (
-                                        <div style={{ padding: '0.75rem', background: 'var(--secondary)', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Notes</div>
-                                            <div style={{ fontSize: '0.875rem' }}>{apt.notes}</div>
+                                        <div style={{
+                                            padding: '1rem',
+                                            background: 'var(--secondary)',
+                                            borderRadius: '8px',
+                                            marginBottom: '1.5rem',
+                                            borderLeft: '3px solid var(--primary)'
+                                        }}>
+                                            <div style={{ 
+                                                fontSize: '0.75rem', 
+                                                fontWeight: 700,
+                                                color: 'var(--muted-foreground)',
+                                                textTransform: 'uppercase',
+                                                marginBottom: '0.5rem'
+                                            }}>Notes</div>
+                                            <div style={{ fontSize: '0.875rem', color: 'var(--foreground)', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                                                {apt.notes}
+                                            </div>
                                         </div>
                                     )}
 
-                                    {/* Status Badge */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <span style={{
-                                            padding: '0.25rem 0.75rem',
-                                            borderRadius: '999px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600,
-                                            background: apt.status === 'confirmed' ? 'rgba(16, 185, 129, 0.1)' : apt.status === 'completed' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(244, 114, 97, 0.1)',
-                                            color: apt.status === 'confirmed' ? 'var(--success)' : apt.status === 'completed' ? 'var(--info)' : 'var(--danger)'
+                                    {/* Service Details */}
+                                    {apt.service && (
+                                        <div style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '1fr 1fr',
+                                            gap: '1.5rem',
+                                            padding: '1rem',
+                                            background: 'var(--secondary)',
+                                            borderRadius: '8px',
+                                            marginBottom: '1.5rem'
                                         }}>
-                                            {apt.status?.charAt(0).toUpperCase() + apt.status?.slice(1) || 'Pending'}
-                                        </span>
-                                    </div>
+                                            <div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem', fontWeight: 600 }}>Service Category</div>
+                                                <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--foreground)' }}>
+                                                    {apt.service.category || 'N/A'}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem', fontWeight: 600 }}>Service Price</div>
+                                                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>
+                                                    ₹{apt.service.price}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Actions */}
-                                <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                                {/* Actions Footer */}
+                                <div style={{
+                                    padding: '1rem 1.5rem',
+                                    borderTop: '1px solid var(--border)',
+                                    background: 'var(--secondary)',
+                                    display: 'flex',
+                                    gap: '0.75rem',
+                                    justifyContent: 'flex-end',
+                                    flexWrap: 'wrap'
+                                }}>
                                     <button
                                         onClick={() => setSelectedAppointment(apt)}
                                         className="btn btn-ghost"
-                                        style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                                        style={{ 
+                                            fontSize: '0.875rem', 
+                                            padding: '0.6rem 1rem',
+                                            borderRadius: '6px'
+                                        }}
+                                        title="View full appointment details"
                                     >
-                                        <Eye size={14} />
-                                        View Details
+                                        <Eye size={16} />
+                                        Details
                                     </button>
+
                                     {apt.status === 'pending' && (
                                         <button
                                             onClick={() => handleStatusUpdate(apt.id, 'confirmed')}
                                             className="btn btn-success"
-                                            style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                                            style={{ 
+                                                fontSize: '0.875rem', 
+                                                padding: '0.6rem 1rem',
+                                                borderRadius: '6px'
+                                            }}
                                             disabled={loading}
+                                            title="Confirm this appointment"
                                         >
-                                            <CheckCircle size={14} />
+                                            <CheckCircle size={16} />
                                             Confirm
                                         </button>
                                     )}
+
                                     {apt.status === 'confirmed' && (
                                         <button
                                             onClick={() => handleStatusUpdate(apt.id, 'completed')}
                                             className="btn btn-primary"
-                                            style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                                            style={{ 
+                                                fontSize: '0.875rem', 
+                                                padding: '0.6rem 1rem',
+                                                borderRadius: '6px'
+                                            }}
                                             disabled={loading}
+                                            title="Mark appointment as completed"
                                         >
-                                            <CheckCircle size={14} />
+                                            <CheckCircle size={16} />
                                             Complete
                                         </button>
                                     )}
+
                                     <button
                                         onClick={() => handleCancel(apt.id)}
                                         className="btn btn-danger"
-                                        style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                                        style={{ 
+                                            fontSize: '0.875rem', 
+                                            padding: '0.6rem 1rem',
+                                            borderRadius: '6px'
+                                        }}
                                         disabled={loading}
+                                        title="Cancel this appointment"
                                     >
-                                        <XCircle size={14} />
+                                        <XCircle size={16} />
                                         Cancel
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 ) : (
-                    <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-                        <Calendar size={48} style={{ margin: '0 auto 1rem', color: 'var(--muted-foreground)' }} />
-                        <p style={{ color: 'var(--muted-foreground)' }}>No upcoming appointments</p>
+                    <div className="card" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+                        <Calendar size={56} style={{ margin: '0 auto 1rem', color: 'var(--muted-foreground)', opacity: 0.5 }} />
+                        <p style={{ 
+                            color: 'var(--muted-foreground)', 
+                            fontSize: '1rem',
+                            fontWeight: 500
+                        }}>No upcoming appointments</p>
                     </div>
                 )}
             </div>
