@@ -208,26 +208,6 @@ export const getCustomerAppointments = async (customerId: string) => {
 };
 
 // ============================================
-// STAFF
-// ============================================
-
-export const getStaff = async () => {
-  try {
-    const querySnapshot = await getDocs(collection(db, 'staff'));
-    const staff: any[] = [];
-    querySnapshot.forEach((doc) => {
-      staff.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
-    return staff;
-  } catch (error: any) {
-    throw new Error(error?.message || 'Failed to load staff');
-  }
-};
-
-// ============================================
 // LOYALTY POINTS
 // ============================================
 
@@ -257,6 +237,48 @@ export const getProducts = async (): Promise<any[]> => {
     return products;
   } catch (error: any) {
     throw new Error(error?.message || 'Failed to load products');
+  }
+};
+
+// ============================================
+// STAFF/STYLISTS
+// ============================================
+
+export const getStaff = async () => {
+  try {
+    const staffRef = collection(db, 'staff');
+    const querySnapshot = await getDocs(staffRef);
+    const staff: any[] = [];
+    querySnapshot.forEach((doc) => {
+      staff.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    return staff;
+  } catch (error: any) {
+    throw new Error(error?.message || 'Failed to load staff');
+  }
+};
+
+// ============================================
+// STYLIST AVAILABILITY
+// ============================================
+
+export const checkStylistAvailability = async (stylistId: string, appointmentDate: string, appointmentTime: string) => {
+  try {
+    const q = query(
+      collection(db, 'appointments'),
+      where('stylistId', '==', stylistId),
+      where('appointmentDate', '==', appointmentDate),
+      where('appointmentTime', '==', appointmentTime),
+      where('status', '!=', 'cancelled')
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.empty; // true if available, false if booked
+  } catch (error: any) {
+    console.error('Error checking availability:', error);
+    return true; // Assume available on error
   }
 };
 

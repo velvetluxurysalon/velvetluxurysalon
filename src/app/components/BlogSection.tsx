@@ -1,5 +1,5 @@
 import { Card } from "./ui/card";
-import { Calendar, User, ArrowRight } from "lucide-react";
+import { User, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getBlogPosts } from "../services/contentService";
 
@@ -34,44 +34,7 @@ export default function BlogSection() {
     }
   };
 
-  const defaultBlogPosts = [
-    {
-      id: '1',
-      title: "Top 10 Hair Color Trends for 2026",
-      excerpt: "Discover the hottest hair color trends that are taking the beauty world by storm this year...",
-      image: "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=600&h=400&fit=crop",
-      author: "Sarah Johnson",
-      category: "Hair Care",
-      published: true
-    },
-    {
-      id: '2',
-      title: "The Ultimate Guide to Skincare Routines",
-      excerpt: "Learn how to create the perfect skincare routine for your skin type and achieve that healthy glow...",
-      image: "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=600&h=400&fit=crop",
-      author: "Emma Williams",
-      category: "Skincare",
-      published: true
-    },
-    {
-      id: '3',
-      title: "Bridal Beauty Timeline: When to Book What",
-      excerpt: "Planning your wedding? Here's a complete timeline for all your beauty appointments leading up to the big day...",
-      image: "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=400&fit=crop",
-      author: "Jessica Lee",
-      category: "Bridal",
-      published: true
-    },
-    {
-      id: '4',
-      title: "Men's Grooming: Essential Tips for Every Guy",
-      excerpt: "A comprehensive guide to modern men's grooming, from skincare to beard maintenance...",
-      image: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=600&h=400&fit=crop",
-      author: "Michael Chen",
-      category: "Men's Grooming",
-      published: true
-    }
-  ];
+  const defaultBlogPosts: BlogPost[] = [];
 
   const displayPosts = blogPosts.length > 0 ? blogPosts : defaultBlogPosts;
 
@@ -80,6 +43,16 @@ export default function BlogSection() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-purple-600">Loading blog posts...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (blogPosts.length === 0) {
+    return (
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-gray-600">No blog posts available yet. Check back soon!</p>
         </div>
       </section>
     );

@@ -281,7 +281,7 @@ const Appointments = () => {
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)' }}>
                                             <User size={16} />
-                                            <span>{getStaffName(apt.staffId)}</span>
+                                            <span>{getStaffName(apt.staffId || apt.stylistId)}</span>
                                         </div>
                                     </div>
 

@@ -86,17 +86,21 @@ export default function FeaturedServices() {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 3000,
+    arrows: true,
     responsive: [
       {
         breakpoint: 1024,
         settings: {
           slidesToShow: 2,
+          arrows: true
         }
       },
       {
-        breakpoint: 640,
+        breakpoint: 768,
         settings: {
           slidesToShow: 1,
+          arrows: false,
+          autoplay: true
         }
       }
     ]
@@ -113,34 +117,34 @@ export default function FeaturedServices() {
   }
 
   return (
-    <section className="py-20 px-4 bg-gradient-to-b from-white to-purple-50">
+    <section className="py-12 md:py-20 px-4 bg-gradient-to-b from-white to-purple-50">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl mb-4">Featured Services</h2>
-          <p className="text-xl text-gray-600">Our most popular treatments</p>
+        <div className="text-center mb-8 md:mb-12">
+          <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-4">Featured Services</h2>
+          <p className="text-lg md:text-xl text-gray-600">Our most popular treatments</p>
         </div>
 
         <Slider {...settings} className="featured-services-slider">
           {displayServices.map((service) => (
-            <div key={service.id} className="px-3">
-              <Card className="overflow-hidden hover:shadow-xl transition-shadow">
-                <div className="relative h-64">
+            <div key={service.id} className="px-2 md:px-3">
+              <Card className="overflow-hidden hover:shadow-xl transition-shadow h-full">
+                <div className="relative h-48 md:h-64">
                   <img
                     src={service.image}
                     alt={service.name}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-white px-2 md:px-3 py-1 rounded-full flex items-center gap-1 text-sm md:text-base">
+                    <Star className="w-3 h-3 md:w-4 md:h-4 fill-yellow-400 text-yellow-400" />
                     <span>{service.rating}</span>
                   </div>
                 </div>
-                <div className="p-6">
-                  <h3 className="text-xl mb-2">{service.name}</h3>
-                  <p className="text-gray-600 mb-4">{service.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-purple-600">{service.price}</span>
-                    <Button>Book Now</Button>
+                <div className="p-4 md:p-6">
+                  <h3 className="text-lg md:text-xl font-semibold mb-2">{service.name}</h3>
+                  <p className="text-sm md:text-base text-gray-600 mb-4 line-clamp-2">{service.description}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-purple-600 font-semibold text-sm md:text-base">{service.price}</span>
+                    <Button className="text-sm md:text-base px-3 md:px-4 py-2">Book Now</Button>
                   </div>
                 </div>
               </Card>

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { Calendar, Clock, User, Phone, Mail, CheckCircle, X } from "lucide-react";
+import { Calendar, Clock, User, Phone, Mail, CheckCircle, X, AlertCircle, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { getServices, bookAppointment } from "../services/firebaseService";
+import { getServices, bookAppointment, getStaff, checkStylistAvailability } from "../services/firebaseService";
 
 interface BookingFormProps {
   isOpen?: boolean;
@@ -12,11 +12,13 @@ interface BookingFormProps {
 
 export default function BookingForm({ isOpen = false, onClose }: BookingFormProps) {
   const [services, setServices] = useState<any[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showForm, setShowForm] = useState(isOpen);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [stylistAvailability, setStylistAvailability] = useState<string>("");
   const { user, isAuthenticated } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -24,6 +26,7 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
     customerEmail: user?.email || "",
     customerPhone: "",
     serviceId: "",
+    stylistId: "",
     appointmentDate: "",
     appointmentTime: "",
     notes: ""
@@ -31,6 +34,7 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
 
   useEffect(() => {
     fetchServices();
+    fetchStaff();
   }, []);
 
   useEffect(() => {
@@ -50,9 +54,25 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
     }
   };
 
+  const fetchStaff = async () => {
+    try {
+      const data = await getStaff();
+      setStaff(data);
+    } catch (err) {
+      console.error("Error fetching staff:", err);
+    }
+  };
+
+  const handleStylistChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const stylistId = e.target.value;
+    setFormData({ ...formData, stylistId, appointmentTime: "" });
+    setStylistAvailability("");
+  };
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const date = e.target.value;
     setFormData({ ...formData, appointmentDate: date, appointmentTime: "" });
+    setStylistAvailability("");
     // Generate time slots (every 30 minutes from 9 AM to 6 PM)
     const slots = [];
     for (let i = 9; i < 18; i++) {
@@ -60,6 +80,27 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
       slots.push(`${String(i).padStart(2, "0")}:30`);
     }
     setAvailableSlots(slots);
+  };
+
+  const handleTimeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const time = e.target.value;
+    setFormData({ ...formData, appointmentTime: time });
+    
+    if (formData.stylistId && formData.appointmentDate && time) {
+      try {
+        const isAvailable = await checkStylistAvailability(formData.stylistId, formData.appointmentDate, time);
+        if (!isAvailable) {
+          const availableAfter = new Date(`${formData.appointmentDate}T${time}`);
+          availableAfter.setHours(availableAfter.getHours() + 1);
+          const availableTimeStr = availableAfter.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+          setStylistAvailability(`⏱️ This stylist is busy from ${time} to ${availableAfter.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}. Available after ${availableTimeStr}`);
+        } else {
+          setStylistAvailability("");
+        }
+      } catch (err) {
+        console.error('Error checking availability:', err);
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,6 +116,7 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
       !formData.customerEmail ||
       !formData.customerPhone ||
       !formData.serviceId ||
+      !formData.stylistId ||
       !formData.appointmentDate ||
       !formData.appointmentTime
     ) {
@@ -92,6 +134,7 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
         serviceId: formData.serviceId,
+        stylistId: formData.stylistId,
         appointmentDate: new Date(`${formData.appointmentDate}T${formData.appointmentTime}`),
         appointmentTime: formData.appointmentTime,
         notes: formData.notes,
@@ -107,6 +150,7 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
           customerEmail: user?.email || "",
           customerPhone: "",
           serviceId: "",
+          stylistId: "",
           appointmentDate: "",
           appointmentTime: "",
           notes: ""
@@ -133,7 +177,7 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-2xl bg-white p-8 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-purple-600">Book an Appointment</h2>
@@ -225,6 +269,25 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
                   ))}
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Users className="w-4 h-4 inline mr-2" />
+                  Select Stylist *
+                </label>
+                <select
+                  value={formData.stylistId}
+                  onChange={handleStylistChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                >
+                  <option value="">Choose your preferred stylist</option>
+                  {staff.map((stylist) => (
+                    <option key={stylist.id} value={stylist.id}>
+                      {stylist.name} {stylist.specialization && `- ${stylist.specialization}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Appointment Details */}
@@ -253,7 +316,7 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
                   </label>
                   <select
                     value={formData.appointmentTime}
-                    onChange={(e) => setFormData({ ...formData, appointmentTime: e.target.value })}
+                    onChange={handleTimeChange}
                     disabled={!formData.appointmentDate}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent disabled:bg-gray-100"
                   >
@@ -264,6 +327,12 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
                       </option>
                     ))}
                   </select>
+                  {stylistAvailability && (
+                    <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-amber-700">{stylistAvailability}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
