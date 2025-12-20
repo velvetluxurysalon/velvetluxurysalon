@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, User, Phone, MapPin, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Clock, User, Phone, MapPin, Edit, Trash2, CheckCircle, XCircle, Eye, X, Mail } from 'lucide-react';
 import { getAppointments, getServices, getStaff, createAppointment, updateAppointmentStatus, cancelAppointment, getAvailableTimeSlots } from '../utils/firebaseUtils';
 
 const Appointments = () => {
@@ -9,6 +9,7 @@ const Appointments = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showForm, setShowForm] = useState(false);
+    const [selectedAppointment, setSelectedAppointment] = useState(null);
     const [availableSlots, setAvailableSlots] = useState([]);
     const [formData, setFormData] = useState({
         customerName: '',
@@ -32,7 +33,15 @@ const Appointments = () => {
                 getServices(false),
                 getStaff(false)
             ]);
-            setAppointments(appts);
+
+            // Enrich appointments with service and staff details
+            const enrichedAppts = appts.map(apt => ({
+                ...apt,
+                service: servs.find(s => s.id === apt.serviceId),
+                staff: stf.find(s => s.id === (apt.stylistId || apt.staffId))
+            }));
+
+            setAppointments(enrichedAppts);
             setServices(servs);
             setStaff(stf);
             setError('');
@@ -57,6 +66,25 @@ const Appointments = () => {
                 setAvailableSlots([]);
             }
         }
+    };
+
+    const handleServiceChange = (e) => {
+        const serviceId = e.target.value;
+        const selectedService = services.find(s => s.id === serviceId);
+        
+        // Filter staff by service category
+        const filteredStaff = selectedService 
+            ? staff.filter(s => s.role === selectedService.category)
+            : staff;
+        
+        setFormData({ 
+            ...formData, 
+            serviceId, 
+            staffId: '', 
+            appointmentTime: '',
+            availableStaff: filteredStaff 
+        });
+        setAvailableSlots([]);
     };
 
     const handleStaffChange = async (e) => {
@@ -192,7 +220,7 @@ const Appointments = () => {
                             <select
                                 className="input"
                                 value={formData.serviceId}
-                                onChange={(e) => setFormData({ ...formData, serviceId: e.target.value })}
+                                onChange={handleServiceChange}
                                 required
                             >
                                 <option value="">Select Service</option>
@@ -207,9 +235,14 @@ const Appointments = () => {
                                 required
                             >
                                 <option value="">Select Staff Member</option>
-                                {staff.map(member => (
-                                    <option key={member.id} value={member.id}>{member.name}</option>
-                                ))}
+                                {formData.serviceId 
+                                    ? staff.filter(s => s.role === services.find(sv => sv.id === formData.serviceId)?.category).map(member => (
+                                        <option key={member.id} value={member.id}>{member.name} ({member.role})</option>
+                                    ))
+                                    : staff.map(member => (
+                                        <option key={member.id} value={member.id}>{member.name} ({member.role})</option>
+                                    ))
+                                }
                             </select>
                             <input
                                 type="date"
@@ -309,6 +342,14 @@ const Appointments = () => {
 
                                 {/* Actions */}
                                 <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                                    <button
+                                        onClick={() => setSelectedAppointment(apt)}
+                                        className="btn btn-ghost"
+                                        style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                                    >
+                                        <Eye size={14} />
+                                        View Details
+                                    </button>
                                     {apt.status === 'pending' && (
                                         <button
                                             onClick={() => handleStatusUpdate(apt.id, 'confirmed')}
@@ -353,6 +394,162 @@ const Appointments = () => {
             </div>
 
             {error && <div className="alert alert-danger">{error}</div>}
+
+            {/* Detail Modal */}
+            {selectedAppointment && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        background: 'var(--background)',
+                        borderRadius: 'var(--radius)',
+                        padding: '2rem',
+                        maxWidth: '600px',
+                        width: '90%',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Appointment Details</h2>
+                            <button
+                                onClick={() => setSelectedAppointment(null)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: '0.5rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            {/* Customer Information */}
+                            <div>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Customer Name</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>{selectedAppointment.customerName}</div>
+
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Phone</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>{selectedAppointment.customerPhone}</div>
+
+                                {selectedAppointment.customerEmail && (
+                                    <>
+                                        <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Email</div>
+                                        <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>{selectedAppointment.customerEmail}</div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Service Information */}
+                            <div>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Service</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                                    {selectedAppointment.service?.name || 'Unknown Service'}
+                                </div>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '1rem' }}>
+                                    {selectedAppointment.service?.category && `Category: ${selectedAppointment.service.category}`}
+                                </div>
+
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Price</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>₹{selectedAppointment.service?.price || 'N/A'}</div>
+                            </div>
+
+                            {/* Staff Information */}
+                            <div>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Staff Member</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                                    {selectedAppointment.staff?.name || 'Unassigned'}
+                                </div>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '1rem' }}>
+                                    {selectedAppointment.staff?.role && `Role: ${selectedAppointment.staff.role}`}
+                                </div>
+                            </div>
+
+                            {/* Appointment Details */}
+                            <div>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Date</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>
+                                    {selectedAppointment.appointmentDate?.toDate 
+                                        ? selectedAppointment.appointmentDate.toDate().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
+                                        : new Date(selectedAppointment.appointmentDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
+                                    }
+                                </div>
+
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Time</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>{selectedAppointment.appointmentTime}</div>
+
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Status</div>
+                                <span style={{
+                                    padding: '0.25rem 0.75rem',
+                                    borderRadius: '999px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    background: selectedAppointment.status === 'confirmed' ? 'rgba(16, 185, 129, 0.1)' : selectedAppointment.status === 'completed' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(244, 114, 97, 0.1)',
+                                    color: selectedAppointment.status === 'confirmed' ? 'var(--success)' : selectedAppointment.status === 'completed' ? 'var(--info)' : 'var(--danger)',
+                                    display: 'inline-block'
+                                }}>
+                                    {selectedAppointment.status?.charAt(0).toUpperCase() + selectedAppointment.status?.slice(1) || 'Pending'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Notes */}
+                        {selectedAppointment.notes && (
+                            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--secondary)', borderRadius: 'var(--radius-sm)' }}>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem', fontWeight: 600 }}>Notes</div>
+                                <div style={{ fontSize: '0.875rem', whiteSpace: 'pre-wrap' }}>{selectedAppointment.notes}</div>
+                            </div>
+                        )}
+
+                        {/* Timestamps */}
+                        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Created</div>
+                                <div style={{ fontSize: '0.875rem' }}>
+                                    {selectedAppointment.createdAt?.toDate
+                                        ? selectedAppointment.createdAt.toDate().toLocaleString()
+                                        : 'N/A'
+                                    }
+                                </div>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Last Updated</div>
+                                <div style={{ fontSize: '0.875rem' }}>
+                                    {selectedAppointment.updatedAt?.toDate
+                                        ? selectedAppointment.updatedAt.toDate().toLocaleString()
+                                        : 'N/A'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Close Button */}
+                        <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
+                            <button
+                                onClick={() => setSelectedAppointment(null)}
+                                className="btn btn-ghost"
+                                style={{ flex: 1 }}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

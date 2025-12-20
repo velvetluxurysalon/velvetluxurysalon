@@ -8,17 +8,17 @@ import {
   deleteDoc,
   addDoc,
   serverTimestamp,
-  arrayUnion,
-  arrayRemove
+  query,
+  where,
+  orderBy
 } from 'firebase/firestore';
 import { 
-  getStorage, 
   ref, 
   uploadBytes, 
   getDownloadURL,
   deleteObject
 } from 'firebase/storage';
-import { db } from './firebaseService';
+import { db, storage } from '../../../firebaseConfig';
 
 // ============================================
 // HERO SECTION MANAGEMENT
@@ -70,13 +70,18 @@ export interface Service {
   rating: number;
   image: string;
   category: string;
-  featured: boolean;
+  duration?: number;
   updatedAt?: any;
 }
 
 export const getServices = async (): Promise<Service[]> => {
   try {
-    const querySnapshot = await getDocs(collection(db, 'websiteContent/services/items'));
+    const q = query(
+      collection(db, 'services'),
+      where('deletedAt', '==', null),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -89,18 +94,28 @@ export const getServices = async (): Promise<Service[]> => {
 
 export const getFeaturedServices = async (): Promise<Service[]> => {
   try {
-    const services = await getServices();
-    return services.filter(s => s.featured).slice(0, 4);
+    const q = query(
+      collection(db, 'services'),
+      where('deletedAt', '==', null),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Service[];
   } catch (error) {
-    console.error('Error fetching featured services:', error);
+    console.error('Error fetching services:', error);
     throw error;
   }
 };
 
 export const addService = async (service: Omit<Service, 'id'>): Promise<string> => {
   try {
-    const docRef = await addDoc(collection(db, 'websiteContent/services/items'), {
+    const docRef = await addDoc(collection(db, 'services'), {
       ...service,
+      deletedAt: null,
+      createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
     return docRef.id;
@@ -112,7 +127,7 @@ export const addService = async (service: Omit<Service, 'id'>): Promise<string> 
 
 export const updateService = async (id: string, service: Partial<Service>): Promise<void> => {
   try {
-    const docRef = doc(db, 'websiteContent/services/items', id);
+    const docRef = doc(db, 'services', id);
     await updateDoc(docRef, {
       ...service,
       updatedAt: serverTimestamp()
@@ -125,7 +140,11 @@ export const updateService = async (id: string, service: Partial<Service>): Prom
 
 export const deleteService = async (id: string): Promise<void> => {
   try {
-    await deleteDoc(doc(db, 'websiteContent/services/items', id));
+    const docRef = doc(db, 'services', id);
+    await updateDoc(docRef, {
+      deletedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
   } catch (error) {
     console.error('Error deleting service:', error);
     throw error;
@@ -391,7 +410,6 @@ export const deleteFAQ = async (id: string): Promise<void> => {
 
 export const uploadImage = async (file: File, folder: string): Promise<string> => {
   try {
-    const storage = getStorage();
     const timestamp = Date.now();
     const fileName = `${timestamp}_${file.name}`;
     const storageRef = ref(storage, `websiteContent/${folder}/${fileName}`);
@@ -407,7 +425,6 @@ export const uploadImage = async (file: File, folder: string): Promise<string> =
 
 export const deleteImage = async (imageUrl: string): Promise<void> => {
   try {
-    const storage = getStorage();
     const imageRef = ref(storage, imageUrl);
     await deleteObject(imageRef);
   } catch (error) {

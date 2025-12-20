@@ -67,7 +67,7 @@
 /* ==================== LAYOUT ==================== */
 .admin-panel .layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   font-family: var(--admin-font-sans);
   color: var(--admin-foreground);
   background: var(--admin-background-gradient);
@@ -77,7 +77,7 @@
 /* Sidebar */
 .admin-panel .sidebar {
   width: 260px;
-  min-height: 100vh;
+  height: 100vh;
   position: sticky;
   top: 0;
   background: var(--admin-sidebar-bg);
@@ -87,6 +87,7 @@
   flex-direction: column;
   z-index: 100;
   transition: all var(--admin-transition-base);
+  overflow-y: auto;
 }
 
 .admin-panel .sidebar-brand {
@@ -217,12 +218,18 @@
 }
 
 /* Main Content */
+.admin-panel .content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .admin-panel .main-content {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
   overflow-x: hidden;
-  height: 100vh;
   background: var(--admin-background-gradient);
 }
 

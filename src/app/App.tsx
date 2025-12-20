@@ -1,20 +1,19 @@
 import { useLocation } from "react-router-dom";
-import Navigation from "./components/Navigation";
-import HeroSection from "./components/HeroSection";
-import FeaturedServices from "./components/FeaturedServices";
-import WhyChooseUs from "./components/WhyChooseUs";
-import ServicesGrid from "./components/ServicesGrid";
-import TeamSection from "./components/TeamSection";
-import TestimonialsSection from "./components/TestimonialsSection";
-import GallerySection from "./components/GallerySection";
-import SpecialOffers from "./components/SpecialOffers";
-import HowToBook from "./components/HowToBook";
-import FAQSection from "./components/FAQSection";
-import BlogSection from "./components/BlogSection";
-import LocationContact from "./components/LocationContact";
-import CTASection from "./components/CTASection";
-import Newsletter from "./components/Newsletter";
-import Footer from "./components/Footer";
+import Navigation from "./frontend/components/Navigation";
+import HeroSection from "./frontend/components/HeroSection";
+import Services from "./frontend/components/FeaturedServices";
+import WhyChooseUs from "./frontend/components/WhyChooseUs";
+import TeamSection from "./frontend/components/TeamSection";
+import TestimonialsSection from "./frontend/components/TestimonialsSection";
+import GallerySection from "./frontend/components/GallerySection";
+import SpecialOffers from "./frontend/components/SpecialOffers";
+import HowToBook from "./frontend/components/HowToBook";
+import FAQSection from "./frontend/components/FAQSection";
+import BlogSection from "./frontend/components/BlogSection";
+import LocationContact from "./frontend/components/LocationContact";
+import CTASection from "./frontend/components/CTASection";
+import Newsletter from "./frontend/components/Newsletter";
+import Footer from "./frontend/components/Footer";
 
 export default function App() {
   const location = useLocation();
@@ -30,11 +29,8 @@ export default function App() {
       <div id="home">
         <HeroSection />
       </div>
-      <FeaturedServices />
+      <Services />
       <WhyChooseUs />
-      <div id="services">
-        <ServicesGrid />
-      </div>
       <div id="team">
         <TeamSection />
       </div>

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Star, Loader, X } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import Slider from "react-slick";
 import { getReviews, submitReview } from "../services/firebaseService";
 import { useAuth } from "../context/AuthContext";
 
@@ -85,50 +84,22 @@ export default function TestimonialsSection() {
     }
   };
 
-  const settings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 4000,
-    arrows: true,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 2,
-          arrows: true
-        }
-      },
-      {
-        breakpoint: 768,
-        settings: {
-          slidesToShow: 1,
-          arrows: false,
-          autoplay: true
-        }
-      }
-    ]
-  };
-
   return (
-    <section className="py-12 md:py-20 px-4 bg-gradient-to-b from-purple-50 to-white">
+    <section className="py-8 md:py-12 lg:py-20 px-2 sm:px-4 bg-gradient-to-b from-purple-50 to-white">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8 md:mb-12">
-          <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-4">What Our Clients Say</h2>
-          <p className="text-base md:text-xl text-gray-600">Real experiences from real customers</p>
+        <div className="text-center mb-6 sm:mb-8 md:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2 sm:mb-3 md:mb-4 leading-tight">What Our Clients Say</h2>
+          <p className="text-xs sm:text-base md:text-xl text-gray-600">Real experiences from real customers</p>
         </div>
 
         {/* Post Review Button for Logged-in Users */}
         {isAuthenticated && !hasPosted && !showReviewForm && (
-          <div className="text-center mb-6 md:mb-8">
+          <div className="text-center mb-4 sm:mb-6 md:mb-8">
             <Button 
               onClick={() => setShowReviewForm(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 md:px-8 py-3 md:py-6 text-sm md:text-base"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-6 text-xs sm:text-sm md:text-base"
             >
-              <Star className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+              <Star className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-1 sm:mr-2" />
               Share Your Experience
             </Button>
           </div>
@@ -136,10 +107,10 @@ export default function TestimonialsSection() {
 
         {/* Review Form Modal */}
         {showReviewForm && isAuthenticated && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md p-4 md:p-6 bg-white">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl md:text-2xl font-bold">Share Your Review</h3>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+            <Card className="w-full max-w-sm p-3 sm:p-4 md:p-6 bg-white max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold">Share Your Review</h3>
                 <button 
                   onClick={() => setShowReviewForm(false)}
                   className="text-gray-500 hover:text-gray-700"
@@ -149,15 +120,15 @@ export default function TestimonialsSection() {
               </div>
 
               {submitMessage && (
-                <div className={`mb-4 p-3 rounded-lg ${submitMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                <div className={`mb-3 sm:mb-4 p-2 sm:p-3 rounded-lg text-xs sm:text-sm ${submitMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                   {submitMessage.text}
                 </div>
               )}
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Rating *</label>
-                  <div className="flex gap-2">
+                  <label className="block text-xs sm:text-sm font-medium mb-2">Rating *</label>
+                  <div className="flex gap-1 sm:gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
@@ -165,7 +136,7 @@ export default function TestimonialsSection() {
                         className="transition-transform hover:scale-110"
                       >
                         <Star
-                          className={`w-8 h-8 ${
+                          className={`w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 ${
                             star <= formData.rating
                               ? 'fill-yellow-400 text-yellow-400'
                               : 'text-gray-300'
@@ -177,28 +148,28 @@ export default function TestimonialsSection() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Your Review *</label>
+                  <label className="block text-xs sm:text-sm font-medium mb-2">Your Review *</label>
                   <textarea
                     value={formData.reviewText}
                     onChange={(e) => setFormData({ ...formData, reviewText: e.target.value })}
                     placeholder="Share your experience with us..."
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent resize-none"
-                    rows={4}
+                    className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent resize-none text-xs sm:text-sm"
+                    rows={3}
                   />
                 </div>
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-2 sm:gap-3 pt-2">
                   <Button
                     onClick={handleSubmitReview}
                     disabled={submitting}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm py-2 sm:py-3"
                   >
                     {submitting ? 'Posting...' : 'Post Review'}
                   </Button>
                   <Button
                     onClick={() => setShowReviewForm(false)}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 text-xs sm:text-sm py-2 sm:py-3"
                     disabled={submitting}
                   >
                     Cancel
@@ -211,8 +182,8 @@ export default function TestimonialsSection() {
 
         {/* Already Posted Message */}
         {isAuthenticated && hasPosted && (
-          <div className="text-center mb-8 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-700">✓ Thank you for your review!</p>
+          <div className="text-center mb-6 sm:mb-8 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-700 text-xs sm:text-sm">✓ Thank you for your review!</p>
           </div>
         )}
 
@@ -221,47 +192,50 @@ export default function TestimonialsSection() {
             <Loader className="w-8 h-8 animate-spin text-purple-600" />
           </div>
         ) : testimonials.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">No reviews yet. Be the first to share your experience!</p>
+          <div className="text-center py-8 sm:py-12">
+            <p className="text-gray-600 text-xs sm:text-base md:text-lg">No reviews yet. Be the first to share your experience!</p>
           </div>
         ) : (
           <>
-            <Slider {...settings} className="testimonials-slider">
+            <ul className="space-y-6">
               {testimonials.map((testimonial) => (
-                <div key={testimonial.id} className="px-2 md:px-3">
-                  <Card className="p-4 md:p-6 h-full">
-                    <div className="flex items-center gap-3 mb-4">
-                      <img
-                        src={testimonial.image}
-                        alt={testimonial.name}
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover flex-shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <h4 className="text-sm md:text-base font-semibold truncate">{testimonial.name}</h4>
-                        <p className="text-xs md:text-sm text-gray-600 truncate">{testimonial.service}</p>
+                <li
+                  key={testimonial.id}
+                  className="border-b border-purple-100 last:border-0 pb-4 last:pb-0"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                    <img
+                      src={testimonial.image}
+                      alt={testimonial.name}
+                      className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h4 className="text-sm sm:text-base font-semibold leading-snug">{testimonial.name}</h4>
+                          <p className="text-xs sm:text-sm text-gray-600">{testimonial.service}</p>
+                        </div>
+                        <span className="text-xs sm:text-sm text-gray-500">{testimonial.date}</span>
+                      </div>
+                      <div className="flex gap-1 mt-2">
+                        {[...Array(testimonial.rating)].map((_, idx) => (
+                          <Star key={idx} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        ))}
                       </div>
                     </div>
+                  </div>
 
-                <div className="flex gap-1 mb-3">
-                  {[...Array(testimonial.rating)].map((_, idx) => (
-                    <Star key={idx} className="w-3 h-3 md:w-4 md:h-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
+                  <p className="text-sm sm:text-base text-gray-700 mt-3 leading-relaxed">"{testimonial.review}"</p>
+                </li>
+              ))}
+            </ul>
 
-                <p className="text-sm md:text-base text-gray-700 mb-4 italic line-clamp-3">"{testimonial.review}"</p>
-
-                <p className="text-xs md:text-sm text-gray-500">{testimonial.date}</p>
-              </Card>
-            </div>
-          ))}
-            </Slider>
-
-            <div className="text-center mt-8">
-              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-3 bg-purple-100 rounded-full">
-                <Star className="w-4 h-4 md:w-5 md:h-5 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm md:text-lg">
-                  {(reviews.reduce((sum: number, r: any) => sum + (r.rating || 5), 0) / reviews.length).toFixed(1)}/5 
-                  {' '}Average Rating from {reviews.length}+ Reviews
+            <div className="text-center mt-6 sm:mt-8">
+              <div className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 md:px-6 py-2 sm:py-3 bg-purple-100 rounded-full">
+                <Star className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 fill-yellow-400 text-yellow-400" />
+                <span className="text-xs sm:text-sm md:text-lg">
+                  {(reviews.reduce((sum: number, r: any) => sum + (r.rating || 5), 0) / reviews.length).toFixed(1)}/5 {' '}
+                  Average Rating from {reviews.length}+ Reviews
                 </span>
               </div>
             </div>

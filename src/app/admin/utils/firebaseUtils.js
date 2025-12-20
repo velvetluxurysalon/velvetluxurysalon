@@ -5,8 +5,8 @@ import {
   updateProfile,
   sendPasswordResetEmail 
 } from 'firebase/auth';
-import { auth, db } from '../firebaseConfig';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, db, storage } from '../../../firebaseConfig';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
   doc, 
   setDoc, 
@@ -303,9 +303,18 @@ export const addStaff = async (staffData) => {
   try {
     const staffId = await addDocument('staff', {
       name: staffData.name,
-      phone: staffData.phone,
-      email: staffData.email,
+      phone: staffData.phone || '',
+      email: staffData.email || '',
       role: staffData.role,
+      specialties: Array.isArray(staffData.specialties) ? staffData.specialties : [],
+      experience: staffData.experience || '',
+      bio: staffData.bio || '',
+      image: staffData.image || '',
+      socials: {
+        facebook: staffData.socials?.facebook || '',
+        instagram: staffData.socials?.instagram || '',
+        twitter: staffData.socials?.twitter || ''
+      },
       active: true,
       totalVisits: 0,
       createdAt: serverTimestamp()
@@ -373,7 +382,10 @@ export const addService = async (serviceData) => {
       price: parseFloat(serviceData.price),
       duration: parseInt(serviceData.duration) || 30,
       gender: serviceData.gender || 'any',
-      deletedAt: null
+      description: serviceData.description || '',
+      image: serviceData.image || '',
+      deletedAt: null,
+      createdAt: serverTimestamp()
     });
     return serviceId;
   } catch (error) {
@@ -413,7 +425,10 @@ export const getRecentServices = async (days = 7) => {
 
 export const updateService = async (serviceId, serviceData) => {
   try {
-    await updateDocument('services', serviceId, serviceData);
+    await updateDocument('services', serviceId, {
+      ...serviceData,
+      updatedAt: serverTimestamp()
+    });
   } catch (error) {
     console.error('Error updating service:', error);
     throw error;
@@ -906,7 +921,6 @@ export const uploadProductImage = async (file) => {
   try {
     if (!file) throw new Error('No file provided');
     
-    const storage = getStorage();
     const fileName = `products/${Date.now()}_${file.name}`;
     const fileRef = ref(storage, fileName);
     
@@ -918,6 +932,22 @@ export const uploadProductImage = async (file) => {
     return downloadURL;
   } catch (error) {
     console.error('Error uploading image:', error);
+    throw error;
+  }
+};
+
+export const uploadServiceImage = async (file) => {
+  try {
+    if (!file) throw new Error('No file provided');
+    
+    const fileName = `services/${Date.now()}_${file.name}`;
+    const fileRef = ref(storage, fileName);
+    
+    await uploadBytes(fileRef, file);
+    const downloadURL = await getDownloadURL(fileRef);
+    return downloadURL;
+  } catch (error) {
+    console.error('Error uploading service image:', error);
     throw error;
   }
 };
@@ -1420,3 +1450,48 @@ export const bookAppointmentPublic = async (bookingData) => {
     throw error;
   }
 };
+
+// ============================================
+// BULK IMPORT UTILITIES
+// ============================================
+
+export const bulkUploadServices = async (servicesData) => {
+  try {
+    const uploaded = [];
+    const errors = [];
+
+    for (const serviceData of servicesData) {
+      try {
+        const newService = {
+          ...serviceData,
+          deletedAt: null,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+
+        const docRef = await addDoc(collection(db, 'services'), newService);
+        uploaded.push({
+          id: docRef.id,
+          name: serviceData.name
+        });
+      } catch (error) {
+        errors.push({
+          name: serviceData.name,
+          error: error.message
+        });
+      }
+    }
+
+    return {
+      uploaded,
+      errors,
+      totalAttempted: servicesData.length,
+      totalSuccess: uploaded.length,
+      totalFailed: errors.length
+    };
+  } catch (error) {
+    console.error('Error in bulk upload:', error);
+    throw error;
+  }
+};
+

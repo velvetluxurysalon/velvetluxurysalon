@@ -63,6 +63,21 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
     }
   };
 
+  const getAvailableStaff = () => {
+    if (!formData.serviceId) return [];
+    
+    const selectedService = services.find(s => s.id === formData.serviceId);
+    if (!selectedService) return [];
+    
+    // Filter staff by service category (staff role should match service category)
+    return staff.filter(member => member.role === selectedService.category);
+  };
+
+  const handleServiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData({ ...formData, serviceId: e.target.value, stylistId: "", appointmentTime: "" });
+    setStylistAvailability("");
+  };
+
   const handleStylistChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const stylistId = e.target.value;
     setFormData({ ...formData, stylistId, appointmentTime: "" });
@@ -258,13 +273,13 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
                 </label>
                 <select
                   value={formData.serviceId}
-                  onChange={(e) => setFormData({ ...formData, serviceId: e.target.value })}
+                  onChange={handleServiceChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                 >
                   <option value="">Select a service</option>
                   {services.map((service) => (
                     <option key={service.id} value={service.id}>
-                      {service.name} - ${service.price}
+                      {service.name} - ₹{service.price}
                     </option>
                   ))}
                 </select>
@@ -280,10 +295,10 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
                   onChange={handleStylistChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                 >
-                  <option value="">Choose your preferred stylist</option>
-                  {staff.map((stylist) => (
-                    <option key={stylist.id} value={stylist.id}>
-                      {stylist.name} {stylist.specialization && `- ${stylist.specialization}`}
+                  <option value="">Select a stylist</option>
+                  {getAvailableStaff().map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name} - {member.role}
                     </option>
                   ))}
                 </select>

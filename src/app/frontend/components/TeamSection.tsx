@@ -2,7 +2,7 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Facebook, Instagram, Twitter } from "lucide-react";
 import { useState, useEffect } from "react";
-import { getTeamMembers } from "../services/contentService";
+import { getStaff } from "../services/firebaseService";
 
 interface TeamMember {
   id: string;
@@ -25,7 +25,7 @@ export default function TeamSection() {
   const loadTeamMembers = async () => {
     try {
       setLoading(true);
-      const data = await getTeamMembers();
+      const data = await getStaff();
       setTeam(data);
     } catch (error) {
       console.error("Error loading team members:", error);
@@ -34,52 +34,24 @@ export default function TeamSection() {
     }
   };
 
-  const defaultTeam = [
-    {
-      id: '1',
-      name: "Sarah Johnson",
-      role: "Master Stylist",
-      specialties: ["Hair Coloring", "Balayage", "Extensions"],
-      experience: "12 years",
-      bio: "Award-winning stylist specializing in creative color transformations",
-      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop"
-    },
-    {
-      id: '2',
-      name: "Michael Chen",
-      role: "Senior Barber",
-      specialties: ["Men's Cuts", "Beard Styling", "Hot Shaves"],
-      experience: "10 years",
-      bio: "Expert in classic and modern men's grooming techniques",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"
-    },
-    {
-      id: '3',
-      name: "Emma Williams",
-      role: "Spa Therapist",
-      specialties: ["Facial Treatments", "Body Massage", "Aromatherapy"],
-      experience: "8 years",
-      bio: "Certified therapist focused on holistic wellness and relaxation",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop"
-    },
-    {
-      id: '4',
-      name: "Jessica Lee",
-      role: "Nail Artist",
-      specialties: ["Nail Art", "Gel Extensions", "Spa Manicure"],
-      experience: "7 years",
-      bio: "Creative nail artist known for intricate designs and attention to detail",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop"
-    }
-  ];
 
-  const displayTeam = team.length > 0 ? team : defaultTeam;
+  const displayTeam = team;
 
   if (loading) {
     return (
       <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-purple-600">Loading team members...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (displayTeam.length === 0) {
+    return (
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-gray-600 text-lg">No team members available at the moment.</p>
         </div>
       </section>
     );

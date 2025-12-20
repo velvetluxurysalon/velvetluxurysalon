@@ -1,15 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, Search, RotateCcw } from 'lucide-react';
-import { getServices, getRecentServices, addService, deleteService, restoreService } from '../utils/firebaseUtils';
+import { Trash2, Plus, Search, RotateCcw, Edit2, X, Star } from 'lucide-react';
+import { getServices, getRecentServices, addService, updateService, deleteService, restoreService, uploadServiceImage } from '../utils/firebaseUtils';
+
+const CATEGORY_OPTIONS = [
+    'Hair Services',
+    'Barbering',
+    'Spa & Massage',
+    'Nail Services',
+    'Facial & Skincare',
+    'Makeup',
+    'Waxing & Threading',
+    'Eyelash Services',
+    'Body Treatments',
+    'Grooming',
+    'Wellness',
+    'Other'
+];
 
 const Services = () => {
     const [services, setServices] = useState([]);
     const [filteredServices, setFilteredServices] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [newService, setNewService] = useState({ name: '', price: '', category: 'General', gender: 'any' });
+    const [newService, setNewService] = useState({ name: '', price: '', category: 'General', gender: 'Unisex', description: '', image: '' });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [recentServices, setRecentServices] = useState({ added: [], deleted: [] });
+    const [editingService, setEditingService] = useState(null);
+    const [imagePreview, setImagePreview] = useState('');
 
     useEffect(() => {
         fetchServices();
@@ -54,19 +71,31 @@ const Services = () => {
 
         try {
             setLoading(true);
-            await addService({
+            const serviceData = {
                 name: newService.name,
-                category: newService.category,
-                price: parseFloat(newService.price),
+                category: newService.category || 'General',
+                price: typeof newService.price === 'number' ? newService.price : parseFloat(newService.price),
                 duration: 30,
-                gender: newService.gender
-            });
-            setNewService({ name: '', price: '', category: 'General', gender: 'any' });
+                gender: newService.gender || 'Unisex',
+                description: newService.description || '',
+                image: newService.image || ''
+            };
+
+            if (editingService) {
+                // Update existing service
+                await updateService(editingService.id, serviceData);
+                setEditingService(null);
+            } else {
+                // Add new service
+                await addService(serviceData);
+            }
+            setNewService({ name: '', price: '', category: 'General', gender: 'Unisex', description: '', image: '' });
+            setImagePreview('');
             await fetchServices();
             setError('');
         } catch (error) {
-            console.error('Error adding service:', error);
-            setError('Failed to add service');
+            console.error('Error saving service:', error);
+            setError('Failed to save service');
         } finally {
             setLoading(false);
         }
@@ -102,6 +131,43 @@ const Services = () => {
         }
     };
 
+    const handleEditService = (service) => {
+        setEditingService(service);
+        setNewService({
+            name: service.name,
+            price: service.price,
+            category: service.category || 'General',
+            gender: service.gender || 'Unisex',
+            description: service.description || '',
+            image: service.image || ''
+        });
+        setImagePreview(service.image || '');
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setLoading(true);
+            const url = await uploadServiceImage(file);
+            setNewService({ ...newService, image: url });
+            setImagePreview(url);
+            setError('');
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            setError('Failed to upload image');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const cancelEdit = () => {
+        setEditingService(null);
+        setNewService({ name: '', price: '', category: 'General', gender: 'any', description: '', image: '' });
+        setImagePreview('');
+    };
+
     return (
         <div>
             <div className="page-header">
@@ -128,29 +194,25 @@ const Services = () => {
                         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
                             <thead>
                                 <tr>
+                                    <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem', width: '60px' }}>Image</th>
                                     <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Name</th>
-                                    <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Gender</th>
                                     <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Category</th>
                                     <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem', textAlign: 'right' }}>Price</th>
-                                    <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem', width: '50px' }}></th>
+                                    <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem', width: '100px' }}></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredServices.map(service => (
                                     <tr key={service.id}>
-                                        <td style={{ fontWeight: '500' }}>{service.name}</td>
-                                        <td>
-                                            <span style={{
-                                                padding: '0.25rem 0.75rem',
-                                                borderRadius: '999px',
-                                                fontSize: '0.75rem',
-                                                backgroundColor: service.gender === 'Male' ? 'rgba(59, 130, 246, 0.1)' : service.gender === 'Female' ? 'rgba(236, 72, 153, 0.1)' : 'rgba(107, 114, 128, 0.1)',
-                                                color: service.gender === 'Male' ? '#3b82f6' : service.gender === 'Female' ? '#ec4899' : '#9ca3af',
-                                                border: '1px solid var(--glass-border)'
-                                            }}>
-                                                {service.gender}
-                                            </span>
+                                        <td style={{ padding: '0.5rem' }}>
+                                            <img 
+                                                src={service.image || 'https://via.placeholder.com/50?text=No+Image'} 
+                                                alt={service.name}
+                                                style={{ width: '50px', height: '50px', borderRadius: '4px', objectFit: 'cover' }}
+                                                onError={(e) => e.currentTarget.src = 'https://via.placeholder.com/50?text=No+Image'}
+                                            />
                                         </td>
+                                        <td style={{ fontWeight: '500' }}>{service.name}</td>
                                         <td>
                                             <span style={{
                                                 padding: '0.25rem 0.75rem',
@@ -163,21 +225,32 @@ const Services = () => {
                                                 {service.category}
                                             </span>
                                         </td>
-                                        <td style={{ textAlign: 'right', fontWeight: '600', color: 'var(--primary)' }}>₹{service.price.toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right', fontWeight: '600', color: 'var(--primary)' }}>₹{typeof service.price === 'number' ? service.price.toFixed(2) : service.price}</td>
                                         <td>
-                                            <button
-                                                onClick={() => handleDeleteService(service.id)}
-                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', opacity: 0.7 }}
-                                                className="hover:opacity-100"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <button
+                                                    onClick={() => handleEditService(service)}
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', opacity: 0.7 }}
+                                                    className="hover:opacity-100"
+                                                    title="Edit service"
+                                                >
+                                                    <Edit2 size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteService(service.id)}
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', opacity: 0.7 }}
+                                                    className="hover:opacity-100"
+                                                    title="Delete service"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
                                 {filteredServices.length === 0 && (
                                     <tr>
-                                        <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted-foreground)' }}>
+                                        <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted-foreground)' }}>
                                             No services found matching "{searchQuery}"
                                         </td>
                                     </tr>
@@ -190,10 +263,61 @@ const Services = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                     <div className="card" style={{ height: 'fit-content' }}>
                         <div className="card-header">
-                            <h2 className="card-title">Add New Service</h2>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h2 className="card-title">{editingService ? 'Edit Service' : 'Add New Service'}</h2>
+                                {editingService && (
+                                    <button
+                                        onClick={cancelEdit}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)' }}
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <div className="card-content">
                             <form onSubmit={handleAddService} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                {/* Image Upload */}
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--muted-foreground)' }}>Service Image</label>
+                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                                        <div>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageUpload}
+                                                style={{ display: 'none' }}
+                                                id="image-upload"
+                                                disabled={loading}
+                                            />
+                                            <label
+                                                htmlFor="image-upload"
+                                                style={{
+                                                    display: 'inline-block',
+                                                    padding: '0.75rem 1.5rem',
+                                                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                                                    color: 'var(--primary)',
+                                                    border: '1px solid var(--primary)',
+                                                    borderRadius: '0.375rem',
+                                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: '500',
+                                                    opacity: loading ? 0.5 : 1
+                                                }}
+                                            >
+                                                Choose Image
+                                            </label>
+                                        </div>
+                                        {imagePreview && (
+                                            <img 
+                                                src={imagePreview} 
+                                                alt="Preview"
+                                                style={{ width: '100px', height: '100px', borderRadius: '0.375rem', objectFit: 'cover', border: '1px solid var(--glass-border)' }}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
                                 <div>
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--muted-foreground)' }}>Service Name</label>
                                     <input
@@ -205,33 +329,35 @@ const Services = () => {
                                         required
                                     />
                                 </div>
+
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--muted-foreground)' }}>Description</label>
+                                    <textarea
+                                        className="input"
+                                        value={newService.description}
+                                        onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+                                        placeholder="Service description..."
+                                        rows="3"
+                                        style={{ fontFamily: 'inherit', resize: 'vertical' }}
+                                    />
+                                </div>
+
                                 <div>
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--muted-foreground)' }}>Category</label>
                                     <select
                                         className="input"
                                         value={newService.category}
                                         onChange={(e) => setNewService({ ...newService, category: e.target.value })}
+                                        required
+                                        style={{ cursor: 'pointer' }}
                                     >
-                                        <option value="General">General</option>
-                                        <option value="Skin Care">Skin Care</option>
-                                        <option value="Hair">Hair</option>
-                                        <option value="Waxing">Waxing</option>
-                                        <option value="Manicure/Pedicure">Manicure/Pedicure</option>
-                                        <option value="Makeup">Makeup</option>
+                                        <option value="">Select a category...</option>
+                                        {CATEGORY_OPTIONS.map(category => (
+                                            <option key={category} value={category}>{category}</option>
+                                        ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--muted-foreground)' }}>Gender</label>
-                                    <select
-                                        className="input"
-                                        value={newService.gender}
-                                        onChange={(e) => setNewService({ ...newService, gender: e.target.value })}
-                                    >
-                                        <option value="Unisex">Unisex</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                    </select>
-                                </div>
+
                                 <div>
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--muted-foreground)' }}>Price (₹)</label>
                                     <input
@@ -244,10 +370,33 @@ const Services = () => {
                                         required
                                     />
                                 </div>
-                                <button type="submit" className="btn btn-primary">
-                                    <Plus size={18} style={{ marginRight: '0.5rem' }} />
-                                    Add Service
-                                </button>
+
+                                <div>
+                                    <div style={{ display: 'flex', gap: '1rem' }}>
+                                        <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                                            <Plus size={18} style={{ marginRight: '0.5rem' }} />
+                                            {editingService ? 'Update Service' : 'Add Service'}
+                                        </button>
+                                        {editingService && (
+                                            <button 
+                                                type="button" 
+                                                onClick={cancelEdit}
+                                                style={{
+                                                    padding: '0.625rem 1.5rem',
+                                                    backgroundColor: 'transparent',
+                                                    border: '1px solid var(--glass-border)',
+                                                    color: 'var(--muted-foreground)',
+                                                    borderRadius: '0.375rem',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: '500'
+                                                }}
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                             </form>
                         </div>
                     </div>

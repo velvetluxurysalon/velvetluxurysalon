@@ -2,9 +2,9 @@ import { createRoot } from "react-dom/client";
 import { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import App from "./app/App.tsx";
-import AdminApp from "./admin/src/App.admin.jsx";
-import { AuthProvider } from "./app/context/AuthContext.tsx";
-import "./styles/index.css";
+import AdminApp from "./app/admin/AdminApp.tsx";
+import { AuthProvider } from "./app/frontend/context/AuthContext.tsx";
+import "./app/styles/index.css";
 
 function RootApp() {
   const location = useLocation();

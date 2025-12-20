@@ -63,6 +63,27 @@ export default function HeroSection() {
   };
 
   const displayData = heroData || defaultHeroData;
+  const heroBackgroundStyle = displayData.image
+    ? {
+        backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url(${displayData.image})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }
+    : undefined;
+  const hasCTALink = Boolean(displayData.ctaButtonLink?.trim());
+
+  const handlePrimaryAction = () => {
+    if (hasCTALink && displayData.ctaButtonLink) {
+      if (displayData.ctaButtonLink.startsWith("http")) {
+        window.open(displayData.ctaButtonLink, "_blank");
+      } else {
+        window.location.href = displayData.ctaButtonLink;
+      }
+      return;
+    }
+    handleBooking();
+  };
 
   const defaultServices = [
     { name: "Haircut", icon: Scissors },
@@ -87,7 +108,10 @@ export default function HeroSection() {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden pt-20 md:pt-0 bg-gradient-to-br from-purple-600 to-purple-900">
+    <div
+      className="relative min-h-screen w-full overflow-hidden pt-20 md:pt-0 bg-gradient-to-br from-purple-600 to-purple-900"
+      style={heroBackgroundStyle}
+    >
       {/* Content */}
       <div className="relative z-10 min-h-screen md:h-screen flex items-center justify-center px-4 py-12 md:py-0">
         <div className="text-center text-white max-w-4xl mx-auto">
@@ -107,13 +131,18 @@ export default function HeroSection() {
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
             <Button 
               size="lg" 
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 md:px-8 py-3 md:py-6 text-sm md:text-base"
-              onClick={handleBooking}
+              variant="ghost"
+              className="border border-white text-white bg-white/10 px-6 md:px-8 py-3 md:py-6 text-sm md:text-base hover:bg-white/20"
+              onClick={handlePrimaryAction}
             >
               <Calendar className="w-4 h-4 md:w-5 md:h-5 mr-2" />
               {displayData.ctaButtonText}
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black px-6 md:px-8 py-3 md:py-6 text-sm md:text-base">
+            <Button
+              size="lg"
+              variant="ghost"
+              className="border border-white text-white bg-white/10 px-6 md:px-8 py-3 md:py-6 text-sm md:text-base hover:bg-white/20"
+            >
               Explore Services
             </Button>
           </div>

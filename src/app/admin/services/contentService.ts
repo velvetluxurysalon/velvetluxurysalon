@@ -10,13 +10,12 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { 
-  getStorage, 
   ref, 
   uploadBytes, 
   getDownloadURL,
   deleteObject
 } from 'firebase/storage';
-import { db } from '../firebaseConfig';
+import { db, storage } from '../../../firebaseConfig';
 
 // ============================================
 // HERO SECTION MANAGEMENT
@@ -389,7 +388,6 @@ export const deleteFAQ = async (id: string): Promise<void> => {
 
 export const uploadImage = async (file: File, folder: string): Promise<string> => {
   try {
-    const storage = getStorage();
     const timestamp = Date.now();
     const fileName = `${timestamp}_${file.name}`;
     const storageRef = ref(storage, `websiteContent/${folder}/${fileName}`);
@@ -405,7 +403,6 @@ export const uploadImage = async (file: File, folder: string): Promise<string> =
 
 export const deleteImage = async (imageUrl: string): Promise<void> => {
   try {
-    const storage = getStorage();
     const imageRef = ref(storage, imageUrl);
     await deleteObject(imageRef);
   } catch (error) {

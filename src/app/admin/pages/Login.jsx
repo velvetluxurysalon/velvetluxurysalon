@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
+import { auth } from '../../../firebaseConfig';
 import { Scissors, Mail, Lock } from 'lucide-react';
 
 const Login = () => {

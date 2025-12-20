@@ -45,6 +45,41 @@
   }
 }
 
+/* Featured Services Slider Mobile Styles */
+.featured-services-slider {
+  padding: 0 10px;
+}
+
+.featured-services-slider .slick-slide {
+  padding: 0 4px;
+}
+
+.featured-services-slider .slick-dots {
+  bottom: -30px;
+}
+
+@media (max-width: 640px) {
+  .featured-services-slider {
+    padding: 0 5px;
+  }
+  
+  .featured-services-slider .slick-slide {
+    padding: 0 2px;
+  }
+  
+  .featured-services-slider .slick-dots {
+    bottom: -25px;
+  }
+  
+  .featured-services-slider .slick-dots li {
+    margin: 0 2px;
+  }
+  
+  .featured-services-slider .slick-dots li button:before {
+    font-size: 8px;
+  }
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
@@ -61,6 +96,7 @@ body {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
