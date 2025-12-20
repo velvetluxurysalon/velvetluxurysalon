@@ -93,38 +93,42 @@ export default function TestimonialsSection() {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 4000,
+    arrows: true,
     responsive: [
       {
         breakpoint: 1024,
         settings: {
           slidesToShow: 2,
+          arrows: true
         }
       },
       {
-        breakpoint: 640,
+        breakpoint: 768,
         settings: {
           slidesToShow: 1,
+          arrows: false,
+          autoplay: true
         }
       }
     ]
   };
 
   return (
-    <section className="py-20 px-4 bg-gradient-to-b from-purple-50 to-white">
+    <section className="py-12 md:py-20 px-4 bg-gradient-to-b from-purple-50 to-white">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl mb-4">What Our Clients Say</h2>
-          <p className="text-xl text-gray-600">Real experiences from real customers</p>
+        <div className="text-center mb-8 md:mb-12">
+          <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-4">What Our Clients Say</h2>
+          <p className="text-base md:text-xl text-gray-600">Real experiences from real customers</p>
         </div>
 
         {/* Post Review Button for Logged-in Users */}
         {isAuthenticated && !hasPosted && !showReviewForm && (
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 md:mb-8">
             <Button 
               onClick={() => setShowReviewForm(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 md:px-8 py-3 md:py-6 text-sm md:text-base"
             >
-              <Star className="w-5 h-5 mr-2" />
+              <Star className="w-4 h-4 md:w-5 md:h-5 mr-2" />
               Share Your Experience
             </Button>
           </div>
@@ -132,10 +136,10 @@ export default function TestimonialsSection() {
 
         {/* Review Form Modal */}
         {showReviewForm && isAuthenticated && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40 p-4">
-            <Card className="w-full max-w-md p-6 bg-white">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md p-4 md:p-6 bg-white">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-2xl font-bold">Share Your Review</h3>
+                <h3 className="text-xl md:text-2xl font-bold">Share Your Review</h3>
                 <button 
                   onClick={() => setShowReviewForm(false)}
                   className="text-gray-500 hover:text-gray-700"
@@ -224,38 +228,38 @@ export default function TestimonialsSection() {
           <>
             <Slider {...settings} className="testimonials-slider">
               {testimonials.map((testimonial) => (
-                <div key={testimonial.id} className="px-3">
-                  <Card className="p-6 h-full">
+                <div key={testimonial.id} className="px-2 md:px-3">
+                  <Card className="p-4 md:p-6 h-full">
                     <div className="flex items-center gap-3 mb-4">
                       <img
                         src={testimonial.image}
                         alt={testimonial.name}
-                        className="w-12 h-12 rounded-full object-cover"
+                        className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover flex-shrink-0"
                       />
-                      <div>
-                        <h4>{testimonial.name}</h4>
-                        <p className="text-sm text-gray-600">{testimonial.service}</p>
+                      <div className="min-w-0">
+                        <h4 className="text-sm md:text-base font-semibold truncate">{testimonial.name}</h4>
+                        <p className="text-xs md:text-sm text-gray-600 truncate">{testimonial.service}</p>
                       </div>
                     </div>
 
                 <div className="flex gap-1 mb-3">
                   {[...Array(testimonial.rating)].map((_, idx) => (
-                    <Star key={idx} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <Star key={idx} className="w-3 h-3 md:w-4 md:h-4 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
 
-                <p className="text-gray-700 mb-4 italic">"{testimonial.review}"</p>
+                <p className="text-sm md:text-base text-gray-700 mb-4 italic line-clamp-3">"{testimonial.review}"</p>
 
-                <p className="text-sm text-gray-500">{testimonial.date}</p>
+                <p className="text-xs md:text-sm text-gray-500">{testimonial.date}</p>
               </Card>
             </div>
           ))}
             </Slider>
 
             <div className="text-center mt-8">
-              <div className="inline-flex items-center gap-2 px-6 py-3 bg-purple-100 rounded-full">
-                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span className="text-lg">
+              <div className="inline-flex items-center gap-2 px-4 md:px-6 py-3 bg-purple-100 rounded-full">
+                <Star className="w-4 h-4 md:w-5 md:h-5 fill-yellow-400 text-yellow-400" />
+                <span className="text-sm md:text-lg">
                   {(reviews.reduce((sum: number, r: any) => sum + (r.rating || 5), 0) / reviews.length).toFixed(1)}/5 
                   {' '}Average Rating from {reviews.length}+ Reviews
                 </span>
