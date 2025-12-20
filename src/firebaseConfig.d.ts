@@ -1,8 +1,11 @@
-import { Firestore } from 'firebase/firestore';
-import { Auth } from 'firebase/auth';
-import { FirebaseApp } from 'firebase/app';
+declare module '**/firebaseConfig.js' {
+  import { Firestore } from 'firebase/firestore';
+  
+  export const db: Firestore;
+}
 
-export const db: Firestore;
-export const auth: Auth;
-declare const app: FirebaseApp;
-export default app;
+declare module '**/firebaseConfig.ts' {
+  import { Firestore } from 'firebase/firestore';
+  
+  export const db: Firestore;
+}
