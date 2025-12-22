@@ -237,11 +237,14 @@ export const addCustomer = async (customerData) => {
 
 export const getCustomers = async (includeDeleted = false) => {
   try {
-    const conditions = includeDeleted ? [] : [
-      { type: 'where', field: 'deletedAt', operator: '==', value: null }
-    ];
-    conditions.push({ type: 'orderBy', field: 'createdAt', direction: 'desc' });
-    return await getDocuments('customers', conditions);
+    let customers = await getDocuments('customers', [
+      { type: 'orderBy', field: 'createdAt', direction: 'desc' }
+    ]);
+    if (!includeDeleted) {
+      // Show customers where deletedAt is missing or null
+      customers = customers.filter(c => c.deletedAt === undefined || c.deletedAt === null);
+    }
+    return customers;
   } catch (error) {
     console.error('Error getting customers:', error);
     throw error;

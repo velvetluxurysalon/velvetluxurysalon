@@ -14,7 +14,6 @@ import {
   query, 
   where,
   orderBy,
-  limit,
   Timestamp
 } from 'firebase/firestore';
 import { auth, db } from '../../../firebaseConfig';
@@ -112,10 +111,11 @@ export const getServiceById = async (serviceId: string) => {
 
 export const getReviews = async (limit_count: number = 10) => {
   try {
+    // Query all verified reviews (orderBy on different field requires composite index)
+    // So we fetch verified reviews and sort client-side
     const q = query(
       collection(db, 'reviews'),
-      orderBy('createdAt', 'desc'),
-      limit(limit_count)
+      where('verified', '==', true)
     );
     const querySnapshot = await getDocs(q);
     const reviews: any[] = [];
@@ -126,8 +126,17 @@ export const getReviews = async (limit_count: number = 10) => {
         createdAt: doc.data().createdAt?.toDate?.() || new Date()
       });
     });
-    return reviews;
+    
+    // Sort by createdAt descending on client-side and limit
+    reviews.sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    return reviews.slice(0, limit_count);
   } catch (error: any) {
+    console.error('Error loading reviews:', error);
     throw new Error(error?.message || 'Failed to load reviews');
   }
 };
@@ -156,7 +165,14 @@ export const submitReview = async (customerId: string, customerName: string, cus
 
 export const bookAppointment = async (appointmentData: any) => {
   try {
-    const appointmentRef = collection(db, 'appointments');
+    // Format date as YYYY-MM-DD for subfolder structure
+    const dateObj = appointmentData.appointmentDate instanceof Date 
+      ? appointmentData.appointmentDate 
+      : new Date(appointmentData.appointmentDate);
+    const dateString = dateObj.toISOString().split('T')[0];
+    
+    // Store in date-wise subfolder: appointments/{YYYY-MM-DD}/{booking}
+    const appointmentRef = collection(db, `appointments/${dateString}/bookings`);
     const docRef = await addDoc(appointmentRef, {
       ...appointmentData,
       createdAt: Timestamp.now(),
@@ -254,10 +270,13 @@ export const getStaff = async () => {
 
 export const checkStylistAvailability = async (stylistId: string, appointmentDate: string, appointmentTime: string) => {
   try {
+    // Format date as YYYY-MM-DD for subfolder
+    const dateString = appointmentDate;
+    
+    // Check in date-wise subfolder: appointments/{YYYY-MM-DD}/bookings
     const q = query(
-      collection(db, 'appointments'),
+      collection(db, `appointments/${dateString}/bookings`),
       where('stylistId', '==', stylistId),
-      where('appointmentDate', '==', appointmentDate),
       where('appointmentTime', '==', appointmentTime),
       where('status', '!=', 'cancelled')
     );
@@ -266,5 +285,30 @@ export const checkStylistAvailability = async (stylistId: string, appointmentDat
   } catch (error: any) {
     console.error('Error checking availability:', error);
     return true; // Assume available on error
+  }
+};
+
+export const getBookedSlotsForStylist = async (stylistId: string, appointmentDate: string) => {
+  try {
+    const dateString = appointmentDate;
+    
+    // Get all booked slots for the stylist on the given date
+    const q = query(
+      collection(db, `appointments/${dateString}/bookings`),
+      where('stylistId', '==', stylistId),
+      where('status', '!=', 'cancelled')
+    );
+    const querySnapshot = await getDocs(q);
+    const bookedTimes: string[] = [];
+    querySnapshot.forEach((doc) => {
+      const appointmentTime = doc.data().appointmentTime;
+      if (appointmentTime && !bookedTimes.includes(appointmentTime)) {
+        bookedTimes.push(appointmentTime);
+      }
+    });
+    return bookedTimes;
+  } catch (error: any) {
+    console.error('Error fetching booked slots:', error);
+    return [];
   }
 };

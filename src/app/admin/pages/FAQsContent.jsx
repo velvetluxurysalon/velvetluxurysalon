@@ -1,35 +1,67 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, Edit2, ChevronDown } from 'lucide-react';
-import { getFAQs, addFAQ, updateFAQ, deleteFAQ } from '../services/contentService';
+import { Trash2, Plus, Edit2, ChevronDown, Upload } from 'lucide-react';
+import { getFAQs, addFAQ, updateFAQ, deleteFAQ, getFAQMetadata, updateFAQMetadata } from '../services/contentService';
 
 const FAQsContent = () => {
   const [faqs, setFAQs] = useState([]);
+  const [metadata, setMetadata] = useState({ title: '', description: '' });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [isEditingMetadata, setIsEditingMetadata] = useState(false);
   const [formData, setFormData] = useState({
     question: '',
     answer: ''
   });
+  const [metadataForm, setMetadataForm] = useState({
+    title: '',
+    description: ''
+  });
 
   useEffect(() => {
-    loadFAQs();
+    loadData();
   }, []);
 
-  const loadFAQs = async () => {
+  const loadData = async () => {
     try {
       setIsLoading(true);
-      const data = await getFAQs();
-      setFAQs(data);
+      const [faqsData, metadataData] = await Promise.all([
+        getFAQs(),
+        getFAQMetadata()
+      ]);
+      setFAQs(faqsData);
+      if (metadataData) {
+        setMetadata(metadataData);
+        setMetadataForm(metadataData);
+      }
       setError('');
     } catch (err) {
       setError('Failed to load FAQs');
       console.error(err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+
+  const handleUpdateMetadata = async () => {
+    try {
+      if (!metadataForm.title || !metadataForm.description) {
+        setError('Please fill all metadata fields');
+        return;
+      }
+      await updateFAQMetadata(metadataForm);
+      setMetadata(metadataForm);
+      setSuccess('FAQ metadata updated successfully');
+      setTimeout(() => setSuccess(''), 3000);
+      setIsEditingMetadata(false);
+    } catch (err) {
+      setError('Failed to update metadata');
+      console.error(err);
+      setTimeout(() => setError(''), 3000);
     }
   };
 
@@ -52,7 +84,7 @@ const FAQsContent = () => {
       setFormData({ question: '', answer: '' });
       setIsAddingNew(false);
       setEditingId(null);
-      await loadFAQs();
+      await loadData();
     } catch (err) {
       setError('Failed to save FAQ');
       console.error(err);
@@ -65,7 +97,7 @@ const FAQsContent = () => {
       await deleteFAQ(id);
       setSuccess('FAQ deleted successfully');
       setTimeout(() => setSuccess(''), 3000);
-      await loadFAQs();
+      await loadData();
     } catch (err) {
       setError('Failed to delete FAQ');
       console.error(err);
@@ -115,6 +147,70 @@ const FAQsContent = () => {
           {success}
         </div>
       )}
+
+
+      {/* Metadata Card */}
+      <div className="card" style={{ marginBottom: '2rem' }}>
+        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <h2 className="card-title">FAQ Section Metadata</h2>
+        </div>
+        <div className="card-content">
+          {!isEditingMetadata ? (
+            <div>
+              <div style={{ marginBottom: '1rem' }}>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', fontWeight: '600', color: 'var(--admin-muted-foreground)' }}>Title</p>
+                <p style={{ margin: 0, fontSize: '1rem', color: 'var(--admin-foreground)' }}>{metadata.title || 'Not set'}</p>
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', fontWeight: '600', color: 'var(--admin-muted-foreground)' }}>Description</p>
+                <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--admin-foreground)', whiteSpace: 'pre-wrap' }}>{metadata.description || 'Not set'}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setMetadataForm(metadata);
+                  setIsEditingMetadata(true);
+                }}
+                className="btn btn-primary"
+              >
+                <Edit2 size={16} /> Edit Metadata
+              </button>
+            </div>
+          ) : (
+            <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--admin-muted-foreground)' }}>Section Title *</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={metadataForm.title}
+                  onChange={(e) => setMetadataForm({ ...metadataForm, title: e.target.value })}
+                  placeholder="e.g., Frequently Asked Questions"
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--admin-muted-foreground)' }}>Description *</label>
+                <textarea
+                  className="input"
+                  value={metadataForm.description}
+                  onChange={(e) => setMetadataForm({ ...metadataForm, description: e.target.value })}
+                  placeholder="e.g., Everything you need to know about our services"
+                  style={{ minHeight: '80px', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="button" onClick={handleUpdateMetadata} className="btn btn-primary" style={{ flex: 1 }}>
+                  Save Metadata
+                </button>
+                <button type="button" onClick={() => setIsEditingMetadata(false)} className="btn btn-secondary" style={{ flex: 1 }}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '2rem', alignItems: 'start' }}>
         <div className="card">

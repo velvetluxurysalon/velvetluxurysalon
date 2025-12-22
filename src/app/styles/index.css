@@ -46,37 +46,98 @@
 }
 
 /* Featured Services Slider Mobile Styles */
-.featured-services-slider {
+/* Featured Services Slider - Bigger Cards */
+.services-slider {
+  padding: 0 15px;
+}
+
+.services-slider .slick-slide {
   padding: 0 10px;
+  transition: transform 0.3s ease;
 }
 
-.featured-services-slider .slick-slide {
-  padding: 0 4px;
+.services-slider .slick-slide:hover {
+  transform: translateY(-5px);
 }
 
-.featured-services-slider .slick-dots {
-  bottom: -30px;
+.services-slider .slick-dots {
+  bottom: -40px;
 }
 
-@media (max-width: 640px) {
-  .featured-services-slider {
-    padding: 0 5px;
+.services-slider .slick-dots li button:before {
+  font-size: 12px;
+  color: #8b5cf6; /* purple-500 */
+  opacity: 0.5;
+}
+
+.services-slider .slick-dots li.slick-active button:before {
+  color: #7c3aed; /* purple-600 */
+  opacity: 1;
+}
+
+/* Desktop - Bigger cards */
+@media (min-width: 1024px) {
+  .services-slider .slick-slide {
+    padding: 0 15px;
+  }
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .services-slider .slick-slide {
+    padding: 0 12px;
+  }
+}
+
+/* Mobile - Single big card */
+@media (max-width: 768px) {
+  .services-slider {
+    padding: 0;
   }
   
-  .featured-services-slider .slick-slide {
-    padding: 0 2px;
+  .services-slider .slick-slide {
+    padding: 0 15px !important; /* Increased padding for bigger cards */
+    margin: 0;
+    width: 100% !important;
   }
   
-  .featured-services-slider .slick-dots {
-    bottom: -25px;
+  .services-slider .slick-track {
+    display: flex !important;
+    align-items: stretch;
   }
   
-  .featured-services-slider .slick-dots li {
-    margin: 0 2px;
+  .services-slider .slick-slide > div {
+    width: 100%;
+    height: 100%;
   }
   
-  .featured-services-slider .slick-dots li button:before {
-    font-size: 8px;
+  .services-slider .slick-dots {
+    bottom: -35px;
+  }
+  
+  .services-slider .slick-dots li {
+    margin: 0 6px;
+  }
+  
+  .services-slider .slick-dots li button:before {
+    font-size: 14px;
+  }
+  
+  /* Center the active slide more prominently */
+  .services-slider .slick-slide.slick-active {
+    transform: scale(1.02);
+    z-index: 1;
+  }
+}
+
+/* Extra small mobile - Even bigger cards */
+@media (max-width: 480px) {
+  .services-slider .slick-slide {
+    padding: 0 10px !important;
+  }
+  
+  .services-slider .slick-dots {
+    bottom: -30px;
   }
 }
 

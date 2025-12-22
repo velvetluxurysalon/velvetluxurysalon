@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Calendar, Clock, User, Phone, Mail, CheckCircle, X, AlertCircle, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { getServices, bookAppointment, getStaff, checkStylistAvailability } from "../services/firebaseService";
+import { getServices, bookAppointment, getStaff, checkStylistAvailability, getBookedSlotsForStylist } from "../services/firebaseService";
 
 interface BookingFormProps {
   isOpen?: boolean;
@@ -17,9 +17,10 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showForm, setShowForm] = useState(isOpen);
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<Array<{ time: string; value: string }>>([]);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [stylistAvailability, setStylistAvailability] = useState<string>("");
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, setShowLoginModal } = useAuth();
 
   const [formData, setFormData] = useState({
     customerName: user?.displayName || "",
@@ -40,7 +41,18 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
   useEffect(() => {
     if (isOpen) {
       setShowForm(true);
+      // Scroll to top when modal opens
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore body scroll when modal closes
+      document.body.style.overflow = 'unset';
     }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isOpen]);
 
   const fetchServices = async () => {
@@ -64,13 +76,18 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
   };
 
   const getAvailableStaff = () => {
-    if (!formData.serviceId) return [];
+    if (!formData.serviceId) {
+      // If no service selected, return all staff
+      return staff;
+    }
     
     const selectedService = services.find(s => s.id === formData.serviceId);
-    if (!selectedService) return [];
+    if (!selectedService) return staff;
     
     // Filter staff by service category (staff role should match service category)
-    return staff.filter(member => member.role === selectedService.category);
+    const filtered = staff.filter(member => member.role === selectedService.category);
+    // If no staff matches the category, return all staff
+    return filtered.length > 0 ? filtered : staff;
   };
 
   const handleServiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -82,33 +99,73 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
     const stylistId = e.target.value;
     setFormData({ ...formData, stylistId, appointmentTime: "" });
     setStylistAvailability("");
+    
+    // Fetch booked slots for the selected stylist on the current date
+    if (stylistId && formData.appointmentDate) {
+      try {
+        const booked = await getBookedSlotsForStylist(stylistId, formData.appointmentDate);
+        setBookedSlots(booked);
+      } catch (err) {
+        console.error('Error fetching booked slots:', err);
+      }
+    }
   };
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const date = e.target.value;
     setFormData({ ...formData, appointmentDate: date, appointmentTime: "" });
     setStylistAvailability("");
-    // Generate time slots (every 30 minutes from 9 AM to 6 PM)
-    const slots = [];
-    for (let i = 9; i < 18; i++) {
-      slots.push(`${String(i).padStart(2, "0")}:00`);
-      slots.push(`${String(i).padStart(2, "0")}:30`);
+    setBookedSlots([]);
+    
+    // Generate time slots (hourly from 8 AM to 9 PM)
+    const slots: Array<{ time: string; value: string }> = [];
+    const now = new Date();
+    const selectedDate = new Date(date);
+    const isToday = selectedDate.toDateString() === now.toDateString();
+    const currentHour = now.getHours();
+    
+    for (let hour = 8; hour <= 20; hour++) {
+      // Skip past hours for today
+      if (isToday && hour <= currentHour) {
+        continue;
+      }
+      
+      let displayHour = hour;
+      let period = 'AM';
+      
+      if (hour === 12) {
+        displayHour = 12;
+        period = 'PM';
+      } else if (hour > 12) {
+        displayHour = hour - 12;
+        period = 'PM';
+      }
+      
+      const timeValue = `${String(hour).padStart(2, "0")}:00`;
+      const timeDisplay = `${displayHour}:00 ${period}`;
+      slots.push({ time: timeDisplay, value: timeValue });
     }
     setAvailableSlots(slots);
+    
+    // Fetch booked slots if stylist is selected
+    if (formData.stylistId) {
+      try {
+        const booked = await getBookedSlotsForStylist(formData.stylistId, date);
+        setBookedSlots(booked);
+      } catch (err) {
+        console.error('Error fetching booked slots:', err);
+      }
+    }
   };
 
-  const handleTimeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const time = e.target.value;
-    setFormData({ ...formData, appointmentTime: time });
+  const handleTimeSelect = async (timeValue: string, timeDisplay: string) => {
+    setFormData({ ...formData, appointmentTime: timeValue });
     
-    if (formData.stylistId && formData.appointmentDate && time) {
+    if (formData.stylistId && formData.appointmentDate) {
       try {
-        const isAvailable = await checkStylistAvailability(formData.stylistId, formData.appointmentDate, time);
+        const isAvailable = await checkStylistAvailability(formData.stylistId, formData.appointmentDate, timeValue);
         if (!isAvailable) {
-          const availableAfter = new Date(`${formData.appointmentDate}T${time}`);
-          availableAfter.setHours(availableAfter.getHours() + 1);
-          const availableTimeStr = availableAfter.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-          setStylistAvailability(`⏱️ This stylist is busy from ${time} to ${availableAfter.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}. Available after ${availableTimeStr}`);
+          setStylistAvailability(`⚠️ This stylist is already booked at ${timeDisplay}. Please select another time slot.`);
         } else {
           setStylistAvailability("");
         }
@@ -117,7 +174,6 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
       }
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -139,6 +195,17 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
       return;
     }
 
+    // Check availability one more time before submitting
+    try {
+      const isAvailable = await checkStylistAvailability(formData.stylistId, formData.appointmentDate, formData.appointmentTime);
+      if (!isAvailable) {
+        setError("This time slot is no longer available. Please select another time.");
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking availability:', err);
+    }
+
     try {
       setSubmitLoading(true);
       setError("");
@@ -149,7 +216,9 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
         serviceId: formData.serviceId,
+        serviceName: services.find(s => s.id === formData.serviceId)?.name,
         stylistId: formData.stylistId,
+        stylistName: staff.find(s => s.id === formData.stylistId)?.name,
         appointmentDate: new Date(`${formData.appointmentDate}T${formData.appointmentTime}`),
         appointmentTime: formData.appointmentTime,
         notes: formData.notes,
@@ -159,6 +228,8 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
       await bookAppointment(appointmentData);
 
       setSuccess("Appointment booked successfully! We'll confirm via email.");
+      
+      // Keep form visible for 2 seconds to show success message, then close
       setTimeout(() => {
         setFormData({
           customerName: user?.displayName || "",
@@ -192,8 +263,8 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl bg-white p-8 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4 pt-20">
+      <Card className="w-full max-w-2xl bg-white p-8 max-h-[85vh] overflow-y-auto my-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-purple-600">Book an Appointment</h2>
           <button
@@ -218,8 +289,29 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
         )}
 
         {!isAuthenticated ? (
-          <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg text-center">
-            <p className="text-blue-700 font-medium">Please login to book an appointment</p>
+          <div className="p-8 bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl text-center">
+            <div className="mb-4">
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Ready to Book Your Appointment?</h3>
+              <p className="text-gray-600 text-lg mb-4">Sign in to your account to complete your booking with us.</p>
+            </div>
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">It only takes a minute to sign in or create a new account.</p>
+              <Button
+                onClick={() => {
+                  setShowLoginModal(true);
+                  handleClose();
+                }}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 text-base font-semibold"
+              >
+                Continue to Sign In
+              </Button>
+              <button
+                onClick={handleClose}
+                className="w-full px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+              >
+                Not Now
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -324,27 +416,46 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-4">
                     <Clock className="w-4 h-4 inline mr-2" />
-                    Appointment Time *
+                    Select Appointment Time *
                   </label>
-                  <select
-                    value={formData.appointmentTime}
-                    onChange={handleTimeChange}
-                    disabled={!formData.appointmentDate}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent disabled:bg-gray-100"
-                  >
-                    <option value="">Select a time</option>
-                    {availableSlots.map((slot) => (
-                      <option key={slot} value={slot}>
-                        {slot}
-                      </option>
-                    ))}
-                  </select>
+                  {!formData.appointmentDate ? (
+                    <div className="p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm">
+                      Please select a date first to view available time slots
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                        {availableSlots.map((slot: any) => {
+                          const isBooked = bookedSlots.includes(slot.value);
+                          return (
+                            <button
+                              key={slot.value}
+                              onClick={() => !isBooked && handleTimeSelect(slot.value, slot.time)}
+                              disabled={isBooked}
+                              className={`py-3 px-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                                isBooked
+                                  ? 'bg-gray-200 text-gray-400 border-2 border-gray-300 cursor-not-allowed opacity-60'
+                                  : formData.appointmentTime === slot.value
+                                  ? 'bg-purple-600 text-white shadow-lg ring-2 ring-purple-400 ring-offset-2'
+                                  : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-purple-400 hover:shadow-md cursor-pointer'
+                              }`}
+                            >
+                              <div className="text-center">
+                                {slot.time}
+                                {isBooked && <span className="block text-xs mt-1">Booked</span>}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   {stylistAvailability && (
-                    <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                       <p className="text-sm text-amber-700">{stylistAvailability}</p>
                     </div>
                   )}

@@ -16,6 +16,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  showLoginModal: boolean;
+  setShowLoginModal: (show: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [customerData, setCustomerData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthChange(async (authUser) => {
@@ -111,7 +114,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signup,
     login,
     logout,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    showLoginModal,
+    setShowLoginModal
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

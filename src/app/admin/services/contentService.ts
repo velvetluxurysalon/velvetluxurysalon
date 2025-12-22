@@ -17,6 +17,7 @@ import {
 } from 'firebase/storage';
 import { db, storage } from '../../../firebaseConfig';
 
+
 // ============================================
 // HERO SECTION MANAGEMENT
 // ============================================
@@ -203,11 +204,8 @@ export const deleteTeamMember = async (id: string): Promise<void> => {
 
 export interface GalleryImage {
   id: string;
-  image?: string;
-  before?: string;
-  after?: string;
-  service: string;
-  type: string;
+  image: string;
+  title: string;
   description?: string;
   updatedAt?: any;
 }
@@ -334,6 +332,36 @@ export interface FAQ {
   updatedAt?: any;
 }
 
+export interface FAQMetadata {
+  title: string;
+  description: string;
+  updatedAt?: any;
+}
+
+export const getFAQMetadata = async (): Promise<FAQMetadata | null> => {
+  try {
+    const docRef = doc(db, 'websiteContent', 'faqs-metadata');
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docSnap.data() as FAQMetadata : null;
+  } catch (error) {
+    console.error('Error fetching FAQ metadata:', error);
+    throw error;
+  }
+};
+
+export const updateFAQMetadata = async (metadata: FAQMetadata): Promise<void> => {
+  try {
+    const docRef = doc(db, 'websiteContent', 'faqs-metadata');
+    await setDoc(docRef, {
+      ...metadata,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error updating FAQ metadata:', error);
+    throw error;
+  }
+};
+
 export const getFAQs = async (): Promise<FAQ[]> => {
   try {
     const querySnapshot = await getDocs(collection(db, 'websiteContent/faqs/items'));
@@ -381,6 +409,7 @@ export const deleteFAQ = async (id: string): Promise<void> => {
     throw error;
   }
 };
+
 
 // ============================================
 // IMAGE UPLOAD SERVICE
@@ -584,6 +613,51 @@ export const updateContactInfo = async (info: ContactInfo): Promise<void> => {
     });
   } catch (error) {
     console.error('Error updating contact info:', error);
+    throw error;
+  }
+};
+
+// ============================================
+// NEWSLETTER SECTION MANAGEMENT
+// ============================================
+
+export interface NewsletterContent {
+  heading: string;
+  subtitle: string;
+  inputPlaceholder: string;
+  buttonText: string;
+  privacyText: string;
+  stats: {
+    subscribers: string;
+    subscribersLabel: string;
+    discount: string;
+    discountLabel: string;
+    frequency: string;
+    frequencyLabel: string;
+  };
+  updatedAt?: any;
+}
+
+export const getNewsletterContent = async (): Promise<NewsletterContent | null> => {
+  try {
+    const docRef = doc(db, 'websiteContent', 'newsletter');
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docSnap.data() as NewsletterContent : null;
+  } catch (error) {
+    console.error('Error fetching newsletter content:', error);
+    throw error;
+  }
+};
+
+export const updateNewsletterContent = async (content: NewsletterContent): Promise<void> => {
+  try {
+    const docRef = doc(db, 'websiteContent', 'newsletter');
+    await setDoc(docRef, {
+      ...content,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error updating newsletter content:', error);
     throw error;
   }
 };

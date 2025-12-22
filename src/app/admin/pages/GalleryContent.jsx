@@ -11,8 +11,7 @@ const GalleryContent = () => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     image: '',
-    service: '',
-    type: '',
+    title: '',
     description: ''
   });
 
@@ -50,8 +49,8 @@ const GalleryContent = () => {
 
   const handleSubmit = async () => {
     try {
-      if (!formData.image || !formData.service) {
-        setError('Please fill required fields (Image, Service)');
+      if (!formData.image || !formData.title) {
+        setError('Please fill required fields (Image, Title)');
         return;
       }
 
@@ -64,7 +63,7 @@ const GalleryContent = () => {
       }
 
       setTimeout(() => setSuccess(''), 3000);
-      setFormData({ image: '', service: '', type: '', description: '' });
+      setFormData({ image: '', title: '', description: '' });
       setIsAddingNew(false);
       setEditingId(null);
       await loadGalleryImages();
@@ -90,8 +89,7 @@ const GalleryContent = () => {
   const handleEdit = (image) => {
     setFormData({
       image: image.image,
-      service: image.service,
-      type: image.type || '',
+      title: image.title || '',
       description: image.description || ''
     });
     setEditingId(image.id);
@@ -151,10 +149,10 @@ const GalleryContent = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
                 {images.map(image => (
                   <div key={image.id} style={{ position: 'relative', borderRadius: 'var(--admin-radius-sm)', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
-                    <img src={image.image} alt={image.service} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
+                    <img src={image.image} alt={image.title} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
                     <div style={{ padding: '0.75rem' }}>
-                      <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: '600', color: 'var(--admin-foreground)' }}>{image.service}</p>
-                      {image.type && <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--admin-muted-foreground)' }}>{image.type}</p>}
+                      <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: '600', color: 'var(--admin-foreground)' }}>{image.title}</p>
+                      {image.description && <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--admin-muted-foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{image.description}</p>}
                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
                         <button onClick={() => handleEdit(image)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--admin-primary)', flex: 1, padding: '0.5rem' }} className="btn btn-ghost">
                           <Edit2 size={16} />
@@ -183,24 +181,13 @@ const GalleryContent = () => {
             ) : (
               <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--admin-muted-foreground)' }}>Service *</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--admin-muted-foreground)' }}>Title *</label>
                   <input
                     type="text"
                     className="input"
-                    value={formData.service}
-                    onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                    placeholder="e.g., Hair Coloring"
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--admin-muted-foreground)' }}>Type</label>
-                  <input
-                    type="text"
-                    className="input"
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    placeholder="e.g., Before/After"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g., Hair Transformation"
                   />
                 </div>
 
@@ -208,10 +195,10 @@ const GalleryContent = () => {
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--admin-muted-foreground)' }}>Description</label>
                   <textarea
                     className="input"
-                    style={{ minHeight: '80px', resize: 'vertical' }}
+                    style={{ minHeight: '100px', resize: 'vertical' }}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Image description"
+                    placeholder="Describe this gallery image..."
                   />
                 </div>
 
@@ -233,7 +220,7 @@ const GalleryContent = () => {
                   <button type="button" onClick={handleSubmit} className="btn btn-primary" style={{ flex: 1 }}>
                     {editingId ? 'Update' : 'Add'}
                   </button>
-                  <button type="button" onClick={() => { setIsAddingNew(false); setEditingId(null); setFormData({ image: '', service: '', type: '', description: '' }); }} className="btn btn-secondary" style={{ flex: 1 }}>
+                  <button type="button" onClick={() => { setIsAddingNew(false); setEditingId(null); setFormData({ image: '', title: '', description: '' }); }} className="btn btn-secondary" style={{ flex: 1 }}>
                     Cancel
                   </button>
                 </div>

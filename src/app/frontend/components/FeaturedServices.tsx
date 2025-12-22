@@ -57,31 +57,47 @@ export default function Services() {
     autoplay: true,
     autoplaySpeed: 3000,
     arrows: true,
+    // Remove padding/margin settings from here, handle in CSS
     responsive: [
       {
-        breakpoint: 1024,
+        breakpoint: 1024, // Tablet
         settings: {
           slidesToShow: 2,
+          slidesToScroll: 1,
+          infinite: true,
+          dots: true,
           arrows: true
         }
       },
       {
-        breakpoint: 768,
+        breakpoint: 768, // Mobile
         settings: {
           slidesToShow: 1,
-          arrows: false,
-          autoplay: true,
-          swipeToSlide: true
-        }
-      },
-      {
-        breakpoint: 480,
-        settings: {
-          slidesToShow: 1,
+          slidesToScroll: 1,
+          infinite: true,
+          dots: true,
           arrows: false,
           autoplay: true,
           swipeToSlide: true,
-          dots: true
+          centerMode: false,
+          centerPadding: "0",
+          // IMPORTANT: Force single slide on mobile
+          variableWidth: false
+        }
+      },
+      {
+        breakpoint: 480, // Small Mobile
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+          infinite: true,
+          dots: true,
+          arrows: false,
+          autoplay: true,
+          swipeToSlide: true,
+          centerMode: false,
+          centerPadding: "0",
+          variableWidth: false
         }
       }
     ]
@@ -106,33 +122,34 @@ export default function Services() {
             <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto">Premium beauty and wellness treatments</p>
           </div>
 
-          <div className="pb-8 sm:pb-10">
+          <div className="pb-8 sm:pb-10 px-2 sm:px-0"> {/* Added px-2 for mobile padding */}
+            {/* Remove any conflicting inline styles */}
             <Slider {...settings} className="services-slider">
               {services.map((service) => (
-                <div key={service.id} className="px-1 sm:px-2 md:px-3">
-                <Card className="overflow-hidden hover:shadow-xl transition-shadow h-full flex flex-col mx-1">
-                  <div className="relative h-40 sm:h-44 md:h-48 lg:h-64 bg-gray-200 overflow-hidden">
-                    <img
-                      src={service.image}
-                      alt={service.name}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                      <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs sm:text-sm font-medium">{service.rating}</span>
+                <div key={service.id} className="focus:outline-none"> {/* Removed all padding classes */}
+                  <Card className="overflow-hidden hover:shadow-xl transition-shadow h-full flex flex-col mx-1 sm:mx-2 gap-4 sm:gap-6"> {/* Added mx for spacing */}
+                    <div className="relative h-40 sm:h-44 md:h-48 lg:h-64 bg-gray-200 overflow-hidden">
+                      <img
+                        src={service.image}
+                        alt={service.name}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                        <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-xs sm:text-sm font-medium">{service.rating}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-3 sm:p-4 md:p-5 lg:p-6 flex-grow flex flex-col">
-                    <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold mb-1 sm:mb-2 line-clamp-1">{service.name}</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2 flex-grow">{service.description}</p>
-                    <div className="flex items-center justify-between gap-2 mt-auto">
-                      <span className="text-purple-600 font-bold text-sm sm:text-base">₹{service.price}</span>
-                      <Button size="sm" className="text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2" onClick={() => setIsBookingOpen(true)}>Book Now</Button>
+                    <div className="p-3 sm:p-4 md:p-5 lg:p-6 flex-grow flex flex-col">
+                      <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold mb-1 sm:mb-2 line-clamp-1">{service.name}</h3>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2 flex-grow">{service.description}</p>
+                      <div className="flex items-center justify-between gap-2 mt-auto">
+                        <span className="text-purple-600 font-bold text-sm sm:text-base">₹{service.price}</span>
+                        <Button size="sm" className="text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2" onClick={() => setIsBookingOpen(true)}>Book Now</Button>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </div>
-            ))}
+                  </Card>
+                </div>
+              ))}
             </Slider>
           </div>
         </div>

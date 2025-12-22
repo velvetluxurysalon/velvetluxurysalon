@@ -1,11 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Mail, CheckCircle2 } from "lucide-react";
+import { getNewsletterContent } from "../services/contentService";
 
 export default function Newsletter() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [newsletterData, setNewsletterData] = useState({
+    heading: "Stay Beautiful, Stay Informed",
+    subtitle: "Get exclusive offers and beauty tips delivered to your inbox",
+    inputPlaceholder: "Enter your email address",
+    buttonText: "Subscribe",
+    privacyText: "We respect your privacy. Unsubscribe at any time.",
+    stats: {
+      subscribers: "10K+",
+      subscribersLabel: "Subscribers",
+      discount: "20%",
+      discountLabel: "Exclusive Discount",
+      frequency: "Weekly",
+      frequencyLabel: "Beauty Tips"
+    }
+  });
+
+  useEffect(() => {
+    loadNewsletterContent();
+  }, []);
+
+  const loadNewsletterContent = async () => {
+    try {
+      const content = await getNewsletterContent();
+      if (content) {
+        setNewsletterData(content);
+      }
+    } catch (err) {
+      console.error("Error loading newsletter content:", err);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +55,10 @@ export default function Newsletter() {
           </div>
           
           <h2 className="text-3xl md:text-4xl mb-4">
-            Stay Beautiful, Stay Informed
+            {newsletterData.heading}
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Get exclusive offers and beauty tips delivered to your inbox
+            {newsletterData.subtitle}
           </p>
 
           {subscribed ? (
@@ -39,34 +70,34 @@ export default function Newsletter() {
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <Input
                 type="email"
-                placeholder="Enter your email address"
+                placeholder={newsletterData.inputPlaceholder}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="flex-1"
               />
               <Button type="submit" size="lg" className="bg-purple-600 hover:bg-purple-700">
-                Subscribe
+               {newsletterData.buttonText}
               </Button>
             </form>
           )}
 
           <p className="text-sm text-gray-500 mt-4">
-            We respect your privacy. Unsubscribe at any time.
+            {newsletterData.privacyText}
           </p>
 
           <div className="grid grid-cols-3 gap-6 mt-8 pt-8 border-t border-gray-200">
             <div>
-              <p className="text-2xl text-purple-600 mb-1">10K+</p>
-              <p className="text-sm text-gray-600">Subscribers</p>
+              <p className="text-2xl text-purple-600 mb-1">{newsletterData.stats.subscribers}</p>
+              <p className="text-sm text-gray-600">{newsletterData.stats.subscribersLabel}</p>
             </div>
             <div>
-              <p className="text-2xl text-purple-600 mb-1">20%</p>
-              <p className="text-sm text-gray-600">Exclusive Discount</p>
+              <p className="text-2xl text-purple-600 mb-1">{newsletterData.stats.discount}</p>
+              <p className="text-sm text-gray-600">{newsletterData.stats.discountLabel}</p>
             </div>
             <div>
-              <p className="text-2xl text-purple-600 mb-1">Weekly</p>
-              <p className="text-sm text-gray-600">Beauty Tips</p>
+              <p className="text-2xl text-purple-600 mb-1">{newsletterData.stats.frequency}</p>
+              <p className="text-sm text-gray-600">{newsletterData.stats.frequencyLabel}</p>
             </div>
           </div>
         </div>

@@ -1,6 +1,5 @@
 import { Button } from "./ui/button";
 import { Sparkles, Calendar, Scissors, Zap, Gem, Palette } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { getHeroContent, getServices } from "../services/contentService";
 import BookingForm from "./BookingForm";
@@ -14,7 +13,6 @@ interface HeroData {
 }
 
 export default function HeroSection() {
-  const { isAuthenticated } = useAuth();
   const [heroData, setHeroData] = useState<HeroData | null>(null);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,10 +45,6 @@ export default function HeroSection() {
   };
 
   const handleBooking = () => {
-    if (!isAuthenticated) {
-      alert("Please login to book an appointment");
-      return;
-    }
     setShowBookingForm(true);
   };
 

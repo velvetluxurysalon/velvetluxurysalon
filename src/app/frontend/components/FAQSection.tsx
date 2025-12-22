@@ -5,7 +5,7 @@ import {
   AccordionTrigger,
 } from "./ui/accordion";
 import { useState, useEffect } from "react";
-import { getFAQs } from "../services/contentService";
+import { getFAQs, getFAQMetadata } from "../services/contentService";
 
 interface FAQ {
   id: string;
@@ -14,8 +14,14 @@ interface FAQ {
   category: string;
 }
 
+interface FAQMetadata {
+  title: string;
+  description: string;
+}
+
 export default function FAQSection() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [metadata, setMetadata] = useState<FAQMetadata | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,8 +31,12 @@ export default function FAQSection() {
   const loadFAQs = async () => {
     try {
       setLoading(true);
-      const data = await getFAQs();
-      setFaqs(data);
+      const [faqsData, metadataData] = await Promise.all([
+        getFAQs(),
+        getFAQMetadata()
+      ]);
+      setFaqs(faqsData);
+      setMetadata(metadataData);
     } catch (error) {
       console.error("Error loading FAQs:", error);
     } finally {
@@ -101,8 +111,8 @@ export default function FAQSection() {
     <section className="py-20 px-4 bg-gradient-to-b from-purple-50 to-white">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl mb-4">Frequently Asked Questions</h2>
-          <p className="text-xl text-gray-600">Everything you need to know about our services</p>
+          <h2 className="text-4xl md:text-5xl mb-4">{metadata?.title || 'Frequently Asked Questions'}</h2>
+          <p className="text-xl text-gray-600">{metadata?.description || 'Everything you need to know about our services'}</p>
         </div>
 
         <Accordion type="single" collapsible className="space-y-4">

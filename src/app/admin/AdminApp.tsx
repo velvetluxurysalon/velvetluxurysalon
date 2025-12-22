@@ -34,14 +34,14 @@ import ContactContent from './pages/ContactContent';
 // @ts-ignore
 import GalleryContent from './pages/GalleryContent';
 // @ts-ignore
-import TestimonialsContent from './pages/TestimonialsContent';
+import ReviewsManagement from './pages/ReviewsManagement';
 // @ts-ignore
 import FAQsContent from './pages/FAQsContent';
 // @ts-ignore
-import BlogContent from './pages/BlogContent';
-// @ts-ignore
 import OffersContent from './pages/OffersContent';
-import { Scissors, LogOut, Users, ClipboardList, BarChart3, Package, UserCog, Menu, X, Calendar, Gift, Star, Clock, FileText, Phone } from 'lucide-react';
+// @ts-ignore
+import NewsletterContent from './pages/NewsletterContent';
+import { Scissors, LogOut, Users, ClipboardList, BarChart3, Package, UserCog, Menu, X, Calendar, Gift, Star, Clock, FileText, Phone, Mail } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -92,10 +92,10 @@ const DashboardLayout = () => {
     { path: '/admin/attendance', icon: Clock, label: 'Attendance' },
     { path: '/admin/hero', icon: FileText, label: 'Hero Section' },
     { path: '/admin/gallery', icon: FileText, label: 'Gallery' },
-    { path: '/admin/testimonials', icon: Star, label: 'Testimonials' },
+    { path: '/admin/reviews', icon: Star, label: 'Reviews' },
     { path: '/admin/faqs', icon: FileText, label: 'FAQs' },
-    { path: '/admin/blog', icon: FileText, label: 'Blog Posts' },
     { path: '/admin/offers', icon: Gift, label: 'Special Offers' },
+    { path: '/admin/newsletter', icon: Mail, label: 'Newsletter' },
     { path: '/admin/contact', icon: Phone, label: 'Contact Info' },
   ];
 
@@ -218,10 +218,11 @@ const DashboardLayout = () => {
             <Route path="/hero" element={<HeroContent />} />
             <Route path="/contact" element={<ContactContent />} />
             <Route path="/gallery" element={<GalleryContent />} />
-            <Route path="/testimonials" element={<TestimonialsContent />} />
+             <Route path="/reviews" element={<ReviewsManagement />} />
             <Route path="/faqs" element={<FAQsContent />} />
-            <Route path="/blog" element={<BlogContent />} />
             <Route path="/offers" element={<OffersContent />} />
+            <Route path="/newsletter" element={<NewsletterContent />} />
+            <Route path="/contact" element={<ContactContent />} />
           </Routes>
         </main>
       </div>

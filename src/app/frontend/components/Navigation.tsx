@@ -2,16 +2,14 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Menu, X, Phone } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import LoginModal from "./LoginModal";
-import SignupModal from "./SignupModal";
+import AuthPage from "./AuthPage";
 import BookingForm from "./BookingForm";
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
-  const { logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated, showLoginModal, setShowLoginModal } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
@@ -67,14 +65,14 @@ export default function Navigation() {
                 <Button 
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowLogin(true)}
+                  onClick={() => setShowAuth(true)}
                 >
                   Login
                 </Button>
                 <Button 
                   className="bg-purple-600 hover:bg-purple-700"
                   size="sm"
-                  onClick={() => setShowSignup(true)}
+                  onClick={() => setShowAuth(true)}
                 >
                   Sign Up
                 </Button>
@@ -167,7 +165,7 @@ export default function Navigation() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setShowLogin(true);
+                      setShowAuth(true);
                       setIsMenuOpen(false);
                     }}
                     className="w-full mb-2"
@@ -178,7 +176,7 @@ export default function Navigation() {
                     className="w-full bg-purple-600 hover:bg-purple-700 mb-3"
                     size="sm"
                     onClick={() => {
-                      setShowSignup(true);
+                      setShowAuth(true);
                       setIsMenuOpen(false);
                     }}
                   >
@@ -202,11 +200,14 @@ export default function Navigation() {
         )}
       </div>
 
-      {/* Login Modal */}
-      <LoginModal open={showLogin} onClose={() => setShowLogin(false)} />
-      
-      {/* Signup Modal */}
-      <SignupModal open={showSignup} onClose={() => setShowSignup(false)} />
+      {/* Auth Modal (Login/Signup) */}
+      <AuthPage 
+        open={showAuth || showLoginModal} 
+        onClose={() => {
+          setShowAuth(false);
+          setShowLoginModal(false);
+        }} 
+      />
 
       {/* Booking Form Modal */}
       <BookingForm isOpen={showBookingForm} onClose={() => setShowBookingForm(false)} />

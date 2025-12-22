@@ -201,7 +201,7 @@ const Customers = () => {
                                         </div>
                                         <span style={{ fontWeight: '600' }}>{customer.name}</span>
                                     </td>
-                                    <td style={{ color: 'var(--muted-foreground)' }}>{customer.contactNo}</td>
+                                    <td style={{ color: 'var(--muted-foreground)' }}>{customer.contactNo || customer.phone || 'N/A'}</td>
                                     <td>
                                         <span style={{
                                             padding: '0.25rem 0.75rem',
@@ -224,25 +224,7 @@ const Customers = () => {
                                             ? new Date(customer.visits[0].date).toLocaleDateString()
                                             : 'N/A'}
                                     </td>
-                                    <td>
-                                        <button
-                                            onClick={(e) => handleDeleteCustomer(e, customer.id)}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                color: 'var(--muted-foreground)',
-                                                cursor: 'pointer',
-                                                padding: '0.5rem',
-                                                borderRadius: '4px',
-                                                transition: 'all 0.2s'
-                                            }}
-                                            onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
-                                            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted-foreground)'; e.currentTarget.style.background = 'none'; }}
-                                            title="Delete Customer"
-                                        >
-                                            <Trash size={16} />
-                                        </button>
-                                    </td>
+                                    {/* No delete button for customers */}
                                 </tr>
                             ))}
                             {filteredCustomers.length === 0 && (
