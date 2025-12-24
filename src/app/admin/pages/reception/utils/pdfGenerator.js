@@ -120,10 +120,7 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
           .salon-info h1 {
             font-size: 28px;
             font-weight: 800;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #1f2937;
             margin-bottom: 5px;
           }
           
@@ -248,7 +245,7 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
           }
           
           .totals-box {
-            background-color: #f9fafb;
+            background-color: #ffffff;
             border-radius: 8px;
             padding: 20px;
             border: 1px solid #e5e7eb;
@@ -267,7 +264,7 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
           }
           
           .total-row.amount {
-            color: #667eea;
+            color: #1f2937;
             font-weight: 600;
           }
           
@@ -278,8 +275,8 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
           }
           
           .total-row.balance-due {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            color: white;
+            background-color: #ffffff;
+            color: #1f2937;
             padding: 10px;
             margin-left: -20px;
             margin-right: -20px;
@@ -287,16 +284,17 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
             padding-right: 20px;
             border-radius: 0 0 8px 8px;
             font-weight: 700;
+            border-top: 2px solid #e5e7eb;
           }
           
           .total-row.paid {
-            color: #10b981;
+            color: #1f2937;
             font-weight: 700;
           }
           
           .total-row.final-total {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background-color: #ffffff;
+            color: #1f2937;
             padding: 15px;
             margin: 12px -20px -20px -20px;
             padding-left: 20px;
@@ -304,6 +302,7 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
             border-radius: 0 0 8px 8px;
             font-size: 16px;
             font-weight: 700;
+            border-top: 2px solid #e5e7eb;
           }
           
           /* Footer */
@@ -321,7 +320,7 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
           
           .thank-you {
             font-weight: 600;
-            color: #667eea;
+            color: #1f2937;
             margin-bottom: 8px;
             font-size: 12px;
           }
@@ -334,9 +333,9 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
             <div class="salon-info">
               <h1>Velvet Luxury Salon</h1>
               <p>Pamper Yourself. Celebrate Beauty.</p>
-              <p>📍 Location: Your Salon Address</p>
-              <p>📞 +91-XXXXXXXXXX</p>
-              <p>✉️ info@velvetluxury.com</p>
+              <p>Location: Your Salon Address</p>
+              <p>+91-XXXXXXXXXX</p>
+              <p>info@velvetluxury.com</p>
             </div>
             <div class="invoice-number">
               <div class="label">Invoice Number</div>
@@ -355,15 +354,15 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
               <h3>Bill To</h3>
               <p>
                 <strong>${visit.customer?.name || 'Guest Customer'}</strong><br>
-                📱 ${visit.customer?.contactNo || visit.customer?.phone || 'N/A'}<br>
-                ✉️ ${visit.customer?.email || 'N/A'}
+                ${visit.customer?.contactNo || visit.customer?.phone || 'N/A'}<br>
+                ${visit.customer?.email || 'N/A'}
               </p>
             </div>
             <div class="info-block">
               <h3>Payment Details</h3>
               <p>
                 <strong>Payment Method:</strong> ${invoiceData.paymentMode || 'Cash'}<br>
-                <strong>Status:</strong> ${invoiceData.paidAmount >= finalTotal ? '✓ PAID' : '⏳ PENDING'}<br>
+                <strong>Status:</strong> ${invoiceData.paidAmount >= finalTotal ? 'PAID' : 'PENDING'}<br>
                 <strong>Invoice Date:</strong> ${new Date().toLocaleDateString('en-IN')}
               </p>
             </div>
@@ -431,7 +430,7 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
                   : `
                 <div class="total-row balance-due">
                   <span>Status:</span>
-                  <span>✓ PAID IN FULL</span>
+                  <span>PAID IN FULL</span>
                 </div>
               `
               }
@@ -440,7 +439,7 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
 
           <!-- Footer -->
           <div class="footer">
-            <p class="thank-you">✨ Thank you for choosing Velvet Luxury Salon ✨</p>
+            <p class="thank-you">Thank you for choosing Velvet Luxury Salon</p>
             <p>We look forward to serving you again!</p>
             <p>For any queries, contact: info@velvetluxury.com | +91-XXXXXXXXXX</p>
           </div>
