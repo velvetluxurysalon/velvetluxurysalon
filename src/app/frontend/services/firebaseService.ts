@@ -273,15 +273,17 @@ export const checkStylistAvailability = async (stylistId: string, appointmentDat
     // Format date as YYYY-MM-DD for subfolder
     const dateString = appointmentDate;
     
-    // Check in date-wise subfolder: appointments/{YYYY-MM-DD}/bookings
+    // Optimized: Query only by stylistId and appointmentTime first
     const q = query(
       collection(db, `appointments/${dateString}/bookings`),
       where('stylistId', '==', stylistId),
-      where('appointmentTime', '==', appointmentTime),
-      where('status', '!=', 'cancelled')
+      where('appointmentTime', '==', appointmentTime)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.empty; // true if available, false if booked
+    
+    // Then filter by status in code to avoid requiring complex composite index
+    const bookedAppointments = querySnapshot.docs.filter(doc => doc.data().status !== 'cancelled');
+    return bookedAppointments.length === 0; // true if available, false if booked
   } catch (error: any) {
     console.error('Error checking availability:', error);
     return true; // Assume available on error
@@ -292,18 +294,22 @@ export const getBookedSlotsForStylist = async (stylistId: string, appointmentDat
   try {
     const dateString = appointmentDate;
     
-    // Get all booked slots for the stylist on the given date
+    // Optimized: Query only by stylistId first
     const q = query(
       collection(db, `appointments/${dateString}/bookings`),
-      where('stylistId', '==', stylistId),
-      where('status', '!=', 'cancelled')
+      where('stylistId', '==', stylistId)
     );
     const querySnapshot = await getDocs(q);
+    
+    // Then filter by status in code to avoid requiring complex composite index
     const bookedTimes: string[] = [];
     querySnapshot.forEach((doc) => {
-      const appointmentTime = doc.data().appointmentTime;
-      if (appointmentTime && !bookedTimes.includes(appointmentTime)) {
-        bookedTimes.push(appointmentTime);
+      // Only count non-cancelled appointments
+      if (doc.data().status !== 'cancelled') {
+        const appointmentTime = doc.data().appointmentTime;
+        if (appointmentTime && !bookedTimes.includes(appointmentTime)) {
+          bookedTimes.push(appointmentTime);
+        }
       }
     });
     return bookedTimes;

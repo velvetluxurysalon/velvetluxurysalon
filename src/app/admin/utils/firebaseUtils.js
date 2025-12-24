@@ -170,8 +170,16 @@ export const getDocuments = async (collectionName, conditions = []) => {
 
 export const updateDocument = async (collectionName, docId, data) => {
   try {
+    // Filter out undefined values
+    const cleanData = Object.entries(data).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
     await updateDoc(doc(db, collectionName, docId), {
-      ...data,
+      ...cleanData,
       updatedAt: serverTimestamp()
     });
   } catch (error) {
@@ -221,12 +229,15 @@ export const addCustomer = async (customerData) => {
   try {
     const customerId = await addDocument('customers', {
       name: customerData.name,
-      contactNo: customerData.contactNo,
+      phone: customerData.contactNo || customerData.phone || '',
       email: customerData.email || '',
       gender: customerData.gender || '',
+      isVerified: false,
+      loyaltyPoints: 0,
       totalVisits: 0,
       totalSpent: 0,
-      deletedAt: null
+      deletedAt: null,
+      createdAt: serverTimestamp()
     });
     return { id: customerId };
   } catch (error) {
@@ -254,11 +265,16 @@ export const getCustomers = async (includeDeleted = false) => {
 export const searchCustomers = async (searchTerm) => {
   try {
     const allCustomers = await getCustomers(false);
-    return allCustomers.filter(customer => 
-      customer.contactNo.includes(searchTerm) ||
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Search by phone (primary), name, or email - handle both phone and contactNo field names
+    return allCustomers.filter(customer => {
+      const phone = customer.phone || customer.contactNo || '';
+      const name = customer.name || '';
+      const email = customer.email || '';
+      
+      return phone.includes(searchTerm) ||
+             name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             email.toLowerCase().includes(searchTerm.toLowerCase());
+    });
   } catch (error) {
     console.error('Error searching customers:', error);
     throw error;
@@ -527,15 +543,18 @@ export const createVisit = async (visitData) => {
   try {
     const visitId = await addDocument('visits', {
       customerId: visitData.customerId,
+      customer: visitData.customer || null,
       staffId: visitData.staffId || '',
       date: Timestamp.now(),
-      status: 'active',
+      status: 'CHECKED_IN',
       items: [],
       totalAmount: 0,
+      paidAmount: 0,
       notes: visitData.notes || '',
       feedback: null,
       invoiceId: null,
-      deletedAt: null
+      deletedAt: null,
+      createdAt: serverTimestamp()
     });
     return visitId;
   } catch (error) {
@@ -564,10 +583,10 @@ export const getActiveVisits = async () => {
       { type: 'orderBy', field: 'date', direction: 'desc' }
     ]);
     
-    // Filter out completed visits (status COMPLETED or not in active statuses)
+    // Include all non-deleted visits with active statuses
     return allVisits.filter(visit => 
       visit.status && 
-      ['CHECKED_IN', 'IN_SERVICE', 'WAITING_PAYMENT'].includes(visit.status)
+      ['CHECKED_IN', 'IN_SERVICE', 'READY_FOR_BILLING', 'COMPLETED'].includes(visit.status)
     );
   } catch (error) {
     console.error('Error getting active visits:', error);
@@ -595,20 +614,29 @@ export const addVisitItem = async (visitId, item) => {
       const items = visit.items || [];
       const newItem = {
         id: Date.now().toString(),
-        type: item.type, // 'service' or 'product'
-        itemId: item.itemId,
-        name: item.name,
-        price: parseFloat(item.price),
+        type: item.type || 'service',
+        name: item.name || '',
+        price: parseFloat(item.price) || 0,
         quantity: parseInt(item.quantity) || 1
       };
+      
+      // Only add optional fields if they exist and are not undefined
+      if (item.serviceId) newItem.serviceId = item.serviceId;
+      if (item.productId) newItem.productId = item.productId;
+      if (item.staff !== null && item.staff !== undefined) newItem.staff = item.staff;
+      if (item.duration) newItem.duration = item.duration;
+      
       items.push(newItem);
 
-      const totalAmount = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+      const totalAmount = items.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 1)), 0);
 
-      await updateDocument('visits', visitId, {
+      // Only update with clean data
+      const updateData = {
         items: items,
         totalAmount: totalAmount
-      });
+      };
+
+      await updateDocument('visits', visitId, updateData);
 
       return newItem.id;
     }
@@ -618,12 +646,12 @@ export const addVisitItem = async (visitId, item) => {
   }
 };
 
-export const removeVisitItem = async (visitId, itemId) => {
+export const removeVisitItem = async (visitId, itemIndex) => {
   try {
     const visit = await getDocument('visits', visitId);
     if (visit && visit.items) {
-      const items = visit.items.filter(i => i.id !== itemId);
-      const totalAmount = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+      const items = visit.items.filter((_, index) => index !== itemIndex);
+      const totalAmount = items.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 1)), 0);
 
       await updateDocument('visits', visitId, {
         items: items,
@@ -654,34 +682,106 @@ export const deleteVisit = async (visitId) => {
   }
 };
 
+export const updateVisit = async (visitId, data) => {
+  try {
+    await updateDocument('visits', visitId, data);
+  } catch (error) {
+    console.error('Error updating visit:', error);
+    throw error;
+  }
+};
+
+export const assignStaffToService = async (visitId, serviceIndex, staffId) => {
+  try {
+    const visit = await getDocument('visits', visitId);
+    if (visit && visit.items && visit.items[serviceIndex]) {
+      // Update the specific item's staff assignment
+      const items = [...visit.items];
+      items[serviceIndex] = {
+        ...items[serviceIndex],
+        staff: staffId || null
+      };
+      await updateDocument('visits', visitId, { items: items });
+    } else {
+      throw new Error('Visit or service item not found');
+    }
+  } catch (error) {
+    console.error('Error assigning staff to service:', error);
+    throw error;
+  }
+};
+
 // ============================================
 // INVOICE & BILLING
 // ============================================
 
-export const createInvoice = async (visitId) => {
+export const createInvoice = async (invoiceData) => {
   try {
-    const visit = await getDocument('visits', visitId);
-    if (!visit) throw new Error('Visit not found');
+    // invoiceData contains: customerId, customerName, customerPhone, customerEmail, 
+    // items, totalAmount, paidAmount, discountPercent, taxPercent, paymentMode, status, notes, staffId, invoiceDate, visitId
+    
+    const {
+      customerId,
+      customerName,
+      customerPhone,
+      customerEmail,
+      items,
+      totalAmount,
+      paidAmount,
+      discountPercent = 0,
+      taxPercent = 18,
+      paymentMode,
+      status,
+      notes,
+      staffId,
+      invoiceDate,
+      visitId
+    } = invoiceData;
 
-    const customer = await getDocument('customers', visit.customerId);
-    if (!customer) throw new Error('Customer not found');
+    // Calculate net amount after discount
+    const discountAmount = (totalAmount * discountPercent) / 100;
+    const subtotal = totalAmount - discountAmount;
+    const taxAmount = (subtotal * taxPercent) / 100;
+    const finalAmount = subtotal + taxAmount;
 
-    const invoiceId = await addDocument('invoices', {
-      visitId: visitId,
-      customerId: visit.customerId,
-      customerName: customer.name,
-      customerEmail: customer.email,
-      customerPhone: customer.contactNo,
-      items: visit.items,
-      totalAmount: visit.totalAmount,
-      paidAmount: 0,
-      status: 'unpaid',
-      invoiceDate: serverTimestamp(),
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    // Build invoice object, filtering out undefined values
+    const invoiceObj = {
+      visitId: visitId || null,
+      customerId: customerId || null,
+      staffId: staffId || null,
+      customerName: customerName || 'Unknown',
+      customerEmail: customerEmail || '',
+      customerPhone: customerPhone || '',
+      items: items || [],
+      totalAmount: totalAmount || 0,
+      discountPercent: discountPercent || 0,
+      discountAmount: discountAmount || 0,
+      taxPercent: taxPercent || 0,
+      taxAmount: taxAmount || 0,
+      subtotal: subtotal || 0,
+      finalAmount: finalAmount || 0,
+      paidAmount: parseFloat(paidAmount) || 0,
+      paymentMode: paymentMode || 'cash',
+      status: status || 'unpaid',
+      notes: notes || '',
+      invoiceDate: invoiceDate || serverTimestamp(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      createdAt: serverTimestamp()
+    };
+
+    // Remove any remaining undefined values
+    Object.keys(invoiceObj).forEach(key => {
+      if (invoiceObj[key] === undefined) {
+        delete invoiceObj[key];
+      }
     });
 
+    const invoiceId = await addDocument('invoices', invoiceObj);
+
     // Link invoice to visit
-    await updateDocument('visits', visitId, { invoiceId: invoiceId });
+    if (visitId) {
+      await updateDocument('visits', visitId, { invoiceId: invoiceId });
+    }
 
     return invoiceId;
   } catch (error) {
@@ -1061,7 +1161,7 @@ export const punchInStaff = async (staffId, staffName) => {
     // Get existing staff document or create structure
     let staffData = await getDocument('staffAttendance', staffName);
     if (!staffData) {
-      staffData = { staffId };
+      staffData = { staffId, createdAt: Timestamp.now() };
     }
 
     // Check if already punched in today
@@ -1080,8 +1180,9 @@ export const punchInStaff = async (staffId, staffName) => {
       status: 'present'
     };
 
-    // Save/update the staff document
-    await updateDocument('staffAttendance', staffName, staffData);
+    // Save/update the staff document using setDoc with merge to ensure creation if not exists
+    const docRef = doc(db, 'staffAttendance', staffName);
+    await setDoc(docRef, staffData, { merge: true });
 
     console.log('Punch in successful for', staffName, 'on', dateStr);
     return dateStr;
@@ -1114,7 +1215,9 @@ export const punchOutStaff = async (staffId, staffName) => {
       status: 'present'
     };
 
-    await updateDocument('staffAttendance', staffName, staffData);
+    // Use setDoc with merge to ensure creation if not exists
+    const docRef = doc(db, 'staffAttendance', staffName);
+    await setDoc(docRef, staffData, { merge: true });
 
     console.log('Punch out successful for', staffName, 'on', dateStr);
     return dateStr;
@@ -1193,33 +1296,39 @@ export const calculateStaffCommission = async (staffId, month = new Date()) => {
     // Get all invoices where this staff member provided service
     const allInvoices = await getDocuments('invoices', []);
     
-    // Filter invoices for this staff and month
-    // This would need to track which staff member served in each visit
+    // Filter invoices for this staff and month by staffId field
     const filteredInvoices = [];
     
     for (const invoice of allInvoices) {
       const invDate = invoice.invoiceDate?.toDate?.() || invoice.invoiceDate;
       if (invDate >= monthStart && invDate <= monthEnd) {
-        // Get the visit to check if this staff member was involved
-        const visit = await getDocument('visits', invoice.visitId);
-        if (visit && visit.staffId === staffId) {
+        // Check if staffId matches (new field) OR get from visit (legacy)
+        if (invoice.staffId === staffId) {
           filteredInvoices.push(invoice);
+        } else if (!invoice.staffId && invoice.visitId) {
+          // Fallback for old invoices without staffId field
+          const visit = await getDocument('visits', invoice.visitId);
+          if (visit && visit.staffId === staffId) {
+            filteredInvoices.push(invoice);
+          }
         }
       }
     }
 
-    const totalServices = filteredInvoices.reduce((sum, inv) => sum + (inv.paidAmount || 0), 0);
+    // Use totalAmount (service price) for commission calculation, not paidAmount
+    const totalServiceAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
     const commissionPercent = 0.1; // 10% commission
-    const commission = totalServices * commissionPercent;
+    const totalCommission = totalServiceAmount * commissionPercent;
 
     return {
       staffId: staffId,
       staffName: staff.name,
       month: monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-      totalServices: totalServices,
+      totalServiceAmount: totalServiceAmount,
       commissionPercent: (commissionPercent * 100),
-      commission: parseFloat(commission.toFixed(2)),
-      invoiceCount: filteredInvoices.length
+      totalCommission: parseFloat(totalCommission.toFixed(2)),
+      invoiceCount: filteredInvoices.length,
+      paidAmount: filteredInvoices.reduce((sum, inv) => sum + (inv.paidAmount || 0), 0)
     };
   } catch (error) {
     console.error('Error calculating commission:', error);
@@ -1232,8 +1341,12 @@ export const deleteAttendanceRecord = async (staffName, dateStr) => {
     const staffData = await getDocument('staffAttendance', staffName);
     if (staffData && staffData[dateStr]) {
       delete staffData[dateStr];
-      await updateDocument('staffAttendance', staffName, staffData);
+      // Use setDoc with merge to ensure proper update
+      const docRef = doc(db, 'staffAttendance', staffName);
+      await setDoc(docRef, staffData, { merge: true });
       console.log('Attendance record deleted for', staffName, 'on', dateStr);
+    } else {
+      throw new Error('Attendance record not found');
     }
   } catch (error) {
     console.error('Error deleting attendance record:', error);
@@ -1246,8 +1359,12 @@ export const updateAttendanceRecord = async (staffName, dateStr, updates) => {
     const staffData = await getDocument('staffAttendance', staffName);
     if (staffData && staffData[dateStr]) {
       staffData[dateStr] = { ...staffData[dateStr], ...updates };
-      await updateDocument('staffAttendance', staffName, staffData);
+      // Use setDoc with merge to ensure proper update
+      const docRef = doc(db, 'staffAttendance', staffName);
+      await setDoc(docRef, staffData, { merge: true });
       console.log('Attendance record updated for', staffName, 'on', dateStr);
+    } else {
+      throw new Error('Attendance record not found');
     }
   } catch (error) {
     console.error('Error updating attendance record:', error);
@@ -1269,6 +1386,221 @@ export const recordStaffCommission = async (staffId, amount, month) => {
     return commissionId;
   } catch (error) {
     console.error('Error recording commission:', error);
+    throw error;
+  }
+};
+
+export const getStaffCommissionHistory = async (staffId) => {
+  try {
+    const commissions = await getDocuments('staffCommissions', [
+      { type: 'where', field: 'staffId', operator: '==', value: staffId },
+      { type: 'orderBy', field: 'recordedDate', direction: 'desc' }
+    ]);
+    return commissions;
+  } catch (error) {
+    console.error('Error getting commission history:', error);
+    throw error;
+  }
+};
+
+export const payCommission = async (commissionId, paymentAmount) => {
+  try {
+    const commission = await getDocument('staffCommissions', commissionId);
+    if (!commission) throw new Error('Commission record not found');
+
+    await updateDocument('staffCommissions', commissionId, {
+      paymentDate: serverTimestamp(),
+      status: 'paid',
+      paidAmount: parseFloat(paymentAmount)
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error paying commission:', error);
+    throw error;
+  }
+};
+
+export const getStaffCommissionByMonth = async (staffId, month) => {
+  try {
+    const allCommissions = await getStaffCommissionHistory(staffId);
+    const filtered = allCommissions.filter(comm => comm.month === month);
+    return filtered.length > 0 ? filtered[0] : null;
+  } catch (error) {
+    console.error('Error getting commission by month:', error);
+    throw error;
+  }
+};
+
+// ============================================
+// ATTENDANCE ANALYTICS & REPORTING
+// ============================================
+
+export const getAttendanceStats = async (staffName, month) => {
+  try {
+    let year, monthNum;
+    if (typeof month === 'string') {
+      const parts = month.split('-');
+      year = parseInt(parts[0], 10);
+      monthNum = parseInt(parts[1], 10) - 1;
+    } else {
+      year = month.getFullYear();
+      monthNum = month.getMonth();
+    }
+
+    const monthPrefix = `${year}-${String(monthNum + 1).padStart(2, '0')}`;
+    const staffData = await getDocument('staffAttendance', staffName);
+    if (!staffData) return null;
+
+    let totalPresent = 0;
+    let totalAbsent = 0;
+    let totalWorkHours = 0;
+    let lateArrivals = 0;
+    const SHIFT_START_HOUR = 10; // 10 AM
+
+    for (const [dateStr, record] of Object.entries(staffData)) {
+      if (dateStr.startsWith(monthPrefix) && dateStr !== 'staffId' && dateStr !== 'createdAt') {
+        if (record.status === 'present') totalPresent++;
+        if (record.status === 'absent') totalAbsent++;
+        if (record.workHours) totalWorkHours += record.workHours;
+        
+        // Check for late arrival
+        if (record.punchInTime) {
+          const punchInDate = record.punchInTime?.toDate?.() || new Date(record.punchInTime);
+          if (punchInDate.getHours() > SHIFT_START_HOUR) lateArrivals++;
+        }
+      }
+    }
+
+    const totalDaysInMonth = new Date(year, monthNum + 1, 0).getDate();
+    const attendancePercentage = totalDaysInMonth > 0 ? ((totalPresent / totalDaysInMonth) * 100).toFixed(2) : 0;
+
+    return {
+      staffName,
+      month: monthPrefix,
+      totalPresent,
+      totalAbsent,
+      totalDaysInMonth,
+      attendancePercentage: parseFloat(attendancePercentage),
+      totalWorkHours: parseFloat(totalWorkHours.toFixed(2)),
+      averageWorkHoursPerDay: totalPresent > 0 ? parseFloat((totalWorkHours / totalPresent).toFixed(2)) : 0,
+      lateArrivals
+    };
+  } catch (error) {
+    console.error('Error getting attendance stats:', error);
+    throw error;
+  }
+};
+
+export const getAllStaffAttendanceStats = async (staffList, month) => {
+  try {
+    const statsPromises = staffList.map(staff => getAttendanceStats(staff.name, month));
+    const allStats = await Promise.all(statsPromises);
+    return allStats.filter(stat => stat !== null);
+  } catch (error) {
+    console.error('Error getting all staff stats:', error);
+    throw error;
+  }
+};
+
+export const markAttendanceManual = async (staffId, staffName, date, punchInTime, punchOutTime, status = 'present') => {
+  try {
+    const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+    
+    let staffData = await getDocument('staffAttendance', staffName);
+    if (!staffData) {
+      staffData = { staffId, createdAt: Timestamp.now() };
+    }
+
+    const punchInDate = typeof punchInTime === 'string' ? new Date(punchInTime) : punchInTime;
+    const punchOutDate = typeof punchOutTime === 'string' ? new Date(punchOutTime) : punchOutTime;
+    const workHours = (punchOutDate - punchInDate) / (1000 * 60 * 60);
+
+    staffData[dateStr] = {
+      staffId: staffId,
+      punchInTime: Timestamp.fromDate(punchInDate),
+      punchOutTime: Timestamp.fromDate(punchOutDate),
+      workHours: parseFloat(workHours.toFixed(2)),
+      status: status,
+      manuallyAdded: true,
+      addedAt: Timestamp.now()
+    };
+
+    const docRef = doc(db, 'staffAttendance', staffName);
+    await setDoc(docRef, staffData, { merge: true });
+    console.log('Attendance manually marked for', staffName, 'on', dateStr);
+    return dateStr;
+  } catch (error) {
+    console.error('Error marking attendance manually:', error);
+    throw error;
+  }
+};
+
+export const bulkMarkAttendance = async (staffMembers, date, status = 'present') => {
+  try {
+    const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+    const results = [];
+
+    for (const staff of staffMembers) {
+      let staffData = await getDocument('staffAttendance', staff.name);
+      if (!staffData) {
+        staffData = { staffId: staff.id, createdAt: Timestamp.now() };
+      }
+
+      staffData[dateStr] = {
+        staffId: staff.id,
+        status: status,
+        markedAt: Timestamp.now()
+      };
+
+      const docRef = doc(db, 'staffAttendance', staff.name);
+      await setDoc(docRef, staffData, { merge: true });
+      results.push({ staffName: staff.name, status: 'success' });
+    }
+
+    return results;
+  } catch (error) {
+    console.error('Error in bulk marking attendance:', error);
+    throw error;
+  }
+};
+
+export const getMonthlyAttendanceReport = async (staffName, month) => {
+  try {
+    let year, monthNum;
+    if (typeof month === 'string') {
+      const parts = month.split('-');
+      year = parseInt(parts[0], 10);
+      monthNum = parseInt(parts[1], 10) - 1;
+    } else {
+      year = month.getFullYear();
+      monthNum = month.getMonth();
+    }
+
+    const monthPrefix = `${year}-${String(monthNum + 1).padStart(2, '0')}`;
+    const staffData = await getDocument('staffAttendance', staffName);
+    if (!staffData) return [];
+
+    const report = [];
+    for (const [dateStr, record] of Object.entries(staffData)) {
+      if (dateStr.startsWith(monthPrefix) && dateStr !== 'staffId' && dateStr !== 'createdAt') {
+        const punchInTime = record.punchInTime?.toDate?.() || (record.punchInTime ? new Date(record.punchInTime) : null);
+        const punchOutTime = record.punchOutTime?.toDate?.() || (record.punchOutTime ? new Date(record.punchOutTime) : null);
+
+        report.push({
+          date: dateStr,
+          dayName: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }),
+          punchInTime: punchInTime?.toLocaleTimeString() || '-',
+          punchOutTime: punchOutTime?.toLocaleTimeString() || '-',
+          workHours: record.workHours || 0,
+          status: record.status || 'N/A'
+        });
+      }
+    }
+
+    return report.sort((a, b) => new Date(b.date) - new Date(a.date));
+  } catch (error) {
+    console.error('Error getting monthly report:', error);
     throw error;
   }
 };
@@ -1497,4 +1829,213 @@ export const bulkUploadServices = async (servicesData) => {
     throw error;
   }
 };
+
+// ============================================
+// RECEPTION & BILLING UTILITIES
+// ============================================
+
+export const getReceptionDashboardStats = async () => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const invoices = await getDocuments('invoices', []);
+    const visits = await getActiveVisits();
+
+    const todayInvoices = invoices.filter(inv => {
+      const invDate = inv.invoiceDate?.toDate?.() || inv.invoiceDate;
+      return invDate >= today;
+    });
+
+    const todayRevenue = todayInvoices.reduce((sum, inv) => sum + (inv.paidAmount || 0), 0);
+    const pendingPayment = todayInvoices.reduce((sum, inv) => sum + ((inv.totalAmount || 0) - (inv.paidAmount || 0)), 0);
+    const completedCount = invoices.filter(inv => inv.status === 'paid').length;
+
+    return {
+      todayRevenue: parseFloat(todayRevenue.toFixed(2)),
+      totalActiveVisits: visits.length,
+      completedVisits: completedCount,
+      pendingPaymentAmount: parseFloat(pendingPayment.toFixed(2)),
+      totalInvoices: invoices.length,
+      unpaidInvoices: invoices.filter(inv => inv.status === 'unpaid').length
+    };
+  } catch (error) {
+    console.error('Error getting dashboard stats:', error);
+    throw error;
+  }
+};
+
+export const generateBillHTML = (invoice, customerData) => {
+  const date = new Date(invoice.invoiceDate?.toDate?.() || invoice.invoiceDate);
+  const itemsHTML = invoice.items?.map(item => `
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.name}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">₹${(item.price * item.quantity).toFixed(2)}</td>
+    </tr>
+  `).join('');
+
+  return `
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Invoice ${invoice.id}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+          .invoice-id { font-size: 14px; color: #666; }
+          .customer-info { margin: 20px 0; }
+          .section-title { font-weight: bold; margin-top: 15px; margin-bottom: 10px; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th { background-color: #f0f0f0; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
+          td { padding: 8px; }
+          .totals { text-align: right; margin-top: 20px; }
+          .total-row { font-size: 16px; font-weight: bold; margin-top: 10px; }
+          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">VELVET LUXURY SALON</div>
+          <div class="invoice-id">Invoice #${invoice.id}</div>
+          <div style="color: #999; margin-top: 5px;">Date: ${date.toLocaleDateString()}</div>
+        </div>
+
+        <div class="customer-info">
+          <div class="section-title">CUSTOMER DETAILS</div>
+          <div><strong>Name:</strong> ${invoice.customerName}</div>
+          <div><strong>Phone:</strong> ${invoice.customerPhone}</div>
+          <div><strong>Email:</strong> ${invoice.customerEmail}</div>
+        </div>
+
+        <div class="section-title">SERVICES & PRODUCTS</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th style="text-align: center;">Qty</th>
+              <th style="text-align: right;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHTML}
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <div>Subtotal: <strong>₹${invoice.totalAmount?.toFixed(2)}</strong></div>
+          <div>Paid: <strong>₹${invoice.paidAmount?.toFixed(2)}</strong></div>
+          <div class="total-row">
+            Balance: <span style="color: ${invoice.totalAmount === invoice.paidAmount ? 'green' : 'red'};">
+              ₹${((invoice.totalAmount || 0) - (invoice.paidAmount || 0)).toFixed(2)}
+            </span>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>Thank you for choosing Velvet Luxury Salon!</p>
+          <p>For queries, contact us at info@velvetluxury.com</p>
+        </div>
+      </body>
+    </html>
+  `;
+};
+
+export const searchInvoicesByCustomer = async (searchTerm) => {
+  try {
+    const invoices = await getInvoices();
+    return invoices.filter(inv =>
+      inv.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      inv.customerPhone?.includes(searchTerm) ||
+      inv.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  } catch (error) {
+    console.error('Error searching invoices:', error);
+    throw error;
+  }
+};
+
+export const getInvoicesByStatus = async (status) => {
+  try {
+    const invoices = await getInvoices();
+    return invoices.filter(inv => inv.status === status);
+  } catch (error) {
+    console.error('Error getting invoices by status:', error);
+    throw error;
+  }
+};
+
+export const getInvoicesByDateRange = async (startDate, endDate) => {
+  try {
+    const invoices = await getInvoices();
+    return invoices.filter(inv => {
+      const invDate = inv.invoiceDate?.toDate?.() || inv.invoiceDate;
+      return invDate >= startDate && invDate <= endDate;
+    });
+  } catch (error) {
+    console.error('Error getting invoices by date:', error);
+    throw error;
+  }
+};
+
+export const getCustomerInvoiceHistory = async (customerId) => {
+  try {
+    const invoices = await getInvoices();
+    return invoices.filter(inv => inv.customerId === customerId).sort((a, b) => 
+      (b.invoiceDate?.toDate?.() || b.invoiceDate) - (a.invoiceDate?.toDate?.() || a.invoiceDate)
+    );
+  } catch (error) {
+    console.error('Error getting customer invoice history:', error);
+    throw error;
+  }
+};
+
+export const getTodayVisitsSummary = async () => {
+  try {
+    const visits = await getActiveVisits();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayVisits = visits.filter(v => {
+      const visitDate = v.date?.toDate?.() || v.date;
+      return visitDate >= today;
+    });
+
+    return {
+      total: todayVisits.length,
+      checkedIn: todayVisits.filter(v => v.status === 'CHECKED_IN').length,
+      inService: todayVisits.filter(v => v.status === 'IN_SERVICE').length,
+      waitingPayment: todayVisits.filter(v => v.status === 'WAITING_PAYMENT').length,
+      visits: todayVisits
+    };
+  } catch (error) {
+    console.error('Error getting today visits summary:', error);
+    throw error;
+  }
+};
+
+export const getCustomerStats = async (customerId) => {
+  try {
+    const invoices = await getCustomerInvoiceHistory(customerId);
+    const totalSpent = invoices.reduce((sum, inv) => sum + (inv.paidAmount || 0), 0);
+    const totalVisits = invoices.length;
+    const lastVisit = invoices[0]?.invoiceDate?.toDate?.() || invoices[0]?.invoiceDate;
+
+    return {
+      customerId,
+      totalVisits,
+      totalSpent: parseFloat(totalSpent.toFixed(2)),
+      lastVisit,
+      averagePerVisit: totalVisits > 0 ? parseFloat((totalSpent / totalVisits).toFixed(2)) : 0,
+      invoiceCount: invoices.length,
+      paidInvoices: invoices.filter(inv => inv.status === 'paid').length,
+      unpaidInvoices: invoices.filter(inv => inv.status === 'unpaid').length
+    };
+  } catch (error) {
+    console.error('Error getting customer stats:', error);
+    throw error;
+  }
+};
+
 

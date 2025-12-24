@@ -131,6 +131,17 @@ const DashboardLayout = () => {
 
       {/* Sidebar */}
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        {/* Mobile Close Button */}
+        <div className="sidebar-mobile-close" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '0.5rem' }}>
+          <button
+            className="mobile-menu-btn"
+            style={{ display: 'flex' }}
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="Close sidebar"
+          >
+            <X size={24} />
+          </button>
+        </div>
         <div className="sidebar-brand">
           <div className="sidebar-logo">S</div>
           <div>
@@ -153,7 +164,10 @@ const DashboardLayout = () => {
                 <Link
                   to={item.path}
                   className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
-                  onClick={() => item.submenu && setExpandedMenu(expandedMenu === item.path ? null : item.path)}
+                  onClick={() => {
+                    if (window.innerWidth <= 1024) setIsSidebarOpen(false);
+                    if (item.submenu) setExpandedMenu(expandedMenu === item.path ? null : item.path);
+                  }}
                 >
                   <item.icon size={20} className="nav-icon" />
                   <span>{item.label}</span>
@@ -218,11 +232,10 @@ const DashboardLayout = () => {
             <Route path="/hero" element={<HeroContent />} />
             <Route path="/contact" element={<ContactContent />} />
             <Route path="/gallery" element={<GalleryContent />} />
-             <Route path="/reviews" element={<ReviewsManagement />} />
+            <Route path="/reviews" element={<ReviewsManagement />} />
             <Route path="/faqs" element={<FAQsContent />} />
             <Route path="/offers" element={<OffersContent />} />
             <Route path="/newsletter" element={<NewsletterContent />} />
-            <Route path="/contact" element={<ContactContent />} />
           </Routes>
         </main>
       </div>

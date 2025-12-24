@@ -78,9 +78,8 @@ const Billing = () => {
     const calculateTotals = () => {
         const subtotal = billDetails.items.reduce((sum, item) => sum + item.price, 0);
         const discountAmount = (subtotal * billDetails.discountRate) / 100;
-        const taxableAmount = subtotal - discountAmount;
-        const taxAmount = (taxableAmount * billDetails.taxRate) / 100;
-        const total = taxableAmount + taxAmount;
+        const taxAmount = ((subtotal - discountAmount) * billDetails.taxRate) / 100;
+        const total = (subtotal - discountAmount) + taxAmount;
 
         return { subtotal, discountAmount, taxAmount, total };
     };

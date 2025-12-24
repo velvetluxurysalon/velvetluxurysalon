@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Calendar, Plus, Trash2, Printer, ArrowLeft, ShoppingBag, Scissors, CheckCircle, Star } from 'lucide-react';
-import PaymentModal from '../components/PaymentModal';
 import FeedbackModal from '../components/FeedbackModal';
 import { getDocument, getServices, getProducts, getStaff, addVisitItem, removeVisitItem, createInvoice } from '../utils/firebaseUtils';
 
@@ -21,7 +20,6 @@ const VisitDetail = () => {
     // Modal states
     const [showAddService, setShowAddService] = useState(false);
     const [showAddProduct, setShowAddProduct] = useState(false);
-    const [showPayment, setShowPayment] = useState(false);
     const [showFeedback, setShowFeedback] = useState(false);
 
     useEffect(() => {
@@ -265,11 +263,12 @@ const VisitDetail = () => {
                             {visit.status === 'WAITING_PAYMENT' && (
                                 <button
                                     className="btn btn-primary"
-                                    style={{ width: '100%', backgroundColor: '#10b981', borderColor: '#10b981' }}
-                                    onClick={() => setShowPayment(true)}
+                                    style={{ width: '100%', backgroundColor: '#10b981', borderColor: '#10b981', cursor: 'not-allowed', opacity: 0.6 }}
+                                    disabled
+                                    title="Use Reception module for payment processing"
                                 >
                                     <CheckCircle size={18} style={{ marginRight: '0.5rem' }} />
-                                    Collect Payment
+                                    Payment in Reception
                                 </button>
                             )}
 
@@ -424,16 +423,6 @@ const VisitDetail = () => {
                             </div>
                         </div>
                     </div>
-                )
-            }
-
-            {
-                showPayment && visit.invoice && (
-                    <PaymentModal
-                        invoice={visit.invoice}
-                        onClose={() => setShowPayment(false)}
-                        onPaymentComplete={fetchVisit}
-                    />
                 )
             }
 
