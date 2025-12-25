@@ -8,64 +8,54 @@ import {
 
 export const ReceptionHeader = ({ onNewCheckIn, error, success, activeSection, setActiveSection, visits, filteredVisits, searchTerm, setSearchTerm }) => {
   return (
-    <div className="glass-card" style={{ borderRadius: '0.75rem', padding: '0', marginBottom: '0', background: '#fff', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0' }}>
-        <div style={{ padding: '0', margin: '0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0', padding: '0' }}>
-            <Crown size={32} color="#1f2937" />
-            <h1 style={{ fontSize: '1.875rem', fontWeight: '800', color: '#1f2937', margin: '0', padding: '0' }}>
-              Reception Manager
-            </h1>
-          </div>
-          <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0', padding: '0' }}>
-            Manage customer journey from check-in to checkout
-          </p>
-        </div>
-
+    <div style={{ background: 'var(--admin-card-bg)', borderRadius: '0', padding: '1.5rem', marginBottom: '0', border: 'none', borderBottom: '1px solid var(--admin-border)', margin: '-2rem -2rem 0 -2rem', paddingLeft: '2rem', paddingRight: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
+        <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'var(--admin-foreground)' }}>Reception Manager</h2>
         <button
           onClick={onNewCheckIn}
           style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'var(--admin-primary-gradient)',
             color: 'white',
             border: 'none',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '0.75rem',
-            fontWeight: '600',
-            fontSize: '0.95rem',
+            padding: '0.625rem 1.25rem',
+            borderRadius: 'var(--admin-radius-sm)',
+            fontWeight: 600,
+            fontSize: '0.875rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
             cursor: 'pointer',
-            transition: 'all 0.3s',
-            boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)'
+            transition: 'all 0.2s',
+            boxShadow: '0 2px 8px rgba(201, 162, 39, 0.25)',
+            whiteSpace: 'nowrap'
           }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
           onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
         >
-          <UserPlus size={20} /> New Check-in
+          <UserPlus size={18} /> New Check-in
         </button>
       </div>
 
       {/* ALERTS */}
       {error && (
-        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#dc2626', padding: '0.625rem 0.875rem', borderRadius: '0.5rem', marginBottom: '0', display: 'flex', alignItems: 'center', gap: '0.5rem', animation: 'slideIn 0.3s', marginTop: '1rem' }}>
+        <div style={{ background: 'var(--admin-danger-light)', border: '1px solid #fca5a5', color: 'var(--admin-danger)', padding: '0.75rem 1rem', borderRadius: 'var(--admin-radius-sm)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <AlertCircle size={18} /> {error}
         </div>
       )}
       {success && (
-        <div style={{ background: '#d1fae5', border: '1px solid #a7f3d0', color: '#059669', padding: '0.625rem 0.875rem', borderRadius: '0.5rem', marginBottom: '0', display: 'flex', alignItems: 'center', gap: '0.5rem', animation: 'slideIn 0.3s', marginTop: '1rem' }}>
+        <div style={{ background: 'var(--admin-success-light)', border: '1px solid #a7f3d0', color: 'var(--admin-success)', padding: '0.75rem 1rem', borderRadius: 'var(--admin-radius-sm)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <CheckCircle size={18} /> {success}
         </div>
       )}
 
       {/* NAVIGATION TABS */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0', overflowX: 'auto', paddingBottom: '0', marginTop: '1rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
         {[
-          { id: 'all', label: 'All Visits', icon: Users, color: '#6b7280' },
-          { id: 'checkin', label: 'Checked In', icon: UserPlus, color: '#f59e0b' },
-          { id: 'inservice', label: 'In Service', icon: Scissors, color: '#3b82f6' },
-          { id: 'checkout', label: 'Ready for Billing', icon: CardIcon, color: '#8b5cf6' },
-          { id: 'completed', label: 'Completed', icon: CheckCircle, color: '#10b981' }
+          { id: 'all', label: 'All Visits', icon: Users, color: 'var(--admin-muted-foreground)' },
+          { id: 'checkin', label: 'Checked In', icon: UserPlus, color: 'var(--admin-warning)' },
+          { id: 'inservice', label: 'In Service', icon: Scissors, color: 'var(--admin-info)' },
+          { id: 'checkout', label: 'Ready for Billing', icon: CardIcon, color: 'var(--admin-primary)' },
+          { id: 'completed', label: 'Completed', icon: CheckCircle, color: 'var(--admin-success)' }
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeSection === tab.id;
@@ -74,12 +64,12 @@ export const ReceptionHeader = ({ onNewCheckIn, error, success, activeSection, s
               key={tab.id}
               onClick={() => setActiveSection(tab.id)}
               style={{
-                background: isActive ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
-                color: isActive ? tab.color : '#6b7280',
+                background: isActive ? 'rgba(201, 162, 39, 0.08)' : 'transparent',
+                color: isActive ? 'var(--admin-foreground)' : 'var(--admin-muted-foreground)',
                 border: `2px solid ${isActive ? tab.color : 'transparent'}`,
-                padding: '0.75rem 1.25rem',
-                borderRadius: '0.75rem',
-                fontWeight: '600',
+                padding: '0.625rem 1rem',
+                borderRadius: 'var(--admin-radius-sm)',
+                fontWeight: isActive ? 600 : 500,
                 fontSize: '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
@@ -90,7 +80,7 @@ export const ReceptionHeader = ({ onNewCheckIn, error, success, activeSection, s
                 minWidth: 'max-content'
               }}
               onMouseEnter={e => {
-                if (!isActive) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                if (!isActive) e.currentTarget.style.background = 'rgba(201, 162, 39, 0.04)';
               }}
               onMouseLeave={e => {
                 if (!isActive) e.currentTarget.style.background = 'transparent';
@@ -102,8 +92,9 @@ export const ReceptionHeader = ({ onNewCheckIn, error, success, activeSection, s
                 color: 'white',
                 padding: '0.125rem 0.5rem',
                 borderRadius: '9999px',
-                fontSize: '0.75rem',
-                marginLeft: '0.25rem'
+                fontSize: '0.7rem',
+                marginLeft: '0.25rem',
+                fontWeight: 600
               }}>
                 {visits.filter(v => {
                   if (tab.id === 'all') return true;
@@ -120,7 +111,7 @@ export const ReceptionHeader = ({ onNewCheckIn, error, success, activeSection, s
       </div>
 
       {/* SEARCH BAR */}
-      <div style={{ position: 'relative', marginTop: '1rem' }}>
+      <div style={{ position: 'relative' }}>
         <input
           type="text"
           placeholder="Search customers by name or phone..."
@@ -128,19 +119,19 @@ export const ReceptionHeader = ({ onNewCheckIn, error, success, activeSection, s
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{
             width: '100%',
-            padding: '0.875rem 1rem 0.875rem 3rem',
-            background: 'white',
-            border: '2px solid #e5e7eb',
-            borderRadius: '0.75rem',
-            fontSize: '0.95rem',
-            color: '#1f2937',
+            padding: '0.75rem 1rem 0.75rem 2.75rem',
+            background: 'var(--admin-input-bg)',
+            border: '1px solid var(--admin-border)',
+            borderRadius: 'var(--admin-radius-sm)',
+            fontSize: '0.875rem',
+            color: 'var(--admin-foreground)',
             outline: 'none',
             transition: 'all 0.2s'
           }}
-          onFocus={e => e.currentTarget.style.borderColor = '#8b5cf6'}
-          onBlur={e => e.currentTarget.style.borderColor = '#e5e7eb'}
+          onFocus={e => e.currentTarget.style.borderColor = 'var(--admin-primary)'}
+          onBlur={e => e.currentTarget.style.borderColor = 'var(--admin-border)'}
         />
-        <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
+        <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-muted-foreground)' }}>
           🔍
         </span>
       </div>

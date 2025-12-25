@@ -59,14 +59,6 @@ const NewsletterContent = () => {
 
   return (
     <div>
-      {/* Page Header */}
-      <div className="page-header">
-        <h1 className="page-title">Newsletter Section</h1>
-        <p style={{ color: 'var(--muted-foreground)', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-          Manage the newsletter subscription section content
-        </p>
-      </div>
-
       {/* Alerts */}
       {error && (
         <div style={{

@@ -67,14 +67,6 @@ const HeroContent = () => {
 
   return (
     <div>
-      {/* Page Header */}
-      <div className="page-header">
-        <h1 className="page-title">Hero Section</h1>
-        <p style={{ color: 'var(--muted-foreground)', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-          Manage the hero banner content on your homepage
-        </p>
-      </div>
-
       {/* Alerts */}
       {error && (
         <div style={{

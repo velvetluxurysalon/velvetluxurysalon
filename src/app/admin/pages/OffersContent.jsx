@@ -102,13 +102,6 @@ const OffersContent = () => {
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">Special Offers</h1>
-        <p style={{ color: 'var(--muted-foreground)', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-          Manage special promotions and offers
-        </p>
-      </div>
-
       {error && (
         <div style={{
           padding: '1rem',

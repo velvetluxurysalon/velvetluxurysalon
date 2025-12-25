@@ -81,15 +81,15 @@ const DashboardLayout = () => {
   };
 
   const navItems: NavItem[] = [
-    { path: '/admin/services', icon: Scissors, label: 'Services' },
     { path: '/admin', icon: ClipboardList, label: 'Reception' },
     { path: '/admin/dashboard', icon: BarChart3, label: 'Dashboard' },
-    { path: '/admin/products', icon: Package, label: 'Inventory' },
+    { path: '/admin/services', icon: Scissors, label: 'Services' },
     { path: '/admin/staff', icon: UserCog, label: 'Staff' },
+    { path: '/admin/products', icon: Package, label: 'Inventory' },
     { path: '/admin/customers', icon: Users, label: 'Customers' },
     { path: '/admin/appointments', icon: Calendar, label: 'Appointments' },
-    { path: '/admin/loyalty', icon: Gift, label: 'Loyalty' },
     { path: '/admin/attendance', icon: Clock, label: 'Attendance' },
+    { path: '/admin/loyalty', icon: Gift, label: 'Loyalty' },
     { path: '/admin/hero', icon: FileText, label: 'Hero Section' },
     { path: '/admin/gallery', icon: FileText, label: 'Gallery' },
     { path: '/admin/reviews', icon: Star, label: 'Reviews' },
@@ -106,31 +106,33 @@ const DashboardLayout = () => {
 
   return (
     <div className="layout">
-      {/* Mobile Header */}
+      {/* Header */}
       <div className="mobile-header">
-        <div className="flex items-center gap-3">
-          <div className="sidebar-logo">S</div>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: '1rem' }}>Velvet Luxury Salon</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>Premium Beauty</div>
+        <div className="header-left">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="mobile-menu-btn"
+            aria-label="Toggle sidebar"
+          >
+            {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+          <div className="header-title-section">
+            <h1 className="header-page-title">Velvet Luxury Salon - Premium Beauty</h1>
           </div>
         </div>
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="mobile-menu-btn"
-        >
-          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="sidebar-logo">S</div>
       </div>
 
-      {/* Sidebar Overlay */}
-      <div
-        className={`sidebar-overlay ${isSidebarOpen ? 'show' : ''}`}
-        onClick={() => setIsSidebarOpen(false)}
-      />
+      {/* Main Layout Container */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* Sidebar Overlay */}
+        <div
+          className={`sidebar-overlay ${isSidebarOpen ? 'show' : ''}`}
+          onClick={() => setIsSidebarOpen(false)}
+        />
 
-      {/* Sidebar */}
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        {/* Sidebar */}
+        <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         {/* Mobile Close Button */}
         <div className="sidebar-mobile-close" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '0.5rem' }}>
           <button
@@ -141,19 +143,6 @@ const DashboardLayout = () => {
           >
             <X size={24} />
           </button>
-        </div>
-        <div className="sidebar-brand">
-          <div className="sidebar-logo">S</div>
-          <div>
-            <div className="sidebar-title">Velvet Luxury Salon</div>
-            <div className="sidebar-subtitle">Premium Beauty</div>
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '1.5rem', padding: '0.75rem', background: 'var(--muted)', borderRadius: 'var(--radius-sm)' }}>
-          <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>Kalingarayanpalayam, Bhavani</p>
-          <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>Erode District, Tamil Nadu - 638301</p>
-          <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem', fontWeight: 500, color: 'var(--foreground)' }}>📞 9667722611</p>
         </div>
 
         <nav className="sidebar-nav">
@@ -197,6 +186,11 @@ const DashboardLayout = () => {
         </nav>
 
         <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-light)', paddingTop: '1rem' }}>
+          <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--muted)', borderRadius: 'var(--radius-sm)' }}>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: '1.4' }}>Kalingarayanpalayam, Bhavani</p>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: '1.4' }}>Erode District, Tamil Nadu - 638301</p>
+            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', fontWeight: 500, color: 'var(--foreground)' }}>📞 9667722611</p>
+          </div>
           <button 
             onClick={handleLogout} 
             className="nav-link" 
@@ -212,32 +206,33 @@ const DashboardLayout = () => {
             <span>Logout</span>
           </button>
         </div>
-      </aside>
+        </aside>
 
-      {/* Main Content */}
-      <div className="content-wrapper">
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Reception />} />
-            <Route path="/visits/:id" element={<VisitDetail />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/staff" element={<Staff />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/appointments" element={<Appointments />} />
-            <Route path="/loyalty" element={<Loyalty />} />
-            <Route path="/attendance" element={<Attendance />} />
-            <Route path="/hero" element={<HeroContent />} />
-            <Route path="/contact" element={<ContactContent />} />
-            <Route path="/gallery" element={<GalleryContent />} />
-            <Route path="/reviews" element={<ReviewsManagement />} />
-            <Route path="/faqs" element={<FAQsContent />} />
-            <Route path="/offers" element={<OffersContent />} />
-            <Route path="/newsletter" element={<NewsletterContent />} />
-          </Routes>
-        </main>
+        {/* Main Content */}
+        <div className="content-wrapper">
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<Reception />} />
+              <Route path="/visits/:id" element={<VisitDetail />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/staff" element={<Staff />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/billing" element={<Billing />} />
+              <Route path="/appointments" element={<Appointments />} />
+              <Route path="/loyalty" element={<Loyalty />} />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/hero" element={<HeroContent />} />
+              <Route path="/contact" element={<ContactContent />} />
+              <Route path="/gallery" element={<GalleryContent />} />
+              <Route path="/reviews" element={<ReviewsManagement />} />
+              <Route path="/faqs" element={<FAQsContent />} />
+              <Route path="/offers" element={<OffersContent />} />
+              <Route path="/newsletter" element={<NewsletterContent />} />
+            </Routes>
+          </main>
+        </div>
       </div>
 
       {/* Mobile Bottom Navigation */}

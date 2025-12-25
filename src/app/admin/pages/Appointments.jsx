@@ -182,11 +182,8 @@ const Appointments = () => {
 
     return (
         <div>
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Appointments</h1>
-                    <p className="page-subtitle">Manage salon appointments</p>
-                </div>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div></div>
                 <button onClick={() => setShowForm(!showForm)} className="btn btn-primary">
                     <Calendar size={16} />
                     New Appointment
@@ -615,7 +612,7 @@ const Appointments = () => {
                         boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Appointment Details</h2>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>Appointment Details</div>
                             <button
                                 onClick={() => setSelectedAppointment(null)}
                                 style={{

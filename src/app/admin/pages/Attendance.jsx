@@ -969,7 +969,7 @@ const Attendance = () => {
         maxHeight: '80vh',
         overflowY: 'auto'
       }}>
-        <h2 style={{ marginBottom: '1.5rem' }}>Bulk Mark Attendance</h2>
+        <div style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 600 }}>Bulk Mark Attendance</div>
 
         <div style={{ marginBottom: '1rem' }}>
           <label className="label">Date</label>
@@ -1049,7 +1049,7 @@ const Attendance = () => {
         maxWidth: '500px',
         width: '90%'
       }}>
-        <h2 style={{ marginBottom: '1.5rem' }}>Mark Attendance Manually</h2>
+        <div style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 600 }}>Mark Attendance Manually</div>
 
         <div style={{ marginBottom: '1rem' }}>
           <label className="label">Date</label>
@@ -1129,12 +1129,7 @@ const Attendance = () => {
   // ============== MAIN RENDER ==============
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Staff Attendance Management</h1>
-          <p className="page-subtitle">Comprehensive attendance tracking and analytics</p>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem' }}>
           <button
             onClick={() => setViewMode('individual')}
             className="btn"
@@ -1165,7 +1160,6 @@ const Attendance = () => {
           >
             Calendar
           </button>
-        </div>
       </div>
 
       {viewMode === 'individual' && (

@@ -125,13 +125,6 @@ const ReviewsManagement = () => {
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">Reviews Management</h1>
-        <p style={{ color: 'var(--muted-foreground)', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-          Manage and moderate customer reviews
-        </p>
-      </div>
-
       {error && (
         <div style={{
           padding: '1rem',

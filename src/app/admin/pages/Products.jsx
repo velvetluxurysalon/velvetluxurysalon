@@ -89,10 +89,6 @@ const Products = () => {
 
     return (
         <div>
-            <div className="page-header">
-                <h1 className="page-title">Product Inventory</h1>
-            </div>
-
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
                 <div className="card">
                     <div className="card-header">

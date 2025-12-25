@@ -61,12 +61,7 @@ const Loyalty = () => {
 
     return (
         <div>
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Loyalty & Points</h1>
-                    <p className="page-subtitle">Manage customer rewards program</p>
-                </div>
-            </div>
+
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 {/* Customer Selection */}

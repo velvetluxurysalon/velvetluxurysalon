@@ -1,54 +1,3 @@
-@media (max-width: 1024px) {
-  .admin-panel .layout,
-  .admin-panel .content-wrapper,
-  .admin-panel .main-content {
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-    width: 100vw !important;
-    max-width: 100vw !important;
-    box-sizing: border-box;
-  }
-}
-
-
-@media (max-width: 1024px) {
-  .admin-panel .mobile-header {
-    display: flex;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 110;
-    background: var(--admin-card-bg);
-    border-bottom: 1px solid var(--admin-border);
-    padding: 0.5rem 1rem;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 48px;
-    height: 48px;
-    box-sizing: border-box;
-  }
-
-  .admin-panel .content-wrapper, .admin-panel .main-content {
-    padding-top: 56px !important;
-  }
-  .admin-panel .sidebar-brand {
-    display: none;
-  }
-  .admin-panel .sidebar.open .sidebar-brand {
-    display: flex;
-  }
-}
-/* Sidebar Mobile Close Button */
-.admin-panel .sidebar-mobile-close {
-  display: none;
-}
-
-@media (max-width: 1024px) {
-  .admin-panel .sidebar-mobile-close {
-    display: flex;
-  }
-}
 /* =====================================================
    ADMIN PANEL STYLES - SCOPED NAMESPACE
    All styles are scoped under .admin-panel to prevent
@@ -118,6 +67,7 @@
 /* ==================== LAYOUT ==================== */
 .admin-panel .layout {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   font-family: var(--admin-font-sans);
   color: var(--admin-foreground);
@@ -125,12 +75,35 @@
   overflow: hidden;
 }
 
+/* Header - Always Visible */
+.admin-panel .mobile-header {
+  display: flex;
+  position: relative;
+  z-index: 50;
+  background: var(--admin-card-bg);
+  border-bottom: 2px solid var(--admin-border);
+  padding: 0.875rem 1.25rem;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  height: auto;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+  gap: 1rem;
+}
+
+/* Main Container - Sidebar + Content */
+.admin-panel > div:nth-child(2) {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
 /* Sidebar */
 .admin-panel .sidebar {
   width: 260px;
-  height: 100vh;
-  position: sticky;
-  top: 0;
+  height: 100%;
+  position: relative;
   background: var(--admin-sidebar-bg);
   border-right: 1px solid var(--admin-sidebar-border);
   padding: 1.5rem;
@@ -139,6 +112,7 @@
   z-index: 100;
   transition: all var(--admin-transition-base);
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .admin-panel .sidebar-brand {
@@ -154,12 +128,19 @@
   height: 40px;
   background: var(--admin-primary-gradient);
   border-radius: var(--admin-radius-sm);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 700;
   font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  .admin-panel .sidebar-logo {
+    display: flex;
+  }
 }
 
 .admin-panel .sidebar-title {
@@ -286,31 +267,15 @@
 
 /* Page Header */
 .admin-panel .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  display: none;
 }
 
 .admin-panel .page-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--admin-foreground);
-  letter-spacing: -0.02em;
+  display: none;
 }
 
 .admin-panel .page-subtitle {
-  font-size: 0.9375rem;
-  color: var(--admin-muted-foreground);
-  margin-top: 0.25rem;
-}
-
-.admin-panel .page-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  display: none;
 }
 
 /* ==================== CARDS ==================== */
@@ -688,17 +653,38 @@
   background: var(--admin-muted-foreground);
 }
 
-/* ==================== MOBILE MENU ==================== */
-.admin-panel .mobile-header {
-  display: none;
-  position: sticky;
-  top: 0;
-  z-index: 90;
-  background: var(--admin-card-bg);
-  border-bottom: 1px solid var(--admin-border);
-  padding: 1rem;
+/* ==================== UNIVERSAL HEADER ==================== */
+.admin-panel .header-left {
+  display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-panel .header-title-section {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.admin-panel .header-page-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--admin-foreground);
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+  white-space: normal;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 768px) {
+  .admin-panel .header-page-title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
 }
 
 .admin-panel .mobile-menu-btn {
@@ -709,10 +695,35 @@
   color: var(--admin-foreground);
   cursor: pointer;
   border-radius: var(--admin-radius-sm);
+  transition: all var(--admin-transition-fast);
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+}
+
+@media (max-width: 1024px) {
+  .admin-panel .mobile-menu-btn {
+    display: flex;
+  }
+}
+
+/* Hide close button on desktop */
+@media (min-width: 1025px) {
+  .admin-panel .sidebar-mobile-close {
+    display: none !important;
+  }
 }
 
 .admin-panel .mobile-menu-btn:hover {
   background: var(--admin-secondary);
+  color: var(--admin-primary);
+}
+
+.admin-panel .mobile-menu-btn:active {
+  transform: scale(0.95);
 }
 
 .admin-panel .sidebar-overlay {
@@ -721,6 +732,16 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 90;
+  animation: fadeIn 200ms ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .admin-panel .mobile-bottom-nav {
@@ -736,50 +757,76 @@
     top: 0;
     bottom: 0;
     width: 260px;
+    height: 100vh;
     transform: translateX(-100%);
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
     z-index: 100;
     background: var(--admin-sidebar-bg);
-    transition: transform var(--admin-transition-base);
+    transition: transform var(--admin-transition-base) ease;
+    overflow-y: auto;
   }
+
   .admin-panel .sidebar.open {
     display: flex !important;
     transform: translateX(0);
   }
+
+  .admin-panel .sidebar-overlay {
+    display: none;
+  }
+
   .admin-panel .sidebar-overlay.show {
     display: block;
   }
+
   .admin-panel .mobile-header {
     display: flex;
   }
+
   .admin-panel .mobile-menu-btn {
     display: flex;
   }
+
   .admin-panel .main-content {
     padding: 1rem;
     height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
+    padding-top: 1rem;
   }
+
+  .admin-panel .content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
   .admin-panel .page-header {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .admin-panel .page-title {
     font-size: 1.375rem;
   }
+
   .admin-panel .card-content {
     padding: 1rem;
   }
+
   .admin-panel .btn {
     padding: 0.5rem 1rem;
   }
+
   .admin-panel table {
     font-size: 0.875rem;
   }
+
   .admin-panel th, .admin-panel td {
     padding: 0.75rem 0.5rem;
   }
+
   .admin-panel .mobile-bottom-nav {
     display: flex;
     position: fixed;
@@ -793,6 +840,7 @@
     z-index: 80;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
   }
+
   .admin-panel .nav-item {
     display: flex;
     flex-direction: column;
@@ -811,6 +859,105 @@
     padding-bottom: 70px;
   }
 }
+
+/* ==================== TABLET VIEW (768px - 1024px) ==================== */
+@media (max-width: 768px) {
+  .admin-panel .sidebar {
+    width: 240px;
+  }
+
+  .admin-panel .header-page-title {
+    font-size: 0.95rem;
+  }
+
+  .admin-panel .mobile-header {
+    padding: 0.65rem 0.75rem;
+    height: 52px;
+  }
+
+  .admin-panel .main-content {
+    padding: 0.75rem;
+  }
+
+  .admin-panel .page-title {
+    font-size: 1.25rem;
+  }
+
+  .admin-panel .card {
+    border-radius: var(--admin-radius-sm);
+  }
+
+  .admin-panel .table-container {
+    border-radius: var(--admin-radius-sm);
+  }
+
+  .admin-panel .section-container {
+    padding: 1.5rem;
+  }
+}
+
+/* ==================== SMALL PHONE VIEW (max 480px) ==================== */
+@media (max-width: 480px) {
+  .admin-panel .sidebar {
+    width: 220px;
+  }
+
+  .admin-panel .header-page-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .admin-panel .mobile-header {
+    padding: 0.6rem 0.65rem;
+    height: 48px;
+  }
+
+  .admin-panel .sidebar-logo {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+
+  .admin-panel .mobile-menu-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .admin-panel .page-title {
+    font-size: 1.125rem;
+  }
+
+  .admin-panel .main-content {
+    padding: 0.65rem;
+  }
+
+  .admin-panel .card-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .admin-panel .card-content {
+    padding: 0.85rem;
+  }
+
+  .admin-panel .section-container {
+    padding: 1.25rem;
+  }
+
+  .admin-panel .form-container input[type="text"],
+  .admin-panel .form-container input[type="email"],
+  .admin-panel .form-container input[type="tel"],
+  .admin-panel .form-container textarea,
+  .admin-panel .form-container select {
+    padding: 0.65rem;
+    font-size: 0.8rem;
+  }
+
+  .admin-panel .btn {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.8rem;
+  }
+}
+
 
 /* Utility Classes */
 .admin-panel .flex { display: flex; }

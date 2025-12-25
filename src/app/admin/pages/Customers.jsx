@@ -153,8 +153,7 @@ const Customers = () => {
 
     return (
         <div>
-            <div className="page-header">
-                <h1 className="page-title">Customers</h1>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem' }}>
                 <div style={{ position: 'relative', width: '300px' }}>
                     <input
                         type="text"

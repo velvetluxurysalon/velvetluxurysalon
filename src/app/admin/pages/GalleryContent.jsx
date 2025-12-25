@@ -98,13 +98,6 @@ const GalleryContent = () => {
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">Gallery</h1>
-        <p style={{ color: 'var(--muted-foreground)', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-          Manage your salon's photo gallery
-        </p>
-      </div>
-
       {error && (
         <div style={{
           padding: '1rem',

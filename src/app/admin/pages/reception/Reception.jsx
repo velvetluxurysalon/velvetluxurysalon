@@ -36,7 +36,7 @@ const ReceptionComponent = () => {
   }
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 80px)', background: '#f8f9fa', padding: '0' }}>
+    <div style={{ minHeight: 'calc(100vh - 80px)', background: 'var(--admin-background-gradient)', padding: '0' }}>
       <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
@@ -75,7 +75,7 @@ const ReceptionComponent = () => {
         }
       `}</style>
 
-      <div style={{ width: '100%', animation: 'fadeIn 0.5s ease-out', padding: '1.5rem' }}>
+      <div style={{ width: '100%', animation: 'fadeIn 0.5s ease-out' }}>
         {/* HEADER */}
         <ReceptionHeader
           onNewCheckIn={() => uiState.setShowCheckIn(true)}
@@ -89,10 +89,11 @@ const ReceptionComponent = () => {
           setSearchTerm={uiState.setSearchTerm}
         />
 
-        {dataState.loading ? (
-          <LoadingState />
-        ) : uiState.activeSection === 'checkout' ? (
-          <ReadyForBillingView
+        <div style={{ marginTop: '1.5rem' }}>
+          {dataState.loading ? (
+            <LoadingState />
+          ) : uiState.activeSection === 'checkout' ? (
+            <ReadyForBillingView
             filteredVisits={filteredVisits}
             calculateTotals={calculateTotalsWrapper}
             getStatusBadge={getStatusBadge}
@@ -124,6 +125,7 @@ const ReceptionComponent = () => {
             allVisits={dataState.visits}
           />
         )}
+        </div>
       </div>
 
       {/* MODALS */}

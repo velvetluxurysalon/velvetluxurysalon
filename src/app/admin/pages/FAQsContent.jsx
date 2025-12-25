@@ -115,13 +115,6 @@ const FAQsContent = () => {
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">FAQs</h1>
-        <p style={{ color: 'var(--muted-foreground)', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-          Manage frequently asked questions
-        </p>
-      </div>
-
       {error && (
         <div style={{
           padding: '1rem',

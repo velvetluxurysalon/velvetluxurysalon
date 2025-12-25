@@ -114,16 +114,10 @@ const VisitDetail = () => {
 
     return (
         <div>
-            <div className="page-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button onClick={() => navigate('/')} className="btn btn-secondary" style={{ padding: '0.5rem' }}>
-                        <ArrowLeft size={20} />
-                    </button>
-                    <div>
-                        <h1 className="page-title">Visit #{visit.id}</h1>
-                        <p style={{ color: 'var(--muted-foreground)' }}>{new Date(visit.date).toLocaleString()}</p>
-                    </div>
-                </div>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button onClick={() => navigate('/')} className="btn btn-secondary" style={{ padding: '0.5rem' }}>
+                    <ArrowLeft size={20} />
+                </button>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <span style={{
                         padding: '0.5rem 1rem',

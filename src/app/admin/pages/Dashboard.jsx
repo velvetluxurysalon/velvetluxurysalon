@@ -264,7 +264,6 @@ const Dashboard = () => {
                 boxShadow: '0 10px 30px rgba(212, 175, 55, 0.2)'
             }}>
                 <div>
-                    <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>Welcome back!</h1>
                     <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>Here's what's happening in your salon today.</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -278,25 +277,15 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="page-header" style={{ marginBottom: '1.5rem' }}>
-                <h2 className="card-title">Dashboard Section</h2>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button className="btn btn-secondary" onClick={handleDownloadReport}>Download Report</button>
-                </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', alignContent: 'start' }}>
+                <StatCard title="Daily Sales" value={`₹${stats.dailySales.toFixed(2)} `} icon={IndianRupee} />
+                <StatCard title="Monthly Revenue" value={`₹${stats.monthlySales.toFixed(2)} `} icon={ShoppingBag} />
+                <StatCard title="Daily Orders" value={stats.dailyOrders} icon={Users} />
+                <StatCard title="Monthly Orders" value={stats.monthlyOrders} icon={CalendarIcon} />
             </div>
 
-            <div className="grid-responsive" style={{ marginBottom: '2.5rem' }}>
-                {/* Stats Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', alignContent: 'start' }}>
-                    <StatCard title="Daily Sales" value={`₹${stats.dailySales.toFixed(2)} `} icon={IndianRupee} />
-                    <StatCard title="Monthly Revenue" value={`₹${stats.monthlySales.toFixed(2)} `} icon={ShoppingBag} />
-                    <StatCard title="Daily Orders" value={stats.dailyOrders} icon={Users} />
-                    <StatCard title="Monthly Orders" value={stats.monthlyOrders} icon={CalendarIcon} />
-                </div>
-
-                {/* Calendar */}
-                <Calendar />
-            </div>
+            {/* Calendar */}
+            <Calendar />
 
             {/* Charts Section */}
             <div className="grid-responsive" style={{ marginBottom: '2.5rem' }}>

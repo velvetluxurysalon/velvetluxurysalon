@@ -136,14 +136,6 @@ const ContentManagement = () => {
 
   return (
     <div>
-      {/* Page Header */}
-      <div className="page-header">
-        <h1 className="page-title">Content Management</h1>
-        <p style={{ color: 'var(--muted-foreground)', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-          Manage website content and information
-        </p>
-      </div>
-
       {/* Alerts */}
       {error && (
         <div style={{
