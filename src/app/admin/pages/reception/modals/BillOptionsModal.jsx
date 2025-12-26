@@ -57,19 +57,98 @@ const BillOptionsModal = ({
     }
   };
 
-  const handleShareWhatsApp = () => {
-    const message = generateSimpleTextBill();
-    const phone = (selectedVisit.customer?.contactNo || selectedVisit.customer?.phone || '').replace(/\D/g, '');
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+
+  // Helper to create PDF Blob
+  const createPDFBlob = async () => {
+    const invoiceData = {
+      visitId: selectedVisit.id,
+      customerId: selectedVisit.customerId,
+      customerName: selectedVisit.customer?.name,
+      customerPhone: selectedVisit.customer?.contactNo || selectedVisit.customer?.phone,
+      customerEmail: selectedVisit.customer?.email || '',
+      items: selectedVisit.items,
+      totalAmount: selectedVisit.totalAmount,
+      discountAmount: 0,
+      taxAmount: 0,
+      paidAmount: selectedVisit.paidAmount || selectedVisit.totalAmount,
+      paymentMode: 'unknown',
+      status: 'paid'
+    };
+    const pdf = await generateProfessionalBillPDF(invoiceData, selectedVisit);
+    return pdf.output('blob');
   };
 
-  const handleShareEmail = () => {
-    const message = generateSimpleTextBill();
-    const subject = encodeURIComponent(`Invoice from Velvet Luxury Salon - ${new Date().toLocaleDateString()}`);
-    const email = selectedVisit.customer?.email || '';
-    const mailtoLink = `mailto:${email}?subject=${subject}&body=${encodeURIComponent(message)}`;
-    window.location.href = mailtoLink;
+  // Share PDF via WhatsApp (Web Share API or fallback)
+  const handleShareWhatsApp = async () => {
+    try {
+      const phone = (selectedVisit.customer?.contactNo || selectedVisit.customer?.phone || '').replace(/\D/g, '');
+      const pdfBlob = await createPDFBlob();
+      const file = new File([pdfBlob], `Velvet_Luxury_Salon_Invoice_${selectedVisit.customer?.name || 'Guest'}.pdf`, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Velvet Luxury Salon Invoice',
+          text: 'Please find your invoice attached.'
+        });
+      } else {
+        // Fallback: download PDF and instruct user to attach in WhatsApp
+        downloadPDF(await generateProfessionalBillPDF({
+          visitId: selectedVisit.id,
+          customerId: selectedVisit.customerId,
+          customerName: selectedVisit.customer?.name,
+          customerPhone: selectedVisit.customer?.contactNo || selectedVisit.customer?.phone,
+          customerEmail: selectedVisit.customer?.email || '',
+          items: selectedVisit.items,
+          totalAmount: selectedVisit.totalAmount,
+          discountAmount: 0,
+          taxAmount: 0,
+          paidAmount: selectedVisit.paidAmount || selectedVisit.totalAmount,
+          paymentMode: 'unknown',
+          status: 'paid'
+        }, selectedVisit), `Velvet_Luxury_Salon_Invoice_${selectedVisit.customer?.name || 'Guest'}.pdf`);
+        alert('PDF downloaded. Please attach and send via WhatsApp manually.');
+      }
+    } catch (err) {
+      alert('Unable to share PDF. Please try again.');
+    }
+  };
+
+  // Share PDF via Email (Web Share API or fallback)
+  const handleShareEmail = async () => {
+    try {
+      const pdfBlob = await createPDFBlob();
+      const file = new File([pdfBlob], `Velvet_Luxury_Salon_Invoice_${selectedVisit.customer?.name || 'Guest'}.pdf`, { type: 'application/pdf' });
+      const email = selectedVisit.customer?.email || '';
+      const subject = `Invoice from Velvet Luxury Salon - ${new Date().toLocaleDateString()}`;
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: subject,
+          text: 'Please find your invoice attached.'
+        });
+      } else {
+        // Fallback: download PDF and open mailto
+        downloadPDF(await generateProfessionalBillPDF({
+          visitId: selectedVisit.id,
+          customerId: selectedVisit.customerId,
+          customerName: selectedVisit.customer?.name,
+          customerPhone: selectedVisit.customer?.contactNo || selectedVisit.customer?.phone,
+          customerEmail: selectedVisit.customer?.email || '',
+          items: selectedVisit.items,
+          totalAmount: selectedVisit.totalAmount,
+          discountAmount: 0,
+          taxAmount: 0,
+          paidAmount: selectedVisit.paidAmount || selectedVisit.totalAmount,
+          paymentMode: 'unknown',
+          status: 'paid'
+        }, selectedVisit), `Velvet_Luxury_Salon_Invoice_${selectedVisit.customer?.name || 'Guest'}.pdf`);
+        const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent('Please find your invoice attached as PDF.')}`;
+        window.location.href = mailtoLink;
+        alert('PDF downloaded. Please attach it to your email.');
+      }
+    } catch (err) {
+      alert('Unable to share PDF. Please try again.');
+    }
   };
 
   const generateSimpleTextBill = () => {

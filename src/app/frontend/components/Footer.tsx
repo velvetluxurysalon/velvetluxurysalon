@@ -14,25 +14,33 @@ export default function Footer() {
             </p>
             <div className="flex gap-3">
               <a 
-                href="#" 
+                href="https://facebook.com" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
               >
                 <Facebook className="w-5 h-5" />
               </a>
               <a 
-                href="#" 
+                href="https://instagram.com" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
               >
                 <Instagram className="w-5 h-5" />
               </a>
               <a 
-                href="#" 
+                href="https://twitter.com" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
               >
                 <Twitter className="w-5 h-5" />
               </a>
               <a 
-                href="#" 
+                href="https://youtube.com" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
               >
                 <Youtube className="w-5 h-5" />
@@ -44,12 +52,12 @@ export default function Footer() {
           <div>
             <h4 className="text-white mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-purple-400 transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Our Services</a></li>
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Book Appointment</a></li>
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Gift Cards</a></li>
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Promotions</a></li>
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Blog</a></li>
+              <li><a href="#home" className="hover:text-purple-400 transition-colors">Home</a></li>
+              <li><a href="#services" className="hover:text-purple-400 transition-colors">Our Services</a></li>
+              <li><a href="#services" className="hover:text-purple-400 transition-colors">Book Appointment</a></li>
+              <li><a href="#offers" className="hover:text-purple-400 transition-colors">Promotions</a></li>
+              <li><a href="#blog" className="hover:text-purple-400 transition-colors">Blog</a></li>
+              <li><a href="#contact" className="hover:text-purple-400 transition-colors">Contact</a></li>
             </ul>
           </div>
 
@@ -57,12 +65,12 @@ export default function Footer() {
           <div>
             <h4 className="text-white mb-4">Popular Services</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Hair Styling</a></li>
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Hair Coloring</a></li>
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Spa Treatments</a></li>
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Nail Services</a></li>
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Facial Treatments</a></li>
-              <li><a href="#" className="hover:text-purple-400 transition-colors">Makeup Services</a></li>
+              <li><a href="#services" className="hover:text-purple-400 transition-colors">Hair Styling</a></li>
+              <li><a href="#services" className="hover:text-purple-400 transition-colors">Hair Coloring</a></li>
+              <li><a href="#services" className="hover:text-purple-400 transition-colors">Spa Treatments</a></li>
+              <li><a href="#services" className="hover:text-purple-400 transition-colors">Nail Services</a></li>
+              <li><a href="#services" className="hover:text-purple-400 transition-colors">Facial Treatments</a></li>
+              <li><a href="#services" className="hover:text-purple-400 transition-colors">Makeup Services</a></li>
             </ul>
           </div>
 
@@ -111,9 +119,9 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
           <p>&copy; 2025 Velvet Luxury Salon. All rights reserved.</p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-purple-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-purple-400 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-purple-400 transition-colors">Cookie Policy</a>
+            <a href="#home" className="hover:text-purple-400 transition-colors">Home</a>
+            <a href="#contact" className="hover:text-purple-400 transition-colors">Contact</a>
+            <a href="#team" className="hover:text-purple-400 transition-colors">Team</a>
           </div>
         </div>
       </div>

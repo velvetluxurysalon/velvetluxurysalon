@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search } from 'lucide-react';
-import { getCustomers, createVisit } from '../../../utils/firebaseUtils';
+import { X, Search, Plus } from 'lucide-react';
+import { getCustomers, createVisit, addCustomer } from '../../../utils/firebaseUtils';
 
 const CheckInModal = ({ onClose, onCheckIn }) => {
   const [customers, setCustomers] = useState([]);
@@ -9,6 +9,12 @@ const CheckInModal = ({ onClose, onCheckIn }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
+  const [newCustomerData, setNewCustomerData] = useState({
+    name: '',
+    phone: '',
+    email: ''
+  });
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -62,6 +68,40 @@ const CheckInModal = ({ onClose, onCheckIn }) => {
       onClose();
     } catch (err) {
       setError('Failed to check in customer: ' + err.message);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateNewCustomer = async () => {
+    if (!newCustomerData.name.trim()) {
+      setError('Please enter customer name');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+      
+      // Add new customer
+      const newCustomer = await addCustomer({
+        name: newCustomerData.name.trim(),
+        phone: newCustomerData.phone.trim(),
+        email: newCustomerData.email.trim()
+      });
+
+      // Select the newly created customer
+      setSelectedCustomer(newCustomer);
+      setSearchTerm(newCustomer.name);
+      setShowNewCustomerForm(false);
+      setNewCustomerData({ name: '', phone: '', email: '' });
+      
+      // Refresh customers list
+      const allCustomers = await getCustomers();
+      setCustomers(allCustomers || []);
+    } catch (err) {
+      setError('Failed to create customer: ' + err.message);
       console.error(err);
     } finally {
       setLoading(false);
@@ -236,12 +276,185 @@ const CheckInModal = ({ onClose, onCheckIn }) => {
                 textAlign: 'center',
                 color: '#6b7280',
                 fontSize: '0.875rem',
-                zIndex: 10
+                zIndex: 10,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
               }}>
-                No customers found
+                <div style={{ marginBottom: '0.75rem' }}>No customers found</div>
+                <button
+                  onClick={() => {
+                    setShowNewCustomerForm(true);
+                    setShowDropdown(false);
+                    setNewCustomerData({ name: searchTerm, phone: '', email: '' });
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 1rem',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '0.9';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <Plus size={16} />
+                  Add New Customer
+                </button>
               </div>
             )}
           </div>
+
+          {/* NEW CUSTOMER FORM */}
+          {showNewCustomerForm && (
+            <div style={{
+              background: '#f0fdf4',
+              border: '2px solid #10b981',
+              padding: '1.5rem',
+              borderRadius: '0.75rem',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{ fontSize: '0.95rem', fontWeight: '600', color: '#374151', marginBottom: '1rem' }}>
+                Add New Customer
+              </div>
+              
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Customer Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter customer name"
+                  value={newCustomerData.name}
+                  onChange={(e) => setNewCustomerData({ ...newCustomerData, name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  placeholder="Enter phone number"
+                  value={newCustomerData.phone}
+                  onChange={(e) => setNewCustomerData({ ...newCustomerData, phone: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="Enter email address"
+                  value={newCustomerData.email}
+                  onChange={(e) => setNewCustomerData({ ...newCustomerData, email: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  onClick={handleCreateNewCustomer}
+                  disabled={loading || !newCustomerData.name.trim()}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    background: loading || !newCustomerData.name.trim() ? '#d1d5db' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: loading || !newCustomerData.name.trim() ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {loading ? 'Creating...' : 'Create & Select'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowNewCustomerForm(false);
+                    setNewCustomerData({ name: '', phone: '', email: '' });
+                  }}
+                  disabled={loading}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    background: 'white',
+                    border: '1px solid #d1d5db',
+                    color: '#374151',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* SELECTED CUSTOMER INFO */}
           {selectedCustomer && (

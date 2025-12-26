@@ -15,14 +15,24 @@ import LocationContact from "./frontend/components/LocationContact";
 import CTASection from "./frontend/components/CTASection";
 import Newsletter from "./frontend/components/Newsletter";
 import Footer from "./frontend/components/Footer";
+import BookingForm from "./frontend/components/BookingForm";
+import { useState } from "react"; // Added import for useState
 
 export default function App() {
   const location = useLocation();
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [selectedStylistId, setSelectedStylistId] = useState<string | null>(null);
   
   // Don't render frontend app on admin routes
   if (location.pathname.startsWith("/admin")) {
     return null;
   }
+  
+  // Handler to open booking form with stylist
+  const handleBookStylist = (stylistId: string) => {
+    setSelectedStylistId(stylistId);
+    setShowBookingForm(true);
+  };
 
   return (
     <div className="min-h-screen w-screen overflow-x-hidden">
@@ -30,10 +40,12 @@ export default function App() {
       <div id="home">
         <HeroSection />
       </div>
-      <Services />
+      <div id="services">
+        <Services />
+      </div>
       <WhyChooseUs />
       <div id="team">
-        <TeamSection />
+        <TeamSection onBookStylist={handleBookStylist} />
       </div>
       <TestimonialsSection />
       <div id="gallery">
@@ -45,13 +57,16 @@ export default function App() {
       <ProductShowcase />
       <HowToBook />
       <FAQSection />
-      <BlogSection />
+      <div id="blog">
+        <BlogSection />
+      </div>
       <div id="contact">
         <LocationContact />
       </div>
       <CTASection />
       <Newsletter />
       <Footer />
+      <BookingForm isOpen={showBookingForm} onClose={() => setShowBookingForm(false)} stylistId={selectedStylistId} />
     </div>
   );
 }

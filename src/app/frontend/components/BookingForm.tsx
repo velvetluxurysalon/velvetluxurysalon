@@ -5,18 +5,25 @@ import { Calendar, Clock, User, Phone, Mail, CheckCircle, X, AlertCircle, Users 
 import { useAuth } from "../context/AuthContext";
 import { getServices, bookAppointment, getStaff, checkStylistAvailability, getBookedSlotsForStylist } from "../services/firebaseService";
 
+
 interface BookingFormProps {
   isOpen?: boolean;
   onClose?: () => void;
+  stylistId?: string | null;
 }
 
-export default function BookingForm({ isOpen = false, onClose }: BookingFormProps) {
+export default function BookingForm({ isOpen = false, onClose, stylistId }: BookingFormProps) {
   const [services, setServices] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showForm, setShowForm] = useState(isOpen);
+
+  // Always sync showForm with isOpen prop
+  useEffect(() => {
+    setShowForm(isOpen);
+  }, [isOpen]);
   const [availableSlots, setAvailableSlots] = useState<Array<{ time: string; value: string }>>([]);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [stylistAvailability, setStylistAvailability] = useState<string>("");
@@ -27,11 +34,18 @@ export default function BookingForm({ isOpen = false, onClose }: BookingFormProp
     customerEmail: user?.email || "",
     customerPhone: "",
     serviceId: "",
-    stylistId: "",
+    stylistId: stylistId || "",
     appointmentDate: "",
     appointmentTime: "",
     notes: ""
   });
+
+  // Update stylistId in formData if prop changes and modal is opened
+  useEffect(() => {
+    if (isOpen && stylistId) {
+      setFormData((prev) => ({ ...prev, stylistId }));
+    }
+  }, [isOpen, stylistId]);
 
   useEffect(() => {
     fetchServices();

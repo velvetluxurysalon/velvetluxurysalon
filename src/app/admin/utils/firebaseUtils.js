@@ -21,7 +21,8 @@ import {
   orderBy,
   limit,
   Timestamp,
-  serverTimestamp
+  serverTimestamp,
+  deleteField
 } from 'firebase/firestore';
 
 // ============================================
@@ -251,7 +252,17 @@ export const addCustomer = async (customerData) => {
       transactionDate: serverTimestamp()
     });
     
-    return { id: customerId };
+    return { 
+      id: customerId,
+      name: customerData.name,
+      phone: customerData.phone || customerData.contactNo || '',
+      email: customerData.email || '',
+      gender: customerData.gender || '',
+      isVerified: false,
+      loyaltyPoints: 0,
+      totalVisits: 0,
+      totalSpent: 0
+    };
   } catch (error) {
     console.error('Error adding customer:', error);
     throw error;
@@ -1497,19 +1508,29 @@ export const calculateStaffCommission = async (staffId, month = new Date()) => {
 
 export const deleteAttendanceRecord = async (staffName, dateStr) => {
   try {
+    console.log('deleteAttendanceRecord called with:', { staffName, dateStr });
+    
     const staffData = await getDocument('staffAttendance', staffName);
-    if (staffData && staffData[dateStr]) {
-      delete staffData[dateStr];
-      // Use setDoc with merge to ensure proper update
-      const docRef = doc(db, 'staffAttendance', staffName);
-      await setDoc(docRef, staffData, { merge: true });
-      console.log('Attendance record deleted for', staffName, 'on', dateStr);
-    } else {
-      throw new Error('Attendance record not found');
+    console.log('Current staff data:', staffData);
+    
+    if (!staffData) {
+      throw new Error('Staff record not found in database');
     }
+    
+    if (!staffData[dateStr]) {
+      throw new Error(`Attendance record not found for date: ${dateStr}`);
+    }
+    
+    // Use updateDoc with deleteField to properly remove the field from Firestore
+    const docRef = doc(db, 'staffAttendance', staffName);
+    await updateDoc(docRef, {
+      [dateStr]: deleteField()
+    });
+    
+    console.log('Attendance record deleted successfully for', staffName, 'on', dateStr);
   } catch (error) {
     console.error('Error deleting attendance record:', error);
-    throw error;
+    throw new Error(`Failed to delete record: ${error.message}`);
   }
 };
 
@@ -1671,23 +1692,32 @@ export const markAttendanceManual = async (staffId, staffName, date, punchInTime
       staffData = { staffId, createdAt: Timestamp.now() };
     }
 
-    const punchInDate = typeof punchInTime === 'string' ? new Date(punchInTime) : punchInTime;
-    const punchOutDate = typeof punchOutTime === 'string' ? new Date(punchOutTime) : punchOutTime;
-    const workHours = (punchOutDate - punchInDate) / (1000 * 60 * 60);
-
-    staffData[dateStr] = {
+    // Only calculate work hours and save punch times for present/half-day
+    let recordData = {
       staffId: staffId,
-      punchInTime: Timestamp.fromDate(punchInDate),
-      punchOutTime: Timestamp.fromDate(punchOutDate),
-      workHours: parseFloat(workHours.toFixed(2)),
       status: status,
       manuallyAdded: true,
       addedAt: Timestamp.now()
     };
 
+    if (punchInTime && punchOutTime && ['present', 'half-day'].includes(status)) {
+      const punchInDate = typeof punchInTime === 'string' ? new Date(punchInTime) : punchInTime;
+      const punchOutDate = typeof punchOutTime === 'string' ? new Date(punchOutTime) : punchOutTime;
+      const workHours = (punchOutDate - punchInDate) / (1000 * 60 * 60);
+
+      recordData.punchInTime = Timestamp.fromDate(punchInDate);
+      recordData.punchOutTime = Timestamp.fromDate(punchOutDate);
+      recordData.workHours = parseFloat(workHours.toFixed(2));
+    } else if (status === 'absent' || status === 'leave') {
+      // For absent/leave, set work hours to 0 and don't include punch times
+      recordData.workHours = 0;
+    }
+
+    staffData[dateStr] = recordData;
+
     const docRef = doc(db, 'staffAttendance', staffName);
     await setDoc(docRef, staffData, { merge: true });
-    console.log('Attendance manually marked for', staffName, 'on', dateStr);
+    console.log('Attendance manually marked for', staffName, 'on', dateStr, 'with status:', status);
     return dateStr;
   } catch (error) {
     console.error('Error marking attendance manually:', error);

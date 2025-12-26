@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, X, Search } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Search, DollarSign, TrendingUp } from 'lucide-react';
 import { getStaff, addStaff, updateStaff, uploadServiceImage } from '../utils/firebaseUtils';
 
 const STAFF_ROLES = [
@@ -32,7 +32,12 @@ const Staff = () => {
             facebook: '',
             instagram: '',
             twitter: ''
-        }
+        },
+        // NEW: Salary fields
+        salaryType: 'hourly', // 'hourly' or 'fixed'
+        hourlyRate: 150,
+        baseSalary: 0,
+        bonusPercentage: 5
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -95,7 +100,12 @@ const Staff = () => {
                         facebook: newMember.socials.facebook || '',
                         instagram: newMember.socials.instagram || '',
                         twitter: newMember.socials.twitter || ''
-                    }
+                    },
+                    // Include salary fields when updating
+                    salaryType: newMember.salaryType,
+                    hourlyRate: parseFloat(newMember.hourlyRate) || 150,
+                    baseSalary: parseFloat(newMember.baseSalary) || 0,
+                    bonusPercentage: parseFloat(newMember.bonusPercentage) || 5
                 });
                 setEditingMember(null);
             } else {
@@ -113,10 +123,15 @@ const Staff = () => {
                         facebook: newMember.socials.facebook || '',
                         instagram: newMember.socials.instagram || '',
                         twitter: newMember.socials.twitter || ''
-                    }
+                    },
+                    // NEW: Salary data
+                    salaryType: newMember.salaryType,
+                    hourlyRate: parseFloat(newMember.hourlyRate) || 150,
+                    baseSalary: parseFloat(newMember.baseSalary) || 0,
+                    bonusPercentage: parseFloat(newMember.bonusPercentage) || 5
                 });
             }
-            setNewMember({ name: '', role: '', specialties: '', experience: '', bio: '', image: '', socials: { facebook: '', instagram: '', twitter: '' } });
+            setNewMember({ name: '', role: '', specialties: '', experience: '', bio: '', image: '', socials: { facebook: '', instagram: '', twitter: '' }, salaryType: 'hourly', hourlyRate: 150, baseSalary: 0, bonusPercentage: 5 });
             setImagePreview('');
             await fetchTeamMembers();
             setError('');
@@ -158,7 +173,12 @@ const Staff = () => {
                 facebook: member.socials?.facebook || '',
                 instagram: member.socials?.instagram || '',
                 twitter: member.socials?.twitter || ''
-            }
+            },
+            // NEW: Salary fields
+            salaryType: member.salaryType || 'hourly',
+            hourlyRate: member.hourlyRate || 150,
+            baseSalary: member.baseSalary || 0,
+            bonusPercentage: member.bonusPercentage || 5
         });
         setImagePreview(member.image || '');
     };
@@ -183,7 +203,7 @@ const Staff = () => {
 
     const cancelEdit = () => {
         setEditingMember(null);
-        setNewMember({ name: '', role: '', specialties: '', experience: '', bio: '', image: '', socials: { facebook: '', instagram: '', twitter: '' } });
+        setNewMember({ name: '', role: '', specialties: '', experience: '', bio: '', image: '', socials: { facebook: '', instagram: '', twitter: '' }, salaryType: 'hourly', hourlyRate: 150, baseSalary: 0, bonusPercentage: 5 });
         setImagePreview('');
     };
 
@@ -222,6 +242,7 @@ const Staff = () => {
                                     <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Name</th>
                                     <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Role</th>
                                     <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Experience</th>
+                                    <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Salary</th>
                                     <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem', width: '100px' }}></th>
                                 </tr>
                             </thead>
@@ -250,6 +271,9 @@ const Staff = () => {
                                             </span>
                                         </td>
                                         <td style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>{member.experience}</td>
+                                        <td style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--primary)' }}>
+                                            {member.salaryType === 'hourly' ? `₹${member.hourlyRate || 150}/hr` : `₹${member.baseSalary || 0}/mo`}
+                                        </td>
                                         <td>
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                 <button
@@ -274,7 +298,7 @@ const Staff = () => {
                                 ))}
                                 {filteredMembers.length === 0 && (
                                     <tr>
-                                        <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted-foreground)' }}>
+                                        <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted-foreground)' }}>
                                             No staff members found {searchQuery && `matching "${searchQuery}"`}
                                         </td>
                                     </tr>
@@ -402,6 +426,70 @@ const Staff = () => {
                                     rows="3"
                                     style={{ fontFamily: 'inherit', resize: 'vertical' }}
                                 />
+                            </div>
+
+                            <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem' }}>
+                                <h3 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <DollarSign size={16} />
+                                    Salary Configuration
+                                </h3>
+                                
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--muted-foreground)' }}>Salary Type</label>
+                                    <select
+                                        className="input"
+                                        value={newMember.salaryType}
+                                        onChange={(e) => setNewMember({ ...newMember, salaryType: e.target.value })}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <option value="hourly">Hourly Rate</option>
+                                        <option value="fixed">Fixed Monthly Salary</option>
+                                    </select>
+                                </div>
+
+                                {newMember.salaryType === 'hourly' ? (
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--muted-foreground)' }}>Hourly Rate (₹)</label>
+                                        <input
+                                            type="number"
+                                            className="input"
+                                            value={newMember.hourlyRate}
+                                            onChange={(e) => setNewMember({ ...newMember, hourlyRate: parseFloat(e.target.value) || 150 })}
+                                            placeholder="150"
+                                            min="50"
+                                            step="10"
+                                        />
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>Standard: 8 hrs/day, Overtime: 1.5x rate</div>
+                                    </div>
+                                ) : (
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--muted-foreground)' }}>Monthly Salary (₹)</label>
+                                        <input
+                                            type="number"
+                                            className="input"
+                                            value={newMember.baseSalary}
+                                            onChange={(e) => setNewMember({ ...newMember, baseSalary: parseFloat(e.target.value) || 0 })}
+                                            placeholder="20000"
+                                            min="0"
+                                            step="100"
+                                        />
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--muted-foreground)' }}>Performance Bonus (%)</label>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        value={newMember.bonusPercentage}
+                                        onChange={(e) => setNewMember({ ...newMember, bonusPercentage: parseFloat(e.target.value) || 5 })}
+                                        placeholder="5"
+                                        min="0"
+                                        max="20"
+                                        step="0.5"
+                                    />
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>Awarded at 95%+ attendance</div>
+                                </div>
                             </div>
 
                             <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem' }}>

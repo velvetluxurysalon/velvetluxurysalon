@@ -36,6 +36,14 @@ export default function SpecialOffers() {
     }
   };
 
+  const handleBookNow = () => {
+    // Scroll to services or booking
+    const servicesSection = document.getElementById("services");
+    if (servicesSection) {
+      servicesSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   const defaultOffers = [
     {
       id: '1',
@@ -126,7 +134,12 @@ export default function SpecialOffers() {
                   <span>Valid until: {offer.validTo}</span>
                 </div>
 
-                <Button className="w-full">Book Now</Button>
+                <Button 
+                  onClick={handleBookNow}
+                  className="w-full cursor-pointer"
+                >
+                  Book Now
+                </Button>
               </div>
             </Card>
           ))}

@@ -139,13 +139,13 @@ export default function FAQSection() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="tel:+1234567890" 
+              href="tel:9345678646" 
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
-              Call Us: +1 (234) 567-890
+              Call Us: 93456 78646
             </a>
             <a 
-              href="mailto:info@luxesalon.com" 
+              href="mailto:Velvetluxurysalon@gmail.com" 
               className="px-6 py-3 bg-white text-purple-600 border-2 border-purple-600 rounded-lg hover:bg-purple-50 transition-colors"
             >
               Email Us

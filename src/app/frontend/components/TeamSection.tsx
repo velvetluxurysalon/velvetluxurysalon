@@ -14,7 +14,11 @@ interface TeamMember {
   image: string;
 }
 
-export default function TeamSection() {
+interface TeamSectionProps {
+  onBookStylist?: (stylistId: string) => void;
+}
+
+export default function TeamSection({ onBookStylist }: TeamSectionProps) {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -112,7 +116,9 @@ export default function TeamSection() {
                   </button>
                 </div>
 
-                <Button className="w-full">Book with {member.name.split(' ')[0]}</Button>
+                <Button className="w-full" onClick={() => onBookStylist && onBookStylist(member.id)}>
+                  Book with {member.name.split(' ')[0]}
+                </Button>
               </div>
             </Card>
           ))}

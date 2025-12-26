@@ -123,19 +123,34 @@ export default function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               variant="ghost"
-              className="border border-white text-white bg-white/10 px-6 md:px-8 py-3 md:py-6 text-sm md:text-base hover:bg-white/20"
+              className="border border-white text-white bg-white/10 px-6 md:px-8 py-3 md:py-6 text-sm md:text-base hover:bg-white/20 font-semibold"
               onClick={handlePrimaryAction}
             >
               <Calendar className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-              {displayData.ctaButtonText}
+              {displayData.ctaButtonText || 'Book Now !'}
             </Button>
             <Button
               size="lg"
               variant="ghost"
-              className="border border-white text-white bg-white/10 px-6 md:px-8 py-3 md:py-6 text-sm md:text-base hover:bg-white/20"
+              className="border border-white text-white bg-white/10 px-6 md:px-8 py-3 md:py-6 text-sm md:text-base hover:bg-white/20 font-semibold"
+              onClick={() => {
+                const scrollToServices = () => {
+                  const servicesSection = document.getElementById("services");
+                  if (servicesSection) {
+                    const headerOffset = 80;
+                    const elementPosition = servicesSection.getBoundingClientRect().top + window.pageYOffset;
+                    const offsetPosition = elementPosition - headerOffset;
+                    window.scrollTo({
+                      top: offsetPosition,
+                      behavior: "smooth"
+                    });
+                  }
+                };
+                requestAnimationFrame(scrollToServices);
+              }}
             >
               Explore Services
             </Button>

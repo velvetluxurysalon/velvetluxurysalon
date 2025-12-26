@@ -20,6 +20,8 @@ import VisitDetail from './pages/VisitDetail';
 // @ts-ignore
 import Staff from './pages/Staff';
 // @ts-ignore
+import StaffSalaryAnalytics from './pages/StaffSalaryAnalytics';
+// @ts-ignore
 import Products from './pages/Products';
 // @ts-ignore
 import Loyalty from './pages/Loyalty';
@@ -41,7 +43,7 @@ import FAQsContent from './pages/FAQsContent';
 import OffersContent from './pages/OffersContent';
 // @ts-ignore
 import NewsletterContent from './pages/NewsletterContent';
-import { Scissors, LogOut, Users, ClipboardList, BarChart3, Package, UserCog, Menu, X, Calendar, Gift, Star, Clock, FileText, Phone, Mail } from 'lucide-react';
+import { Scissors, LogOut, Users, ClipboardList, BarChart3, Package, UserCog, Menu, X, Calendar, Gift, Star, Clock, FileText, Phone, Mail, DollarSign } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -85,6 +87,7 @@ const DashboardLayout = () => {
     { path: '/admin/dashboard', icon: BarChart3, label: 'Dashboard' },
     { path: '/admin/services', icon: Scissors, label: 'Services' },
     { path: '/admin/staff', icon: UserCog, label: 'Staff' },
+    { path: '/admin/salary-analytics', icon: DollarSign, label: 'Payroll' },
     { path: '/admin/products', icon: Package, label: 'Inventory' },
     { path: '/admin/customers', icon: Users, label: 'Customers' },
     { path: '/admin/appointments', icon: Calendar, label: 'Appointments' },
@@ -218,6 +221,7 @@ const DashboardLayout = () => {
               <Route path="/services" element={<Services />} />
               <Route path="/products" element={<Products />} />
               <Route path="/staff" element={<Staff />} />
+              <Route path="/salary-analytics" element={<StaffSalaryAnalytics />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/appointments" element={<Appointments />} />

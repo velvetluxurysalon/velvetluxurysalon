@@ -16,6 +16,7 @@ interface BlogPost {
 export default function BlogSection() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [, setSelectedPost] = useState<BlogPost | null>(null);
 
   useEffect(() => {
     loadBlogPosts();
@@ -32,6 +33,17 @@ export default function BlogSection() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReadMore = (post: BlogPost) => {
+    setSelectedPost(post);
+    // In a real app, you might navigate to a blog detail page
+    // For now, we could open a modal or scroll to the post
+  };
+
+  const handleViewAllArticles = () => {
+    // Navigate to full blog page or show all posts
+    window.location.href = "#blog";
   };
 
   const defaultBlogPosts: BlogPost[] = [];
@@ -97,7 +109,10 @@ export default function BlogSection() {
                   </div>
                 </div>
 
-                <button className="flex items-center gap-2 text-purple-600 hover:gap-3 transition-all">
+                <button 
+                  onClick={() => handleReadMore(post)}
+                  className="flex items-center gap-2 text-purple-600 hover:gap-3 transition-all hover:text-purple-700 font-medium"
+                >
                   Read More
                   <ArrowRight className="w-4 h-4" />
                 </button>
@@ -107,7 +122,10 @@ export default function BlogSection() {
         </div>
 
         <div className="text-center mt-12">
-          <button className="px-8 py-3 border-2 border-purple-600 text-purple-600 rounded-lg hover:bg-purple-600 hover:text-white transition-colors">
+          <button 
+            onClick={handleViewAllArticles}
+            className="px-8 py-3 border-2 border-purple-600 text-purple-600 rounded-lg hover:bg-purple-600 hover:text-white transition-colors font-semibold cursor-pointer"
+          >
             View All Articles
           </button>
         </div>
