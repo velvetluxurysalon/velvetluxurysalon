@@ -747,6 +747,32 @@ export const getVisitsByCustomer = async (customerId) => {
   }
 };
 
+export const calculateCustomerTotalSpent = async (customerId) => {
+  try {
+    // Get all visits for the customer
+    const visits = await getVisitsByCustomer(customerId);
+    
+    // Calculate total from all invoices in visits
+    const totalSpent = visits.reduce((sum, visit) => {
+      const invoiceTotal = visit.invoice?.total || 0;
+      return sum + invoiceTotal;
+    }, 0);
+    
+    // Update customer's totalSpent field
+    const customer = await getDocument('customers', customerId);
+    if (customer) {
+      await updateDocument('customers', customerId, {
+        totalSpent: parseFloat(totalSpent.toFixed(2))
+      });
+    }
+    
+    return totalSpent;
+  } catch (error) {
+    console.error('Error calculating customer total spent:', error);
+    throw error;
+  }
+};
+
 export const addVisitItem = async (visitId, item) => {
   try {
     const visit = await getDocument('visits', visitId);

@@ -108,6 +108,22 @@ const CheckInModal = ({ onClose, onCheckIn }) => {
     }
   };
 
+  const openNewCustomerForm = () => {
+    // Check if search term looks like a phone number (mostly digits)
+    const isPhoneNumber = /^\d+$/.test(searchTerm.replace(/[\s\-()]/g, ''));
+    
+    setShowNewCustomerForm(true);
+    setShowDropdown(false);
+    
+    if (isPhoneNumber) {
+      // If search term is a phone number, pre-fill phone field
+      setNewCustomerData({ name: '', phone: searchTerm, email: '' });
+    } else {
+      // Otherwise pre-fill name field with search term
+      setNewCustomerData({ name: searchTerm, phone: '', email: '' });
+    }
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -185,7 +201,7 @@ const CheckInModal = ({ onClose, onCheckIn }) => {
             }}>
               Select Customer
             </label>
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', zIndex: 20 }}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -229,7 +245,7 @@ const CheckInModal = ({ onClose, onCheckIn }) => {
                   borderRadius: '0 0 0.75rem 0.75rem',
                   maxHeight: '300px',
                   overflowY: 'auto',
-                  zIndex: 10,
+                  zIndex: 50,
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
                 }}>
                   {filteredCustomers.map((customer, index) => (
@@ -260,61 +276,93 @@ const CheckInModal = ({ onClose, onCheckIn }) => {
                   ))}
                 </div>
               )}
+
+              {/* NO RESULTS DROPDOWN */}
+              {showDropdown && filteredCustomers.length === 0 && searchTerm && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: 'white',
+                  border: '1px solid #d1d5db',
+                  borderTop: 'none',
+                  borderRadius: '0 0 0.75rem 0.75rem',
+                  padding: '1rem',
+                  textAlign: 'center',
+                  color: '#6b7280',
+                  fontSize: '0.875rem',
+                  zIndex: 50,
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <div style={{ marginBottom: '0.75rem' }}>No customers found</div>
+                  <button
+                    onClick={openNewCustomerForm}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 1rem',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = '0.9';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = '1';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    <Plus size={16} />
+                    Add New Customer
+                  </button>
+                </div>
+              )}
             </div>
 
-            {showDropdown && filteredCustomers.length === 0 && searchTerm && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                background: 'white',
-                border: '1px solid #d1d5db',
-                borderTop: 'none',
-                borderRadius: '0 0 0.75rem 0.75rem',
-                padding: '1rem',
-                textAlign: 'center',
-                color: '#6b7280',
-                fontSize: '0.875rem',
-                zIndex: 10,
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-              }}>
-                <div style={{ marginBottom: '0.75rem' }}>No customers found</div>
-                <button
-                  onClick={() => {
-                    setShowNewCustomerForm(true);
-                    setShowDropdown(false);
-                    setNewCustomerData({ name: searchTerm, phone: '', email: '' });
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 1rem',
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = '0.9';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = '1';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <Plus size={16} />
-                  Add New Customer
-                </button>
-              </div>
+            {/* QUICK ADD BUTTON - Always visible as fallback */}
+            {!selectedCustomer && searchTerm && filteredCustomers.length === 0 && !showNewCustomerForm && (
+              <button
+                onClick={openNewCustomerForm}
+                style={{
+                  width: '100%',
+                  marginTop: '0.75rem',
+                  padding: '0.75rem 1rem',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = '0.9';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '1';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <Plus size={16} />
+                Add New Customer: {searchTerm}
+              </button>
             )}
           </div>
 

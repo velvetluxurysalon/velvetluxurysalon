@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { User, Phone, Calendar, DollarSign, Search, Printer, Trash } from 'lucide-react';
-import { getCustomers, deleteCustomer, searchCustomers, getVisitsByCustomer, convertTimestampToDate } from '../utils/firebaseUtils';
+import { User, Phone, Calendar, DollarSign, Search, Trash } from 'lucide-react';
+import { getCustomers, deleteCustomer, searchCustomers, getVisitsByCustomer, convertTimestampToDate, calculateCustomerTotalSpent } from '../utils/firebaseUtils';
 
 const Customers = () => {
     const [customers, setCustomers] = useState([]);
@@ -216,8 +216,11 @@ const Customers = () => {
                                     </td>
                                     <td>{customer.visits.length}</td>
                                     <td style={{ textAlign: 'right', fontWeight: '600', color: 'var(--primary)' }}>
-                                        {/* Calculate total spent from visits with paid invoices */}
-                                        ₹{customer.visits.reduce((sum, v) => sum + (v.invoice?.status === 'PAID' ? v.invoice.total : 0), 0).toFixed(2)}
+                                        {/* Calculate total spent from visits totalAmount */}
+                                        ₹{(customer.visits || []).reduce((sum, v) => {
+                                            const total = v.totalAmount || 0;
+                                            return sum + total;
+                                        }, 0).toFixed(2)}
                                     </td>
                                     <td>
                                         <span style={{
@@ -268,36 +271,41 @@ const Customers = () => {
                             </button>
                         </div>
                         <div className="card-content">
+                            {/* CUSTOMER SUMMARY STATS */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                                <div style={{ padding: '1rem', background: 'var(--secondary)', borderRadius: 'var(--radius)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Total Visits</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--primary)' }}>{selectedCustomer.visits.length}</div>
+                                </div>
+                                <div style={{ padding: '1rem', background: 'var(--secondary)', borderRadius: 'var(--radius)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Total Spent</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#10b981' }}>₹{(selectedCustomer.visits || []).reduce((sum, v) => sum + (v.totalAmount || 0), 0).toFixed(2)}</div>
+                                </div>
+                                <div style={{ padding: '1rem', background: 'var(--secondary)', borderRadius: 'var(--radius)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Loyalty Points</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#a855f7' }}>{selectedCustomer.loyaltyPoints || 0}</div>
+                                </div>
+                            </div>
+
                             <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--primary)' }}>Visit History</h3>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 {selectedCustomer.visits.map(visit => (
                                     <div key={visit.id} style={{ padding: '1rem', background: 'var(--secondary)', borderRadius: 'var(--radius)', border: '1px solid var(--glass-border)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                            <span style={{ fontWeight: '500' }}>{new Date(visit.date).toLocaleString()}</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <span style={{
-                                                    fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px',
-                                                    background: visit.status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-                                                    color: visit.status === 'COMPLETED' ? '#10b981' : '#f59e0b'
-                                                }}>
-                                                    {visit.status.replace('_', ' ')}
-                                                </span>
-                                                {visit.invoice && (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleDownloadReceipt(visit); }}
-                                                        style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '0.2rem' }}
-                                                        title="Download Receipt"
-                                                    >
-                                                        <Printer size={16} />
-                                                    </button>
-                                                )}
-                                            </div>
+                                            <span style={{ fontWeight: '500' }}>{convertTimestampToDate(visit.date)?.toLocaleString() || 'Invalid Date'}</span>
+                                            <span style={{
+                                                fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px',
+                                                background: visit.status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                                                color: visit.status === 'COMPLETED' ? '#10b981' : '#f59e0b'
+                                            }}>
+                                                {visit.status.replace('_', ' ')}
+                                            </span>
                                         </div>
                                         <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>
-                                            {visit.items.map(i => i.service?.name || i.product?.name).join(', ')}
+                                            {visit.items?.map(i => i.name).join(', ')}
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                                            <span>Total: <span style={{ color: 'var(--foreground)' }}>₹{visit.invoice?.total.toFixed(2) || '0.00'}</span></span>
+                                            <span>Total: <span style={{ color: 'var(--foreground)' }}>₹{(visit.totalAmount || 0).toFixed(2)}</span></span>
                                             {visit.feedback && (
                                                 <span style={{ color: 'var(--primary)' }}>★ {visit.feedback.rating}</span>
                                             )}

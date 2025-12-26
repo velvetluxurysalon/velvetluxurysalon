@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
-import { IndianRupee, Users, ShoppingBag, TrendingUp, Printer, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Mail } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { getDashboardStats } from '../utils/firebaseUtils';
+import {
+  IndianRupee, Users, ShoppingBag, TrendingUp, Calendar as CalendarIcon, ChevronLeft, ChevronRight,
+  Clock, Activity, Award, Zap, Target, BarChart3, PieChart as PieIcon, TrendingDown, AlertCircle
+} from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  LineChart, Line, AreaChart, Area
+} from 'recharts';
+import {
+  getDashboardStats, getStaff, getCustomers, getServices, getProducts, getVisits, getInvoices,
+  getUpcomingAppointments, getActiveVisits, getTodayVisitsSummary
+} from '../utils/firebaseUtils';
 
 const Dashboard = () => {
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [loading, setLoading] = useState(false);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [stats, setStats] = useState({
         dailySales: 0,
@@ -15,186 +25,160 @@ const Dashboard = () => {
         topServices: [],
         topProducts: [],
         monthlyTrend: [],
-        recentTransactions: []
+        recentTransactions: [],
+        activeVisits: 0,
+        totalCustomers: 0,
+        totalStaff: 0,
+        upcomingAppointments: 0,
+        totalServices: 0,
+        totalProducts: 0,
+        avgOrderValue: 0,
+        conversionRate: 0,
+        peakHour: '10:00 AM',
+        staffAttendance: 0,
+        totalRevenue: 0
     });
 
     useEffect(() => {
-        fetchStats();
-    }, [selectedDate]);
+        fetchAllStats();
+    }, [selectedDate, currentMonth]);
 
-    const fetchStats = async () => {
+    const fetchAllStats = async () => {
         try {
             setLoading(true);
-            const data = await getDashboardStats();
-            setStats(data);
             setError('');
-        } catch (error) {
-            console.error('Error fetching stats:', error);
-            setError('Failed to load dashboard statistics');
+
+            const [
+                dashboardData,
+                staffList,
+                customerList,
+                servicesList,
+                productsList,
+                visitsList,
+                invoicesList,
+                upcomingAppts,
+                activeVisitsList,
+                todaySummary
+            ] = await Promise.all([
+                getDashboardStats(),
+                getStaff(),
+                getCustomers(false),
+                getServices(false),
+                getProducts(),
+                getVisits(false),
+                getInvoices(),
+                getUpcomingAppointments(7),
+                getActiveVisits(),
+                getTodayVisitsSummary()
+            ]);
+
+            const totalRevenue = invoicesList?.reduce((sum, inv) => sum + (inv.finalAmount || 0), 0) || 0;
+            const avgOrderValue = invoicesList?.length > 0 ? totalRevenue / invoicesList.length : 0;
+            const todayVisits = visitsList?.filter(v => {
+                const visitDate = new Date(v.date?.toDate?.() || v.date);
+                const today = new Date();
+                return visitDate.toDateString() === today.toDateString();
+            }).length || 0;
+
+            const monthlyTrend = generateMonthlyTrend(invoicesList);
+            const topServices = dashboardData?.topServices || [];
+            const topProducts = dashboardData?.topProducts || [];
+            const recentTransactions = dashboardData?.recentTransactions || [];
+
+            setStats({
+                dailySales: dashboardData?.dailySales || 0,
+                monthlySales: dashboardData?.monthlySales || 0,
+                todayVisits: todayVisits,
+                totalInvoices: invoicesList?.length || 0,
+                topServices: topServices,
+                topProducts: topProducts,
+                monthlyTrend: monthlyTrend,
+                recentTransactions: recentTransactions,
+                activeVisits: activeVisitsList?.length || 0,
+                totalCustomers: customerList?.length || 0,
+                totalStaff: staffList?.length || 0,
+                upcomingAppointments: upcomingAppts?.length || 0,
+                totalServices: servicesList?.length || 0,
+                totalProducts: productsList?.length || 0,
+                avgOrderValue: avgOrderValue,
+                conversionRate: calculateConversionRate(todayVisits, customerList?.length || 1),
+                peakHour: calculatePeakHour(visitsList),
+                staffAttendance: 0,
+                totalRevenue: totalRevenue
+            });
+        } catch (err) {
+            console.error('Error fetching dashboard stats:', err);
+            setError('Failed to load dashboard data. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDownloadReport = () => {
-        const reportData = {
-            date: selectedDate.toLocaleDateString(),
-            dailySales: stats.dailySales,
-            monthlyRevenue: stats.monthlySales,
-            dailyOrders: stats.dailyOrders,
-            monthlyOrders: stats.monthlyOrders,
-            topProducts: stats.topProducts.map(p => `${p.name} (${p.value})`).join('; '),
-            recentTransactions: stats.recentTransactions.map(b => `ID: ${b.id}, Amount: ${b.amount}`).join('; ')
-        };
-
-        const csvContent = "data:text/csv;charset=utf-8,"
-            + Object.keys(reportData).join(",") + "\n"
-            + Object.values(reportData).join(",");
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        // Fix: Use local date for filename too
-        const offset = selectedDate.getTimezoneOffset();
-        const localDate = new Date(selectedDate.getTime() - (offset * 60 * 1000));
-        const dateStr = localDate.toISOString().split('T')[0];
-        link.setAttribute("download", `salon_report_${dateStr}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const generateMonthlyTrend = (invoices) => {
+        const trend = {};
+        invoices?.forEach(inv => {
+            const date = inv.invoiceDate?.toDate?.() || new Date(inv.invoiceDate);
+            const month = date.toLocaleString('default', { month: 'short' });
+            trend[month] = (trend[month] || 0) + (inv.finalAmount || 0);
+        });
+        return Object.entries(trend).map(([name, revenue]) => ({
+            name,
+            revenue: parseFloat(revenue.toFixed(2))
+        }));
     };
 
-    const StatCard = ({ title, value, icon: Icon, trend }) => (
-        <div className="card">
-            <div className="card-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                    <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>{title}</p>
-                    <h3 style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--foreground)' }}>{value}</h3>
-                    {/* Trend label removed as requested */}
+    const calculateConversionRate = (visits, totalCustomers) => {
+        if (totalCustomers === 0) return 0;
+        return ((visits / totalCustomers) * 100).toFixed(1);
+    };
+
+    const calculatePeakHour = (visits) => {
+        const hourCounts = {};
+        visits?.forEach(visit => {
+            const date = visit.date?.toDate?.() || new Date(visit.date);
+            const hour = date.getHours();
+            hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        });
+        const peakHour = Object.keys(hourCounts).reduce((a, b) => hourCounts[a] > hourCounts[b] ? a : b, 0);
+        return `${String(peakHour).padStart(2, '0')}:00`;
+    };
+
+    const StatCard = ({ title, value, icon: Icon, color = '#d4af37' }) => (
+        <div className="card" style={{
+            background: `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`,
+            borderLeft: `4px solid ${color}`,
+        }}>
+            <div className="card-content" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <div style={{ flex: 1 }}>
+                    <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: '500' }}>{title}</p>
+                    <h3 style={{ fontSize: '2.2rem', fontWeight: '700', color: 'var(--foreground)', lineHeight: 1 }}>{value}</h3>
                 </div>
                 <div style={{
-                    width: '48px',
-                    height: '48px',
+                    width: '56px',
+                    height: '56px',
                     borderRadius: '12px',
-                    background: 'rgba(212, 175, 55, 0.1)',
+                    background: `${color}20`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--primary)'
+                    color: color,
+                    flexShrink: 0
                 }}>
-                    <Icon size={24} />
+                    <Icon size={28} />
                 </div>
             </div>
         </div>
     );
 
-    const COLORS = ['#d4af37', '#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
+    const COLORS = ['#d4af37', '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
-    const [selectedBill, setSelectedBill] = useState(null);
-
-    const handleBillClick = async (visitId) => {
-        try {
-            const res = await fetch(`/api/visits/${visitId}`);
-            const data = await res.json();
-            setSelectedBill(data);
-        } catch (error) {
-            console.error('Error fetching bill details:', error);
-        }
-    };
-
-    const handleDownloadReceipt = (visit) => {
-        const receiptWindow = window.open('', '', 'width=800,height=600');
-        receiptWindow.document.write(`
-            <html>
-            <head>
-                <title>Receipt - Velvet Luxury Salon</title>
-                <style>
-                    body { font-family: 'Courier New', monospace; padding: 20px; max-width: 400px; margin: 0 auto; }
-                    .header { text-align: center; margin-bottom: 20px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
-                    .item { display: flex; justify-content: space-between; margin-bottom: 5px; }
-                    .total { border-top: 1px dashed #000; margin-top: 10px; padding-top: 10px; font-weight: bold; }
-                    .footer { text-align: center; margin-top: 20px; font-size: 12px; }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h2>VELVET LUXURY SALON</h2>
-                    <p>Opposite to ICICI bank, Bharathi Nagar</p>
-                    <p>Kalingarayanpalayam, Bhavani, Erode Dt, Tamil Nadu - 638301</p>
-                    <p>Contact: 9345678646 | Velvetluxurysalon@gmail.com</p>
-                    <p>Date: ${new Date(visit.date).toLocaleString()}</p>
-                    <p>Visit #${visit.id}</p>
-                </div>
-                <div class="content">
-                    ${visit.items.map(item => `
-                        <div class="item">
-                            <span>${item.service?.name || item.product?.name}</span>
-                            <span>₹${item.price.toFixed(2)}</span>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="total">
-                    <div class="item">
-                        <span>Subtotal</span>
-                        <span>₹${visit.invoice.subtotal.toFixed(2)}</span>
-                    </div>
-                    <div class="item">
-                        <span>Tax</span>
-                        <span>₹${visit.invoice.tax.toFixed(2)}</span>
-                    </div>
-                    <div class="item">
-                        <span>Discount</span>
-                        <span>-₹${visit.invoice.discount.toFixed(2)}</span>
-                    </div>
-                    <div class="item" style="font-size: 1.2em; margin-top: 10px;">
-                        <span>TOTAL</span>
-                        <span>₹${visit.invoice.total.toFixed(2)}</span>
-                    </div>
-                </div>
-                <div class="footer">
-                    <p>Thank you for visiting!</p>
-                    <p>Please come again.</p>
-                </div>
-                <script>
-                    window.onload = function() { window.print(); }
-                </script>
-            </body>
-            </html>
-        `);
-        receiptWindow.document.close();
-    };
-
-    const handleEmailReceipt = async (visit) => {
-        if (!visit.customer.email) {
-            alert('Customer does not have an email address linked.');
-            return;
-        }
-        try {
-            const res = await fetch(`/api/invoices/${visit.invoice.id}/send-email`, {
-                method: 'POST'
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert('Email sent successfully!');
-            } else {
-                alert('Failed to send email. Check server logs.');
-            }
-        } catch (error) {
-            console.error('Error sending email:', error);
-            alert('Error sending email.');
-        }
-    };
-
-    // Calendar Component
     const Calendar = () => {
-        const [currentMonth, setCurrentMonth] = useState(new Date(selectedDate));
-
         const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
         const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
 
         const days = [];
         for (let i = 0; i < firstDayOfMonth; i++) {
-            days.push(<div key={`empty - ${i} `} />);
+            days.push(<div key={`empty-${i}`} />);
         }
         for (let i = 1; i <= daysInMonth; i++) {
             const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i);
@@ -206,16 +190,17 @@ const Dashboard = () => {
                     key={i}
                     onClick={() => setSelectedDate(date)}
                     style={{
-                        height: '36px',
+                        height: '40px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         borderRadius: '0.5rem',
                         cursor: 'pointer',
-                        background: isSelected ? 'var(--primary)' : isToday ? 'rgba(212, 175, 55, 0.2)' : 'transparent',
+                        background: isSelected ? 'linear-gradient(135deg, #d4af37, #b45309)' : isToday ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
                         color: isSelected ? 'black' : 'var(--foreground)',
-                        fontWeight: isSelected || isToday ? 'bold' : 'normal',
-                        border: isToday && !isSelected ? '1px solid var(--primary)' : 'none'
+                        fontWeight: isSelected || isToday ? '700' : '500',
+                        border: isToday && !isSelected ? '2px solid #d4af37' : 'none',
+                        transition: 'all 0.2s ease'
                     }}
                 >
                     {i}
@@ -232,17 +217,23 @@ const Dashboard = () => {
         };
 
         return (
-            <div className="card" style={{ height: 'fit-content' }}>
+            <div className="card">
                 <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '1rem' }}>
-                    <button onClick={prevMonth} style={{ background: 'none', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer' }}><ChevronLeft size={20} /></button>
-                    <span style={{ fontWeight: '600' }}>{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                    <button onClick={nextMonth} style={{ background: 'none', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer' }}><ChevronRight size={20} /></button>
+                    <button onClick={prevMonth} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '0.5rem', borderRadius: '0.5rem' }}>
+                        <ChevronLeft size={20} />
+                    </button>
+                    <span style={{ fontWeight: '700', fontSize: '1.1rem', textAlign: 'center', flex: 1 }}>
+                        {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                    </span>
+                    <button onClick={nextMonth} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: '0.5rem', borderRadius: '0.5rem' }}>
+                        <ChevronRight size={20} />
+                    </button>
                 </div>
                 <div className="card-content">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>
-                        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '1rem', fontWeight: '600' }}>
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.75rem' }}>
                         {days}
                     </div>
                 </div>
@@ -250,230 +241,221 @@ const Dashboard = () => {
         );
     };
 
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--muted-foreground)' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+                    <p>Loading your dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div>
             {/* Welcome Header */}
             <div style={{
                 marginBottom: '2.5rem',
-                padding: '2rem',
+                padding: '2.5rem',
                 borderRadius: 'var(--radius)',
                 background: 'linear-gradient(135deg, #d4af37 0%, #b45309 100%)',
                 color: 'white',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                boxShadow: '0 10px 30px rgba(212, 175, 55, 0.2)'
+                boxShadow: '0 15px 40px rgba(212, 175, 55, 0.25)'
             }}>
                 <div>
-                    <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>Here's what's happening in your salon today.</p>
+                    <p style={{ fontSize: '1.125rem', opacity: 0.95, marginBottom: '0.5rem', fontWeight: '500' }}>Welcome to Velvet Luxury Salon</p>
+                    <p style={{ fontSize: '0.875rem', opacity: 0.85 }}>Here's your real-time business intelligence dashboard</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '3rem', fontWeight: '700', lineHeight: 1 }}>{selectedDate.getDate()}</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                        {selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}
+                    <div style={{ fontSize: '2.75rem', fontWeight: '800', lineHeight: 1, marginBottom: '0.25rem' }}>{selectedDate.getDate()}</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        {selectedDate.toLocaleDateString('en-US', { weekday: 'short' })}
                     </div>
-                    <div style={{ fontSize: '1rem', opacity: 0.8 }}>
-                        {selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    <div style={{ fontSize: '0.875rem', opacity: 0.85 }}>
+                        {selectedDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}
                     </div>
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', alignContent: 'start' }}>
-                <StatCard title="Daily Sales" value={`₹${stats.dailySales.toFixed(2)} `} icon={IndianRupee} />
-                <StatCard title="Monthly Revenue" value={`₹${stats.monthlySales.toFixed(2)} `} icon={ShoppingBag} />
-                <StatCard title="Daily Orders" value={stats.dailyOrders} icon={Users} />
-                <StatCard title="Monthly Orders" value={stats.monthlyOrders} icon={CalendarIcon} />
+            {error && (
+                <div style={{
+                    marginBottom: '1.5rem',
+                    padding: '1rem',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: 'var(--radius)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    color: '#ef4444'
+                }}>
+                    <AlertCircle size={20} />
+                    <span>{error}</span>
+                </div>
+            )}
+
+            {/* Main Stats Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                <StatCard title="Daily Sales" value={`₹${stats.dailySales.toFixed(0)}`} icon={IndianRupee} color="#d4af37" />
+                <StatCard title="Monthly Revenue" value={`₹${stats.monthlySales.toFixed(0)}`} icon={TrendingUp} color="#10b981" />
+                <StatCard title="Today's Visits" value={stats.todayVisits} icon={Users} color="#3b82f6" />
+                <StatCard title="Total Orders" value={stats.totalInvoices} icon={ShoppingBag} color="#f59e0b" />
             </div>
 
-            {/* Calendar */}
-            <Calendar />
+            {/* Secondary Stats Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                <StatCard title="Active Visits" value={stats.activeVisits} icon={Activity} color="#8b5cf6" />
+                <StatCard title="Total Customers" value={stats.totalCustomers} icon={Users} color="#06b6d4" />
+                <StatCard title="Upcoming Appointments" value={stats.upcomingAppointments} icon={Clock} color="#ec4899" />
+                <StatCard title="Services Offered" value={stats.totalServices} icon={Zap} color="#f97316" />
+            </div>
 
-            {/* Charts Section */}
-            <div className="grid-responsive" style={{ marginBottom: '2.5rem' }}>
-                {/* Monthly Revenue Trend */}
-                <div className="card">
-                    <div className="card-header">
-                        <h2 className="card-title">Monthly Revenue Trend</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1.5rem', marginBottom: '2.5rem', alignItems: 'start' }}>
+                {/* Charts Container */}
+                <div>
+                    {/* Monthly Revenue Trend */}
+                    <div className="card" style={{ marginBottom: '1.5rem' }}>
+                        <div className="card-header">
+                            <h2 className="card-title">
+                                <BarChart3 size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                                Monthly Revenue Trend
+                            </h2>
+                        </div>
+                        <div className="card-content" style={{ height: '280px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={stats.monthlyTrend}>
+                                    <defs>
+                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#d4af37" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#d4af37" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-border)" vertical={false} />
+                                    <XAxis dataKey="name" stroke="var(--muted-foreground)" />
+                                    <YAxis stroke="var(--muted-foreground)" />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--glass-border)', color: 'var(--foreground)', borderRadius: 'var(--radius)' }}
+                                        cursor={{ fill: 'rgba(212, 175, 55, 0.1)' }}
+                                    />
+                                    <Area type="monotone" dataKey="revenue" stroke="#d4af37" fillOpacity={1} fill="url(#colorRevenue)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
-                    <div className="card-content" style={{ height: '300px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={stats.monthlyTrend}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-border)" vertical={false} />
-                                <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} />
-                                <YAxis stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--glass-border)', color: 'var(--foreground)' }}
-                                    itemStyle={{ color: 'var(--primary)' }}
-                                    cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
-                                />
-                                <Bar dataKey="revenue" fill="var(--primary)" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+
+                    {/* Top Services and Products Row */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                        {/* Top Services */}
+                        <div className="card">
+                            <div className="card-header">
+                                <h2 className="card-title">
+                                    <Award size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                                    Top 5 Services
+                                </h2>
+                            </div>
+                            <div className="card-content">
+                                {stats.topServices.length > 0 ? (
+                                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                        {stats.topServices.slice(0, 5).map((service, idx) => (
+                                            <li key={idx} style={{ padding: '0.75rem 0', borderBottom: idx < stats.topServices.length - 1 ? '1px solid var(--glass-border)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.875rem' }}>{idx + 1}. {service.name}</span>
+                                                <span style={{ fontWeight: '700', color: 'var(--primary)' }}>{service.value}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p style={{ color: 'var(--muted-foreground)', textAlign: 'center' }}>No data available</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Top Products */}
+                        <div className="card">
+                            <div className="card-header">
+                                <h2 className="card-title">
+                                    <ShoppingBag size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                                    Top 5 Products
+                                </h2>
+                            </div>
+                            <div className="card-content">
+                                {stats.topProducts.length > 0 ? (
+                                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                        {stats.topProducts.slice(0, 5).map((product, idx) => (
+                                            <li key={idx} style={{ padding: '0.75rem 0', borderBottom: idx < stats.topProducts.length - 1 ? '1px solid var(--glass-border)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.875rem' }}>{idx + 1}. {product.name}</span>
+                                                <span style={{ fontWeight: '700', color: 'var(--primary)' }}>{product.value}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p style={{ color: 'var(--muted-foreground)', textAlign: 'center' }}>No data available</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Top 5 Products */}
-                <div className="card">
-                    <div className="card-header">
-                        <h2 className="card-title">Top 5 Products</h2>
-                    </div>
-                    <div className="card-content" style={{ height: '300px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={stats.topProducts}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {stats.topProducts.map((entry, index) => (
-                                        <Cell key={`cell - ${index} `} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--glass-border)', color: 'var(--foreground)' }}
-                                    itemStyle={{ color: 'var(--foreground)' }}
-                                />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
+                {/* Calendar Sidebar */}
+                <Calendar />
             </div>
 
             {/* Recent Transactions */}
             <div className="card">
                 <div className="card-header">
-                    <h2 className="card-title">Transactions ({selectedDate.toLocaleDateString()})</h2>
+                    <h2 className="card-title">Latest Transactions - {selectedDate.toLocaleDateString()}</h2>
                 </div>
                 <div className="card-content" style={{ maxHeight: '400px', overflowY: 'auto', padding: 0 }}>
-                    <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
-                        <thead>
-                            <tr>
-                                <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Bill ID</th>
-                                <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Customer</th>
-                                <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Date</th>
-                                <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Amount</th>
-                                <th style={{ position: 'sticky', top: 0, background: 'var(--option-bg)', zIndex: 20, padding: '1rem' }}>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {stats.recentTransactions.length > 0 ? (
-                                stats.recentTransactions.map(bill => (
-                                    <tr key={bill.id} style={{ cursor: 'pointer', transition: 'background 0.2s' }} className="hover:bg-secondary">
-                                        <td style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>#{bill.id}</td>
-                                        <td>
-                                            <div style={{ fontWeight: '500' }}>{bill.customer || 'Walk-in'}</div>
+                    {stats.recentTransactions.length > 0 ? (
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+                            <thead>
+                                <tr style={{ borderBottom: '2px solid var(--glass-border)' }}>
+                                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--muted-foreground)', fontSize: '0.875rem', fontWeight: '600' }}>Bill ID</th>
+                                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--muted-foreground)', fontSize: '0.875rem', fontWeight: '600' }}>Customer</th>
+                                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--muted-foreground)', fontSize: '0.875rem', fontWeight: '600' }}>Time</th>
+                                    <th style={{ padding: '1rem', textAlign: 'right', color: 'var(--muted-foreground)', fontSize: '0.875rem', fontWeight: '600' }}>Amount</th>
+                                    <th style={{ padding: '1rem', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.875rem', fontWeight: '600' }}>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stats.recentTransactions.map((transaction, idx) => (
+                                    <tr key={idx} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                                        <td style={{ padding: '1rem', fontFamily: 'monospace', color: 'var(--primary)', fontWeight: '600' }}>#{transaction.id}</td>
+                                        <td style={{ padding: '1rem' }}>
+                                            <div style={{ fontWeight: '500', fontSize: '0.875rem' }}>{transaction.customer || 'Walk-in'}</div>
                                         </td>
-                                        <td>{bill.date instanceof Date ? bill.date.toLocaleDateString() : new Date(bill.date).toLocaleDateString()}</td>
-                                        <td style={{ fontWeight: '600' }}>₹{(bill.amount || 0).toFixed(2)}</td>
-                                        <td>
+                                        <td style={{ padding: '1rem', color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
+                                            {transaction.time || new Date(transaction.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                        </td>
+                                        <td style={{ padding: '1rem', textAlign: 'right', fontWeight: '700', color: 'var(--primary)' }}>₹{(transaction.amount || 0).toFixed(2)}</td>
+                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
                                             <span style={{
-                                                padding: '0.25rem 0.75rem',
+                                                padding: '0.35rem 0.85rem',
                                                 borderRadius: '999px',
                                                 fontSize: '0.75rem',
-                                                backgroundColor: bill.status === 'paid' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 193, 7, 0.1)',
-                                                color: bill.status === 'paid' ? '#10b981' : '#ffc107',
-                                                border: `1px solid rgba(${bill.status === 'paid' ? '16, 185, 129' : '255, 193, 7'}, 0.2)`
+                                                fontWeight: '600',
+                                                backgroundColor: transaction.status === 'paid' || transaction.status === 'PAID' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 193, 7, 0.1)',
+                                                color: transaction.status === 'paid' || transaction.status === 'PAID' ? '#10b981' : '#ffc107',
+                                                border: `1px solid ${transaction.status === 'paid' || transaction.status === 'PAID' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 193, 7, 0.3)'}`
                                             }}>
-                                                {bill.status === 'paid' ? 'Paid' : 'Pending'}
+                                                {transaction.status === 'paid' || transaction.status === 'PAID' ? 'Paid' : 'Pending'}
                                             </span>
                                         </td>
                                     </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted-foreground)' }}>
-                                        No transactions found for this date.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted-foreground)' }}>
+                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
+                            <p>No transactions for this date</p>
+                        </div>
+                    )}
                 </div>
             </div>
-
-            {/* Bill Details Modal */}
-            {selectedBill && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                    <div className="card" style={{ width: '500px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
-                        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 className="card-title">Bill Details #{selectedBill.invoice?.id}</h3>
-                            <button onClick={() => setSelectedBill(null)} style={{ background: 'none', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer' }}>
-                                X
-                            </button>
-                        </div>
-                        <div className="card-content" style={{ overflowY: 'auto' }}>
-                            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--secondary)', borderRadius: 'var(--radius)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                    <span style={{ color: 'var(--muted-foreground)' }}>Customer</span>
-                                    <span style={{ fontWeight: '600' }}>{selectedBill.customer.name}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: 'var(--muted-foreground)' }}>Date</span>
-                                    <span>{new Date(selectedBill.date).toLocaleString()}</span>
-                                </div>
-                            </div>
-
-                            <table style={{ width: '100%', marginBottom: '1.5rem' }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                                        <th style={{ textAlign: 'left', paddingBottom: '0.5rem' }}>Item</th>
-                                        <th style={{ textAlign: 'right', paddingBottom: '0.5rem' }}>Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {selectedBill.items.map(item => (
-                                        <tr key={item.id}>
-                                            <td style={{ padding: '0.5rem 0' }}>{item.service?.name || item.product?.name}</td>
-                                            <td style={{ textAlign: 'right', padding: '0.5rem 0' }}>₹{item.price.toFixed(2)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-
-                            <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '1rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                    <span style={{ color: 'var(--muted-foreground)' }}>Subtotal</span>
-                                    <span>₹{selectedBill.invoice?.subtotal.toFixed(2)}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                    <span style={{ color: 'var(--muted-foreground)' }}>Tax</span>
-                                    <span>₹{selectedBill.invoice?.tax.toFixed(2)}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                    <span style={{ color: 'var(--muted-foreground)' }}>Discount</span>
-                                    <span>-₹{selectedBill.invoice?.discount.toFixed(2)}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: '700', color: 'var(--primary)', marginTop: '1rem' }}>
-                                    <span>Total</span>
-                                    <span>₹{selectedBill.invoice?.total.toFixed(2)}</span>
-                                </div>
-                            </div>
-
-                            <button
-                                className="btn btn-primary"
-                                style={{ width: '100%', marginTop: '1.5rem' }}
-                                onClick={() => handleDownloadReceipt(selectedBill)}
-                            >
-                                <Printer size={18} style={{ marginRight: '0.5rem' }} />
-                                Download Receipt
-                            </button>
-                            <button
-                                className="btn btn-secondary"
-                                style={{ width: '100%', marginTop: '0.5rem' }}
-                                onClick={() => handleEmailReceipt(selectedBill)}
-                            >
-                                <Mail size={18} style={{ marginRight: '0.5rem' }} />
-                                Email Receipt
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
