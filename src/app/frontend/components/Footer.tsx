@@ -72,27 +72,25 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span>123 Beauty Avenue, Suite 456<br />New York, NY 10001</span>
+                <span>Opposite to ICICI bank, Bharathi Nagar<br />Kalingarayanpalayam, Bhavani<br />Erode Dt, Tamil Nadu - 638301</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-5 h-5 flex-shrink-0" />
-                <a href="tel:+12345678900" className="hover:text-purple-400 transition-colors">
-                  +1 (234) 567-8900
+                <a href="tel:9345678646" className="hover:text-purple-400 transition-colors">
+                  9345678646
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-5 h-5 flex-shrink-0" />
-                <a href="mailto:info@luxesalon.com" className="hover:text-purple-400 transition-colors">
-                  info@luxesalon.com
+                <a href="mailto:Velvetluxurysalon@gmail.com" className="hover:text-purple-400 transition-colors">
+                  Velvetluxurysalon@gmail.com
                 </a>
               </li>
             </ul>
 
             <div className="mt-4 pt-4 border-t border-gray-800">
               <p className="text-sm mb-2">Business Hours:</p>
-              <p className="text-xs text-gray-400">Mon-Fri: 9AM - 8PM</p>
-              <p className="text-xs text-gray-400">Sat: 9AM - 6PM</p>
-              <p className="text-xs text-gray-400">Sun: 10AM - 5PM</p>
+              <p className="text-xs text-gray-400">Mon-Sun: 8:00 AM - 9:00 PM</p>
             </div>
           </div>
         </div>

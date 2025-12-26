@@ -668,3 +668,55 @@ export const updateNewsletterContent = async (content: NewsletterContent): Promi
     throw error;
   }
 };
+
+// ============================================
+// PRODUCTS MANAGEMENT
+// ============================================
+
+export interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  imageUrl: string;
+  stock: number;
+  description?: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export const getProducts = async (): Promise<Product[]> => {
+  try {
+    const q = query(
+      collection(db, 'products'),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Product[];
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
+};
+
+export const getProductsByCategory = async (category: string): Promise<Product[]> => {
+  try {
+    const q = query(
+      collection(db, 'products'),
+      where('category', '==', category),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Product[];
+  } catch (error) {
+    console.error('Error fetching products by category:', error);
+    throw error;
+  }
+};
+

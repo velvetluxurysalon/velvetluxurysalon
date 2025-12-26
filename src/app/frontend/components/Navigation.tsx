@@ -45,11 +45,11 @@ export default function Navigation() {
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-4">
             <a 
-              href="tel:+12345678900"
+              href="tel:9345678646"
               className="flex items-center gap-2 text-gray-700 hover:text-purple-600 transition-colors"
             >
               <Phone className="w-4 h-4" />
-              <span>+1 (234) 567-8900</span>
+              <span>9345678646</span>
             </a>
             
             {isAuthenticated ? (
@@ -143,11 +143,11 @@ export default function Navigation() {
             </a>
             <div className="pt-4 border-t">
               <a 
-                href="tel:+12345678900"
+                href="tel:9345678646"
                 className="flex items-center gap-2 text-gray-700 hover:text-purple-600 transition-colors mb-3"
               >
                 <Phone className="w-4 h-4" />
-                <span>+1 (234) 567-8900</span>
+                <span>9345678646</span>
               </a>
               
               {isAuthenticated ? (

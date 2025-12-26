@@ -7,6 +7,7 @@ import TeamSection from "./frontend/components/TeamSection";
 import TestimonialsSection from "./frontend/components/TestimonialsSection";
 import GallerySection from "./frontend/components/GallerySection";
 import SpecialOffers from "./frontend/components/SpecialOffers";
+import ProductShowcase from "./frontend/components/ProductShowcase";
 import HowToBook from "./frontend/components/HowToBook";
 import FAQSection from "./frontend/components/FAQSection";
 import BlogSection from "./frontend/components/BlogSection";
@@ -41,6 +42,7 @@ export default function App() {
       <div id="offers">
         <SpecialOffers />
       </div>
+      <ProductShowcase />
       <HowToBook />
       <FAQSection />
       <BlogSection />

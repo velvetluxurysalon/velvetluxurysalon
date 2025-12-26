@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { DollarSign, Tag, CreditCard, Smartphone, Wallet, X, Printer, Download, MessageCircle, Mail } from 'lucide-react';
+import { DollarSign, Tag, CreditCard, Smartphone, Wallet, X, Printer, Download, MessageCircle, Mail, Coins } from 'lucide-react';
 import { generateProfessionalBillPDF, downloadPDF } from '../utils/pdfGenerator';
+import { updateDocument } from '../../../utils/firebaseUtils';
 
 const CheckoutModal = ({
   visit,
@@ -8,22 +9,29 @@ const CheckoutModal = ({
   onClose,
   onPaymentComplete
 }) => {
-  const [discountType, setDiscountType] = useState('none'); // 'none', 'percentage', 'flat'
+  const [discountType, setDiscountType] = useState('none'); // 'none', 'percentage', 'flat', 'coins'
   const [discountValue, setDiscountValue] = useState('');
   const [amountPaid, setAmountPaid] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [notes, setNotes] = useState('');
+  const [coinsUsed, setCoinsUsed] = useState('');
 
   const baseTotals = calculateTotals(visit);
   
   // Calculate discount
   let finalDiscount = 0;
+  let coinsDiscount = 0;
   if (discountType === 'percentage') {
     const percentValue = parseFloat(discountValue) || 0;
     finalDiscount = (baseTotals.subtotal * percentValue) / 100;
   } else if (discountType === 'flat') {
     finalDiscount = parseFloat(discountValue) || 0;
+  } else if (discountType === 'coins') {
+    // 10 coins = 1 rupee
+    const coins = parseFloat(coinsUsed) || 0;
+    coinsDiscount = coins / 10;
+    finalDiscount = coinsDiscount;
   }
 
   // Calculate final totals
@@ -42,25 +50,45 @@ const CheckoutModal = ({
   const [invoiceData, setInvoiceData] = React.useState(null);
 
   const handleCompletePayment = async () => {
-    const newInvoiceData = {
-      visitId: visit.id,
-      customerId: visit.customerId,
-      customerName: visit.customer?.name,
-      customerPhone: visit.customer?.contactNo || visit.customer?.phone,
-      customerEmail: visit.customer?.email || '',
-      items: visit.items,
-      totalAmount: totalAmount,
-      paidAmount: amountPaid,
-      discountPercent: discountType === 'percentage' ? discountValue : 0,
-      discountAmount: finalDiscount,
-      taxPercent: 18,
-      paymentMode: paymentMethod,
-      status: amountPaid >= totalAmount ? 'paid' : 'partial',
-      notes: notes
-    };
+    try {
+      // If coins are used, deduct them from customer
+      if (discountType === 'coins' && coinsUsed) {
+        const coinsToDeduct = parseFloat(coinsUsed) || 0;
+        const newCoinBalance = (visit.customer?.coins || 0) - coinsToDeduct;
+        
+        await updateDocument('customers', visit.customerId, {
+          coins: newCoinBalance
+        });
+      }
 
-    setInvoiceData(newInvoiceData);
-    setPaymentCompleted(true);
+      const newInvoiceData = {
+        visitId: visit.id,
+        customerId: visit.customerId,
+        customerName: visit.customer?.name,
+        customerPhone: visit.customer?.contactNo || visit.customer?.phone,
+        customerEmail: visit.customer?.email || '',
+        items: visit.items,
+        totalAmount: totalAmount,
+        paidAmount: amountPaid,
+        discountPercent: discountType === 'percentage' ? discountValue : 0,
+        discountType: discountType,
+        discountAmount: finalDiscount,
+        coinsUsed: discountType === 'coins' ? parseFloat(coinsUsed) : 0,
+        coinsDiscountAmount: coinsDiscount,
+        taxPercent: 18,
+        paymentMode: paymentMethod,
+        status: amountPaid >= totalAmount ? 'paid' : 'partial',
+        notes: notes,
+        timestamp: new Date(),
+        subtotal: baseTotals.subtotal
+      };
+
+      setInvoiceData(newInvoiceData);
+      setPaymentCompleted(true);
+    } catch (error) {
+      console.error('Error completing payment:', error);
+      alert('Error processing payment. Please try again.');
+    }
   };
 
   const handleDoneClick = () => {
@@ -102,8 +130,9 @@ const CheckoutModal = ({
     text += `💳 Payment: ${paymentMethod.toUpperCase()}\n`;
     text += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     text += `✨ Thank you for choosing Velvet Luxury Salon!\n`;
-    text += `📞 For queries: +91-XXXXXXXXXX\n`;
-    text += `✉️ info@velvetluxury.com`;
+    text += `📞 For queries: 9345678646\n`;
+    text += `✉️ Velvetluxurysalon@gmail.com\n`;
+    text += `🕐 Working Hours: 8:00 AM - 9:00 PM`;
     
     return text;
   };
@@ -463,9 +492,28 @@ const CheckoutModal = ({
             >
               Flat Discount
             </button>
+            <button
+              onClick={() => setDiscountType('coins')}
+              style={{
+                padding: '0.5rem',
+                background: discountType === 'coins' ? '#8b5cf6' : '#ede9fe',
+                color: discountType === 'coins' ? 'white' : '#1f2937',
+                border: 'none',
+                borderRadius: '0.5rem',
+                fontSize: '0.75rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.25rem'
+              }}
+            >
+              <Coins size={14} /> Use Coins
+            </button>
           </div>
 
-          {discountType !== 'none' && (
+          {discountType === 'percentage' || discountType === 'flat' ? (
             <input
               type="number"
               value={discountValue}
@@ -480,7 +528,29 @@ const CheckoutModal = ({
                 fontSize: '0.875rem'
               }}
             />
-          )}
+          ) : discountType === 'coins' ? (
+            <div>
+              <input
+                type="number"
+                value={coinsUsed}
+                onChange={(e) => setCoinsUsed(e.target.value)}
+                onWheel={(e) => e.preventDefault()}
+                placeholder="Enter coins to use"
+                max={visit.customer?.coins || 0}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  marginBottom: '0.5rem'
+                }}
+              />
+              <div style={{ fontSize: '0.75rem', color: '#6b7280', textAlign: 'center' }}>
+                Available Coins: {visit.customer?.coins || 0} | Discount: ₹{(parseFloat(coinsUsed) || 0) / 10}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* PAYMENT BREAKDOWN */}
@@ -497,7 +567,7 @@ const CheckoutModal = ({
           </div>
           {finalDiscount > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.875rem', color: '#b45309' }}>
-              <span>Discount ({discountType === 'percentage' ? `${discountValue}%` : 'Flat'}):</span>
+              <span>Discount ({discountType === 'percentage' ? `${discountValue}%` : discountType === 'coins' ? `${coinsUsed} Coins` : 'Flat'}):</span>
               <span style={{ fontWeight: '600' }}>-₹{finalDiscount.toFixed(2)}</span>
             </div>
           )}

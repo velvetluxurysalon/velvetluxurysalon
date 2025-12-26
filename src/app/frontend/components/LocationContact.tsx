@@ -43,19 +43,19 @@ export default function LocationContact() {
   };
 
   const defaultContact: ContactInfo = {
-    phone: "+1 (234) 567-8900",
-    email: "info@luxesalon.com",
-    address: "123 Beauty Avenue, Suite 456",
-    city: "New York, NY 10001",
-    zipCode: "10001",
+    phone: "9345678646",
+    email: "Velvetluxurysalon@gmail.com",
+    address: "Opposite to ICICI bank, Bharathi Nagar",
+    city: "Kalingarayanpalayam, Bhavani, Erode Dt, Tamil Nadu - 638301",
+    zipCode: "638301",
     hours: {
-      monday: "9:00 AM - 8:00 PM",
-      tuesday: "9:00 AM - 8:00 PM",
-      wednesday: "9:00 AM - 8:00 PM",
-      thursday: "9:00 AM - 8:00 PM",
-      friday: "9:00 AM - 8:00 PM",
-      saturday: "9:00 AM - 6:00 PM",
-      sunday: "10:00 AM - 5:00 PM"
+      monday: "8:00 AM - 9:00 PM",
+      tuesday: "8:00 AM - 9:00 PM",
+      wednesday: "8:00 AM - 9:00 PM",
+      thursday: "8:00 AM - 9:00 PM",
+      friday: "8:00 AM - 9:00 PM",
+      saturday: "8:00 AM - 9:00 PM",
+      sunday: "8:00 AM - 9:00 PM"
     }
   };
 
@@ -82,16 +82,7 @@ export default function LocationContact() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Map */}
           <div className="rounded-xl overflow-hidden shadow-lg h-96">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.2412648718453!2d-73.98823492346679!3d40.75889497138558!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25855c6480299%3A0x55194ec5a1ae072e!2sTimes%20Square!5e0!3m2!1sen!2sus!4v1702584000000!5m2!1sen!2sus"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Salon Location"
-            />
+            <iframe src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3910.6333369150375!2d77.67398899999999!3d11.434137!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTHCsDI2JzAyLjkiTiA3N8KwNDAnMjYuNCJF!5e0!3m2!1sen!2sin!4v1766737929962!5m2!1sen!2sin" width="600" height="450" style={{ border: 0 }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
           </div>
 
           {/* Contact Info */}

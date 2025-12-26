@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User, Phone, Calendar, DollarSign, Search, Printer, Trash } from 'lucide-react';
-import { getCustomers, deleteCustomer, searchCustomers, getVisitsByCustomer } from '../utils/firebaseUtils';
+import { getCustomers, deleteCustomer, searchCustomers, getVisitsByCustomer, convertTimestampToDate } from '../utils/firebaseUtils';
 
 const Customers = () => {
     const [customers, setCustomers] = useState([]);
@@ -177,6 +177,7 @@ const Customers = () => {
                                 <th>Type</th>
                                 <th>Visits</th>
                                 <th style={{ textAlign: 'right' }}>Total Spent</th>
+                                <th>Loyalty Points</th>
                                 <th>Last Visit</th>
                                 <th></th>
                             </tr>
@@ -218,9 +219,22 @@ const Customers = () => {
                                         {/* Calculate total spent from visits with paid invoices */}
                                         ₹{customer.visits.reduce((sum, v) => sum + (v.invoice?.status === 'PAID' ? v.invoice.total : 0), 0).toFixed(2)}
                                     </td>
+                                    <td>
+                                        <span style={{
+                                            padding: '0.25rem 0.75rem',
+                                            borderRadius: '999px',
+                                            fontSize: '0.75rem',
+                                            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                            color: '#a855f7',
+                                            border: '1px solid rgba(168, 85, 247, 0.2)',
+                                            fontWeight: '600'
+                                        }}>
+                                            {customer.loyaltyPoints || 0} pts
+                                        </span>
+                                    </td>
                                     <td style={{ color: 'var(--muted-foreground)' }}>
                                         {customer.visits.length > 0
-                                            ? new Date(customer.visits[0].date).toLocaleDateString()
+                                            ? convertTimestampToDate(customer.visits[0].date).toLocaleDateString()
                                             : 'N/A'}
                                     </td>
                                     {/* No delete button for customers */}

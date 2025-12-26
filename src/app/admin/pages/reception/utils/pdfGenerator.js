@@ -332,10 +332,11 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
           <div class="header">
             <div class="salon-info">
               <h1>Velvet Luxury Salon</h1>
-              <p>Pamper Yourself. Celebrate Beauty.</p>
-              <p>Location: Your Salon Address</p>
-              <p>+91-XXXXXXXXXX</p>
-              <p>info@velvetluxury.com</p>
+              <p>Opposite to ICICI bank, Bharathi Nagar</p>
+              <p>Kalingarayanpalayam, Bhavani, Erode Dt, Tamil Nadu - 638301</p>
+              <p>9345678646</p>
+              <p>Working Hours: 8:00 AM - 9:00 PM</p>
+              <p>Velvetluxurysalon@gmail.com</p>
             </div>
             <div class="invoice-number">
               <div class="label">Invoice Number</div>
@@ -441,7 +442,7 @@ const getProfessionalBillHTML = (invoiceData, visit) => {
           <div class="footer">
             <p class="thank-you">Thank you for choosing Velvet Luxury Salon</p>
             <p>We look forward to serving you again!</p>
-            <p>For any queries, contact: info@velvetluxury.com | +91-XXXXXXXXXX</p>
+            <p>For any queries, contact: Velvetluxurysalon@gmail.com | 9345678646</p>
           </div>
         </div>
       </body>

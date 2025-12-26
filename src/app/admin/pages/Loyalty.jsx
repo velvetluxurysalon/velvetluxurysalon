@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Gift, TrendingUp, History, Award } from 'lucide-react';
-import { getCustomers, getCustomerLoyaltyInfo, redeemCustomerPoints } from '../utils/firebaseUtils';
+import { getCustomers, getCustomerLoyaltyPoints, getCustomerPointsHistory } from '../utils/firebaseUtils';
 
 const Loyalty = () => {
     const [customers, setCustomers] = useState([]);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
-    const [loyaltyInfo, setLoyaltyInfo] = useState(null);
+    const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+    const [pointsHistory, setPointsHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [redeemAmount, setRedeemAmount] = useState('');
+    const [success, setSuccess] = useState('');
 
     useEffect(() => {
         fetchCustomers();
@@ -31,37 +32,23 @@ const Loyalty = () => {
     const handleSelectCustomer = async (customer) => {
         try {
             setSelectedCustomer(customer);
-            const info = await getCustomerLoyaltyInfo(customer.id);
-            setLoyaltyInfo(info);
+            const customerPoints = await getCustomerLoyaltyPoints(customer.id);
+            setLoyaltyPoints(customerPoints);
+            const customerHistory = await getCustomerPointsHistory(customer.id);
+            setPointsHistory(customerHistory);
+            setError('');
         } catch (err) {
             console.error('Error fetching loyalty info:', err);
             setError('Failed to load loyalty info');
         }
     };
 
-    const handleRedeemPoints = async () => {
-        if (!redeemAmount || !selectedCustomer) return;
 
-        try {
-            setLoading(true);
-            const points = parseInt(redeemAmount);
-            await redeemCustomerPoints(selectedCustomer.id, points);
-            
-            const info = await getCustomerLoyaltyInfo(selectedCustomer.id);
-            setLoyaltyInfo(info);
-            setRedeemAmount('');
-            setError('');
-        } catch (err) {
-            console.error('Error redeeming points:', err);
-            setError(err.message || 'Failed to redeem points');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     return (
         <div>
-
+            {error && <div style={{ background: 'var(--error-bg)', color: 'var(--error)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{error}</div>}
+            {success && <div style={{ background: 'var(--success-bg)', color: 'var(--success)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{success}</div>}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 {/* Customer Selection */}
@@ -90,7 +77,7 @@ const Loyalty = () => {
                                 >
                                     <div style={{ textAlign: 'left', flex: 1 }}>
                                         <div style={{ fontWeight: 600 }}>{customer.name}</div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{customer.contactNo}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{customer.phone || customer.contactNo}</div>
                                     </div>
                                     <div style={{ background: 'var(--primary-gradient)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600 }}>
                                         {customer.loyaltyPoints || 0} pts
@@ -102,12 +89,12 @@ const Loyalty = () => {
                 </div>
 
                 {/* Customer Loyalty Details */}
-                {loyaltyInfo && (
+                {selectedCustomer && (
                     <div className="card">
                         <div className="card-header">
                             <h2 className="card-title">
                                 <Gift size={20} />
-                                {loyaltyInfo.customerId === selectedCustomer?.id ? selectedCustomer.name : 'Details'}
+                                {selectedCustomer.name} - Loyalty
                             </h2>
                         </div>
                         <div className="card-content">
@@ -119,8 +106,20 @@ const Loyalty = () => {
                                     borderRadius: 'var(--radius-sm)',
                                     border: '1px solid rgba(201, 162, 39, 0.2)'
                                 }}>
-                                    <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Total Points</div>
-                                    <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary)' }}>{loyaltyInfo.totalPoints}</div>
+                                    <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Available Points</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: 700, color: '#a855f7' }}>{loyaltyPoints}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>₹{loyaltyPoints} value</div>
+                                </div>
+
+                                {/* Total Spent */}
+                                <div style={{
+                                    padding: '1rem',
+                                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    border: '1px solid rgba(5, 150, 105, 0.2)'
+                                }}>
+                                    <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Total Spent</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--success)' }}>₹{(selectedCustomer.totalSpent || 0).toFixed(2)}</div>
                                 </div>
 
                                 {/* Total Visits */}
@@ -131,73 +130,46 @@ const Loyalty = () => {
                                     border: '1px solid rgba(59, 130, 246, 0.2)'
                                 }}>
                                     <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Total Visits</div>
-                                    <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--info)' }}>{loyaltyInfo.totalVisits}</div>
-                                </div>
-
-                                {/* Total Spent */}
-                                <div style={{
-                                    padding: '1rem',
-                                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)',
-                                    borderRadius: 'var(--radius-sm)',
-                                    border: '1px solid rgba(5, 150, 105, 0.2)',
-                                    gridColumn: '1 / -1'
-                                }}>
-                                    <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Total Amount Spent</div>
-                                    <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--success)' }}>₹{loyaltyInfo.totalSpent.toFixed(2)}</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--info)' }}>{selectedCustomer.totalVisits || 0}</div>
                                 </div>
                             </div>
 
-                            {/* Redeem Points */}
-                            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--muted)', borderRadius: 'var(--radius-sm)' }}>
-                                <label className="label">Redeem Points</label>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.75rem' }}>
-                                    <input
-                                        type="number"
-                                        className="input"
-                                        value={redeemAmount}
-                                        onChange={(e) => setRedeemAmount(e.target.value)}
-                                        placeholder="Enter points to redeem"
-                                        max={loyaltyInfo.totalPoints}
-                                    />
-                                    <button
-                                        onClick={handleRedeemPoints}
-                                        className="btn btn-primary"
-                                        disabled={loading || !redeemAmount}
-                                    >
-                                        Redeem
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Recent Transactions */}
+                            {/* Points History */}
                             <div>
-                                <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>Recent Transactions</div>
-                                {loyaltyInfo.transactions.length > 0 ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>
+                                    <History size={16} />
+                                    Points History
+                                </div>
+                                {pointsHistory.length > 0 ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                        {loyaltyInfo.transactions.slice(0, 5).map((tx) => (
+                                        {pointsHistory.slice(0, 10).map((tx) => (
                                             <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--secondary)', borderRadius: 'var(--radius-sm)' }}>
                                                 <div>
-                                                    <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{tx.reason}</div>
+                                                    <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{tx.description || `${tx.type === 'earned' ? '+' : '-'}${Math.abs(tx.points)} points`}</div>
                                                     <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
-                                                        {tx.transactionDate?.toDate?.().toLocaleDateString() || new Date(tx.transactionDate).toLocaleDateString()}
+                                                        {new Date(tx.transactionDate).toLocaleDateString()}
                                                     </div>
                                                 </div>
-                                                <div style={{ fontWeight: 600, color: tx.points > 0 ? 'var(--success)' : 'var(--danger)' }}>
-                                                    {tx.points > 0 ? '+' : ''}{tx.points}
+                                                <div style={{ 
+                                                    fontSize: '0.875rem', 
+                                                    fontWeight: 600,
+                                                    color: tx.type === 'earned' ? '#10b981' : '#ef4444'
+                                                }}>
+                                                    {tx.type === 'earned' ? '+' : '-'}{Math.abs(tx.points)} pts
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p style={{ color: 'var(--muted-foreground)', textAlign: 'center' }}>No transactions yet</p>
+                                    <div style={{ textAlign: 'center', color: 'var(--muted-foreground)', padding: '2rem' }}>
+                                        No transaction history
+                                    </div>
                                 )}
                             </div>
                         </div>
                     </div>
                 )}
             </div>
-
-            {error && <div className="alert alert-danger">{error}</div>}
         </div>
     );
 };

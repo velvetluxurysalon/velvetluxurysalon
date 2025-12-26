@@ -119,8 +119,9 @@ const Dashboard = () => {
             <body>
                 <div class="header">
                     <h2>VELVET LUXURY SALON</h2>
-                    <p>Kalingarayanpalayam, Bhavani, Erode District, Tamil Nadu - 638301</p>
-                    <p>Contact: 9667722611</p>
+                    <p>Opposite to ICICI bank, Bharathi Nagar</p>
+                    <p>Kalingarayanpalayam, Bhavani, Erode Dt, Tamil Nadu - 638301</p>
+                    <p>Contact: 9345678646 | Velvetluxurysalon@gmail.com</p>
                     <p>Date: ${new Date(visit.date).toLocaleString()}</p>
                     <p>Visit #${visit.id}</p>
                 </div>

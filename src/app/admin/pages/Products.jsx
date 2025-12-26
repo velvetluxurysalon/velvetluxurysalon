@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Package, X } from 'lucide-react';
-import { getProducts, addProduct, uploadProductImage } from '../utils/firebaseUtils';
+import { Plus, Package, X, Trash2 } from 'lucide-react';
+import { getProducts, addProduct, uploadProductImage, deleteProduct } from '../utils/firebaseUtils';
 
 
 const Products = () => {
@@ -29,6 +29,22 @@ const Products = () => {
             setError('Failed to load products');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteProduct = async (productId, productName) => {
+        if (window.confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
+            try {
+                setLoading(true);
+                await deleteProduct(productId);
+                await fetchProducts();
+                setError('');
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                setError('Failed to delete product');
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -103,6 +119,7 @@ const Products = () => {
                                     <th>Category</th>
                                     <th style={{ textAlign: 'right' }}>Price</th>
                                     <th style={{ textAlign: 'right' }}>Stock</th>
+                                    <th style={{ width: '50px', textAlign: 'center' }}>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -146,6 +163,28 @@ const Products = () => {
                                             }}>
                                                 {product.stock}
                                             </span>
+                                        </td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <button
+                                                onClick={() => handleDeleteProduct(product.id, product.name)}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: '#ef4444',
+                                                    cursor: 'pointer',
+                                                    padding: '0.25rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    borderRadius: '4px',
+                                                    transition: 'background-color 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                                title="Delete product"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}

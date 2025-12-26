@@ -239,6 +239,18 @@ export const addCustomer = async (customerData) => {
       deletedAt: null,
       createdAt: serverTimestamp()
     });
+    
+    // Create loyalty points collection for this customer
+    await addDocument(`customers/${customerId}/pointsHistory`, {
+      type: 'initial',
+      points: 0,
+      amount: 0,
+      description: 'Account created',
+      invoiceId: null,
+      billDetails: null,
+      transactionDate: serverTimestamp()
+    });
+    
     return { id: customerId };
   } catch (error) {
     console.error('Error adding customer:', error);
@@ -310,6 +322,122 @@ export const updateCustomerStats = async (customerId, amount) => {
     }
   } catch (error) {
     console.error('Error updating customer stats:', error);
+    throw error;
+  }
+};
+
+// ============================================
+// LOYALTY POINTS MANAGEMENT
+// ============================================
+
+export const addLoyaltyPoints = async (customerId, points, amount, invoiceId, billDetails, description = 'Points earned from purchase') => {
+  try {
+    if (!customerId) {
+      throw new Error('Customer ID is required');
+    }
+
+    // Update customer loyalty points and coins
+    const customer = await getDocument('customers', customerId);
+    if (customer) {
+      const newTotalPoints = (customer.loyaltyPoints || 0) + points;
+      const newTotalCoins = (customer.coins || 0) + points;
+      await updateDocument('customers', customerId, {
+        loyaltyPoints: newTotalPoints,
+        coins: newTotalCoins
+      });
+    }
+
+    // Add entry to pointsHistory subcollection
+    const pointsHistoryRef = collection(db, `customers/${customerId}/pointsHistory`);
+    const historyDocId = await addDoc(pointsHistoryRef, {
+      type: 'earned',
+      points: points,
+      amount: amount,
+      invoiceId: invoiceId || null,
+      billDetails: billDetails || {
+        items: [],
+        subtotal: amount,
+        discount: 0,
+        tax: 0,
+        total: amount,
+        paidAmount: amount
+      },
+      description: description,
+      transactionDate: serverTimestamp(),
+      createdAt: serverTimestamp()
+    });
+
+    return historyDocId.id;
+  } catch (error) {
+    console.error('Error adding loyalty points:', error);
+    throw error;
+  }
+};
+
+export const getCustomerLoyaltyPoints = async (customerId) => {
+  try {
+    const customer = await getDocument('customers', customerId);
+    return customer?.loyaltyPoints || 0;
+  } catch (error) {
+    console.error('Error getting customer loyalty points:', error);
+    throw error;
+  }
+};
+
+export const getCustomerPointsHistory = async (customerId) => {
+  try {
+    const pointsHistoryRef = collection(db, `customers/${customerId}/pointsHistory`);
+    const q = query(pointsHistoryRef, orderBy('transactionDate', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      transactionDate: doc.data().transactionDate?.toDate?.() || doc.data().transactionDate
+    }));
+  } catch (error) {
+    console.error('Error getting customer points history:', error);
+    throw error;
+  }
+};
+
+export const redeemLoyaltyPoints = async (customerId, pointsToRedeem, discountAmount, invoiceId, description = 'Points redeemed for discount') => {
+  try {
+    if (!customerId) {
+      throw new Error('Customer ID is required');
+    }
+
+    const customer = await getDocument('customers', customerId);
+    if (!customer) {
+      throw new Error('Customer not found');
+    }
+
+    const currentPoints = customer.loyaltyPoints || 0;
+    if (currentPoints < pointsToRedeem) {
+      throw new Error('Insufficient loyalty points');
+    }
+
+    // Update customer loyalty points
+    const newTotalPoints = currentPoints - pointsToRedeem;
+    await updateDocument('customers', customerId, {
+      loyaltyPoints: newTotalPoints
+    });
+
+    // Add redemption entry to pointsHistory
+    const pointsHistoryRef = collection(db, `customers/${customerId}/pointsHistory`);
+    const historyDocId = await addDoc(pointsHistoryRef, {
+      type: 'redeemed',
+      points: -pointsToRedeem,
+      amount: discountAmount,
+      invoiceId: invoiceId || null,
+      description: description,
+      transactionDate: serverTimestamp(),
+      createdAt: serverTimestamp()
+    });
+
+    return historyDocId.id;
+  } catch (error) {
+    console.error('Error redeeming loyalty points:', error);
     throw error;
   }
 };
@@ -483,7 +611,8 @@ export const addProduct = async (productData) => {
       category: productData.category || '',
       price: parseFloat(productData.price),
       stock: parseInt(productData.stock) || 0,
-      description: productData.description || ''
+      description: productData.description || '',
+      imageUrl: productData.imageUrl || null
     });
     return productId;
   } catch (error) {
@@ -783,6 +912,36 @@ export const createInvoice = async (invoiceData) => {
       await updateDocument('visits', visitId, { invoiceId: invoiceId });
     }
 
+    // Add loyalty points if payment is made and customer exists
+    if (customerId && paidAmount > 0) {
+      const loyaltyPoints = Math.floor(paidAmount); // 1 point per rupee paid
+      const billDetails = {
+        invoiceId: invoiceId,
+        items: items,
+        subtotal: subtotal,
+        discountAmount: discountAmount,
+        taxAmount: taxAmount,
+        total: finalAmount,
+        paidAmount: parseFloat(paidAmount),
+        paymentMode: paymentMode,
+        status: status,
+        invoiceDate: invoiceDate || new Date(),
+        customerName: customerName,
+        customerPhone: customerPhone,
+        customerEmail: customerEmail,
+        notes: notes
+      };
+      
+      await addLoyaltyPoints(
+        customerId,
+        loyaltyPoints,
+        parseFloat(paidAmount),
+        invoiceId,
+        billDetails,
+        `Points earned from invoice #${invoiceId}`
+      );
+    }
+
     return invoiceId;
   } catch (error) {
     console.error('Error creating invoice:', error);
@@ -1024,7 +1183,7 @@ export const uploadProductImage = async (file) => {
   try {
     if (!file) throw new Error('No file provided');
     
-    const fileName = `products/${Date.now()}_${file.name}`;
+    const fileName = `admin/products/${Date.now()}_${file.name}`;
     const fileRef = ref(storage, fileName);
     
     // Upload file
@@ -1043,7 +1202,7 @@ export const uploadServiceImage = async (file) => {
   try {
     if (!file) throw new Error('No file provided');
     
-    const fileName = `services/${Date.now()}_${file.name}`;
+    const fileName = `admin/services/${Date.now()}_${file.name}`;
     const fileRef = ref(storage, fileName);
     
     await uploadBytes(fileRef, file);
@@ -1935,7 +2094,9 @@ export const generateBillHTML = (invoice, customerData) => {
 
         <div class="footer">
           <p>Thank you for choosing Velvet Luxury Salon!</p>
-          <p>For queries, contact us at info@velvetluxury.com</p>
+          <p>Opposite to ICICI bank, Bharathi Nagar, Kalingarayanpalayam, Bhavani, Erode Dt, Tamil Nadu - 638301</p>
+          <p>For queries, contact us at Velvetluxurysalon@gmail.com | 9345678646</p>
+          <p>Working Hours: 8:00 AM - 9:00 PM</p>
         </div>
       </body>
     </html>
