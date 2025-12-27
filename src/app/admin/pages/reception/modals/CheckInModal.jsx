@@ -79,12 +79,17 @@ const CheckInModal = ({ onClose, onCheckIn }) => {
       setError('Please enter customer name');
       return;
     }
+    
+    if (!newCustomerData.phone.trim()) {
+      setError('Please enter phone number (required)');
+      return;
+    }
 
     try {
       setLoading(true);
       setError('');
       
-      // Add new customer
+      // Add new customer (phone will be used as document ID)
       const newCustomer = await addCustomer({
         name: newCustomerData.name.trim(),
         phone: newCustomerData.phone.trim(),

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { User, Phone, Calendar, DollarSign, Search, Trash } from 'lucide-react';
-import { getCustomers, deleteCustomer, searchCustomers, getVisitsByCustomer, convertTimestampToDate, calculateCustomerTotalSpent } from '../utils/firebaseUtils';
+import { User, Phone, Calendar, DollarSign, Search, Trash, Edit } from 'lucide-react';
+import { getCustomers, deleteCustomer, searchCustomers, getVisitsByCustomer, convertTimestampToDate, calculateCustomerTotalSpent, updateCustomer } from '../utils/firebaseUtils';
 
 const Customers = () => {
     const [customers, setCustomers] = useState([]);
     const [filteredCustomers, setFilteredCustomers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [editingCustomer, setEditingCustomer] = useState(null);
+    const [editFormData, setEditFormData] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -80,6 +82,49 @@ const Customers = () => {
             } finally {
                 setLoading(false);
             }
+        }
+    };
+
+    const handleEditCustomer = (e, customer) => {
+        e.stopPropagation();
+        setEditingCustomer(customer.id);
+        setEditFormData({
+            name: customer.name || '',
+            phone: customer.phone?.replace('+91', '') || customer.contactNo?.replace('+91', '') || '',
+            email: customer.email || '',
+            gender: customer.gender || 'Not specified'
+        });
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editFormData.name || !editFormData.phone) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const normalizedPhone = editFormData.phone.replace(/\D/g, '').startsWith('91')
+                ? '+' + editFormData.phone.replace(/\D/g, '')
+                : '+91' + editFormData.phone.replace(/\D/g, '');
+
+            await updateCustomer(editingCustomer, {
+                name: editFormData.name,
+                phone: normalizedPhone,
+                email: editFormData.email,
+                gender: editFormData.gender
+            });
+
+            // Refresh customer list
+            await fetchCustomers();
+            setEditingCustomer(null);
+            setEditFormData({});
+            alert('Customer updated successfully!');
+        } catch (error) {
+            console.error('Error updating customer:', error);
+            alert('Failed to update customer: ' + error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -179,7 +224,7 @@ const Customers = () => {
                                 <th style={{ textAlign: 'right' }}>Total Spent</th>
                                 <th>Loyalty Points</th>
                                 <th>Last Visit</th>
-                                <th></th>
+                                <th style={{ width: '80px' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -240,7 +285,25 @@ const Customers = () => {
                                             ? convertTimestampToDate(customer.visits[0].date).toLocaleDateString()
                                             : 'N/A'}
                                     </td>
-                                    {/* No delete button for customers */}
+                                    <td style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button
+                                            onClick={(e) => handleEditCustomer(e, customer)}
+                                            style={{
+                                                padding: '0.25rem 0.75rem',
+                                                background: 'var(--primary)',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.25rem',
+                                                fontSize: '0.75rem'
+                                            }}
+                                        >
+                                            <Edit size={14} /> Edit
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                             {filteredCustomers.length === 0 && (
@@ -287,6 +350,26 @@ const Customers = () => {
                                 </div>
                             </div>
 
+                            <button
+                                onClick={() => handleEditCustomer({ stopPropagation: () => {} }, selectedCustomer)}
+                                style={{
+                                    marginBottom: '1rem',
+                                    padding: '0.5rem 1rem',
+                                    background: 'var(--primary)',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    width: '100%',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <Edit size={18} /> Edit Customer
+                            </button>
+
                             <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--primary)' }}>Visit History</h3>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 {selectedCustomer.visits.map(visit => (
@@ -315,6 +398,104 @@ const Customers = () => {
                                 {selectedCustomer.visits.length === 0 && (
                                     <p style={{ textAlign: 'center', color: 'var(--muted-foreground)' }}>No visits yet.</p>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {editingCustomer && (
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001
+                }}>
+                    <div className="card" style={{ width: '500px' }}>
+                        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 className="card-title">Edit Customer</h2>
+                            <button onClick={() => setEditingCustomer(null)} style={{ background: 'none', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer' }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        <div className="card-content">
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Name</label>
+                                <input
+                                    type="text"
+                                    value={editFormData.name}
+                                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                                    className="input"
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Phone Number</label>
+                                <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
+                                    <span style={{ background: 'var(--secondary)', padding: '0.5rem 0.75rem', color: 'var(--foreground)', fontWeight: '500', display: 'flex', alignItems: 'center' }}>+91</span>
+                                    <input
+                                        type="tel"
+                                        value={editFormData.phone}
+                                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                                        placeholder="9876543210"
+                                        maxLength="10"
+                                        style={{ flex: 1, border: 'none', padding: '0.5rem 0.75rem', outline: 'none' }}
+                                    />
+                                </div>
+                            </div>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Email</label>
+                                <input
+                                    type="email"
+                                    value={editFormData.email}
+                                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                                    className="input"
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Gender</label>
+                                <select
+                                    value={editFormData.gender}
+                                    onChange={(e) => setEditFormData({ ...editFormData, gender: e.target.value })}
+                                    className="input"
+                                    style={{ width: '100%' }}
+                                >
+                                    <option>Not specified</option>
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button
+                                    onClick={handleSaveEdit}
+                                    disabled={loading}
+                                    style={{
+                                        flex: 1,
+                                        padding: '0.75rem',
+                                        background: 'var(--primary)',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: 'var(--radius)',
+                                        cursor: loading ? 'not-allowed' : 'pointer',
+                                        opacity: loading ? 0.6 : 1
+                                    }}
+                                >
+                                    {loading ? 'Saving...' : 'Save Changes'}
+                                </button>
+                                <button
+                                    onClick={() => setEditingCustomer(null)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '0.75rem',
+                                        background: 'var(--secondary)',
+                                        color: 'var(--foreground)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: 'var(--radius)',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Cancel
+                                </button>
                             </div>
                         </div>
                     </div>

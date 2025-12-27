@@ -14,29 +14,108 @@ import {
   query, 
   where,
   orderBy,
-  Timestamp
+  Timestamp,
+  updateDoc,
+  serverTimestamp
 } from 'firebase/firestore';
 import { auth, db } from '../../../firebaseConfig';
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+// Normalize phone number (remove spaces, dashes, etc., and add +91 country code)
+const normalizePhone = (phone: string): string => {
+  if (!phone) return '';
+  let normalized = phone.replace(/[\s\-()]/g, '').trim();
+  // Add +91 if not already present
+  if (normalized && !normalized.startsWith('+')) {
+    // If it starts with 91, just prepend +
+    if (normalized.startsWith('91')) {
+      normalized = '+' + normalized;
+    } else {
+      // Otherwise prepend +91
+      normalized = '+91' + normalized;
+    }
+  }
+  return normalized;
+};
 
 // ============================================
 // CUSTOMER AUTHENTICATION
 // ============================================
 
+// Check if customer exists by phone number
+export const getCustomerByPhone = async (phone: string) => {
+  try {
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) return null;
+    
+    const docRef = doc(db, 'customers', normalizedPhone);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    }
+    return null;
+  } catch (error: any) {
+    console.error('Error getting customer by phone:', error);
+    return null;
+  }
+};
+
 export const registerCustomer = async (email: string, password: string, name: string, phone: string) => {
   try {
+    const normalizedPhone = normalizePhone(phone);
+    
+    if (!normalizedPhone) {
+      throw new Error('Phone number is required');
+    }
+    
+    // Check if customer already exists with this phone number (created from admin)
+    const existingCustomer = await getCustomerByPhone(normalizedPhone);
+    
+    // Create Firebase Auth user
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Store customer profile in Firestore
-    await setDoc(doc(db, 'customers', user.uid), {
-      uid: user.uid,
-      email,
-      name,
-      phone,
-      createdAt: Timestamp.now(),
-      loyaltyPoints: 0,
-      isVerified: false
-    });
+    if (existingCustomer) {
+      // Customer was created from admin panel - link to auth and update
+      await updateDoc(doc(db, 'customers', normalizedPhone), {
+        authUid: user.uid,
+        email: email, // Update email if provided
+        isVerified: true,
+        updatedAt: serverTimestamp()
+      });
+    } else {
+      // New customer - create with phone as document ID
+      await setDoc(doc(db, 'customers', normalizedPhone), {
+        authUid: user.uid,
+        email,
+        name,
+        phone: normalizedPhone,
+        gender: '',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        loyaltyPoints: 0,
+        coins: 0,
+        totalVisits: 0,
+        totalSpent: 0,
+        isVerified: true,
+        deletedAt: null
+      });
+      
+      // Create initial points history
+      await addDoc(collection(db, `customers/${normalizedPhone}/pointsHistory`), {
+        type: 'initial',
+        points: 0,
+        amount: 0,
+        description: 'Account created',
+        invoiceId: null,
+        billDetails: null,
+        transactionDate: Timestamp.now()
+      });
+    }
 
     return user;
   } catch (error: any) {
@@ -53,6 +132,39 @@ export const loginCustomer = async (email: string, password: string) => {
   }
 };
 
+// Login with phone number - looks up customer email by phone, then logs in
+export const loginWithPhone = async (phone: string, password: string) => {
+  try {
+    const normalizedPhone = normalizePhone(phone);
+    
+    if (!normalizedPhone) {
+      throw new Error('Phone number is required');
+    }
+    
+    // Get customer by phone to find their email
+    const customer = await getCustomerByPhone(normalizedPhone);
+    
+    if (!customer) {
+      throw new Error('No account found with this phone number. Please sign up first.');
+    }
+    
+    const customerData = customer as any;
+    
+    if (!customerData.email) {
+      throw new Error('This account was created without an email. Please contact support.');
+    }
+    
+    // Login with the email associated with this phone
+    const userCredential = await signInWithEmailAndPassword(auth, customerData.email, password);
+    return userCredential.user;
+  } catch (error: any) {
+    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      throw new Error('Incorrect password. Please try again.');
+    }
+    throw new Error(error?.message || 'Login failed');
+  }
+};
+
 export const logoutCustomer = async () => {
   try {
     await signOut(auth);
@@ -63,9 +175,24 @@ export const logoutCustomer = async () => {
 
 export const getCurrentCustomer = async (uid: string) => {
   try {
+    // First, try to find customer by authUid field (new system with phone as doc ID)
+    const customersRef = collection(db, 'customers');
+    const q = query(customersRef, where('authUid', '==', uid));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      return { id: doc.id, ...doc.data() };
+    }
+    
+    // Fallback: try to get by UID as document ID (old system)
     const docRef = doc(db, 'customers', uid);
     const docSnap = await getDoc(docRef);
-    return docSnap.exists() ? docSnap.data() : null;
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    }
+    
+    return null;
   } catch (error: any) {
     throw new Error(error?.message || 'Failed to get customer');
   }
@@ -212,7 +339,7 @@ export const getCustomerAppointments = async (customerId: string) => {
 
 export const getLoyaltyPoints = async (customerId: string) => {
   try {
-    const customer = await getCurrentCustomer(customerId);
+    const customer: any = await getCurrentCustomer(customerId);
     return customer?.loyaltyPoints || 0;
   } catch (error: any) {
     throw new Error(error?.message || 'Failed to get loyalty points');

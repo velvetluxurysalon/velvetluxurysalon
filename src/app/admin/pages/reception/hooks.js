@@ -36,6 +36,9 @@ export const useReceptionData = () => {
 
   useEffect(() => {
     fetchAllData();
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchAllData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   return {

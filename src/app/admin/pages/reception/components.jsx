@@ -3,10 +3,10 @@ import {
   Users, UserPlus, Scissors, CreditCard, CheckCircle, AlertCircle,
   Plus, ShoppingCart, DollarSign, ChevronDown, Phone, Eye, Trash2,
   Tag, CreditCard as CardIcon, Smartphone, Wallet, Send, FileText,
-  Download, Printer, Mail, MessageCircle, X, Check, Crown
+  Download, Printer, Mail, MessageCircle, X, Check, Crown, Clock
 } from 'lucide-react';
 
-export const ReceptionHeader = ({ onNewCheckIn, error, success, activeSection, setActiveSection, visits, filteredVisits, searchTerm, setSearchTerm }) => {
+export const ReceptionHeader = ({ onNewCheckIn, error, success, activeSection, setActiveSection, visits = [], filteredVisits, searchTerm, setSearchTerm }) => {
   return (
     <div style={{ background: 'var(--admin-card-bg)', borderRadius: '0', padding: '1.5rem', marginBottom: '0', border: 'none', borderBottom: '1px solid var(--admin-border)', margin: '-2rem -2rem 0 -2rem', paddingLeft: '2rem', paddingRight: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
@@ -14,28 +14,33 @@ export const ReceptionHeader = ({ onNewCheckIn, error, success, activeSection, s
         <button
           onClick={onNewCheckIn}
           style={{
-            background: 'var(--admin-primary-gradient)',
-            color: 'white',
-            border: 'none',
-            padding: '0.625rem 1.25rem',
-            borderRadius: 'var(--admin-radius-sm)',
-            fontWeight: 600,
-            fontSize: '0.875rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
+            padding: '0.625rem 1.25rem',
+            background: 'var(--admin-success)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 'var(--admin-radius-sm)',
+            fontSize: '0.875rem',
+            fontWeight: 600,
             cursor: 'pointer',
-            transition: 'all 0.2s',
-            boxShadow: '0 2px 8px rgba(201, 162, 39, 0.25)',
-            whiteSpace: 'nowrap'
+            transition: 'all 0.2s'
           }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = '#059669';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'var(--admin-success)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
         >
-          <UserPlus size={18} /> New Check-in
+          <UserPlus size={18} /> Check In Customer
         </button>
       </div>
-
       {/* ALERTS */}
       {error && (
         <div style={{ background: 'var(--admin-danger-light)', border: '1px solid #fca5a5', color: 'var(--admin-danger)', padding: '0.75rem 1rem', borderRadius: 'var(--admin-radius-sm)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

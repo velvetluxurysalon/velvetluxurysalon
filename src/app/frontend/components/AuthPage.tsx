@@ -24,15 +24,21 @@ export default function AuthPage({ open, onClose }: AuthPageProps) {
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    
+    if (!phone.trim()) {
+      setError("Phone number is required");
+      return;
+    }
+    
     setLoading(true);
 
     try {
-      await login(email, password);
-      setEmail("");
+      await login(phone, password);
+      setPhone("");
       setPassword("");
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to login. Please check your email and password.");
+      setError(err.message || "Failed to login. Please check your phone number and password.");
     } finally {
       setLoading(false);
     }
@@ -84,7 +90,7 @@ export default function AuthPage({ open, onClose }: AuthPageProps) {
   const switchMode = () => {
     setError("");
     if (mode === "login") {
-      setEmail("");
+      setPhone("");
       setPassword("");
       setMode("signup");
     } else {
@@ -135,33 +141,56 @@ export default function AuthPage({ open, onClose }: AuthPageProps) {
             </div>
           )}
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-              <Input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10"
-                required
-                disabled={loading}
-              />
-            </div>
-          </div>
-
-          {mode === "signup" && (
+          {mode === "login" ? (
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Phone Number</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <Input
                   type="tel"
-                  placeholder="+1 (234) 567-8900"
+                  placeholder="9876543210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="pl-10"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  required
+                  disabled={loading}
+                />
+            </div>
+          </div>
+          )}
+
+          {mode === "signup" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Phone Number</label>
+              <div className="flex border border-gray-300 rounded-md overflow-hidden">
+                <span className="bg-gray-100 px-3 py-2 text-gray-700 font-medium flex items-center">+91</span>
+                <Input
+                  type="tel"
+                  placeholder="9876543210"
+                  value={phone}
+                  onChange={(e) => {
+                    // Only allow digits
+                    const digitsOnly = e.target.value.replace(/\D/g, '');
+                    setPhone(digitsOnly);
+                  }}
+                  maxLength={10}
+                  className="border-0 pl-2 focus:ring-0 flex-1"
                   required
                   disabled={loading}
                 />

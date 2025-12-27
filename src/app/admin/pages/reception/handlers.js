@@ -4,7 +4,8 @@ import {
   addVisitItem,
   removeVisitItem,
   updateVisit,
-  createInvoice
+  createInvoice,
+  checkInAppointment
 } from '../../utils/firebaseUtils';
 import { calculateTotals } from './utils';
 
@@ -169,5 +170,17 @@ export const handleRemoveItem = async (visitId, itemIndex, visits, fetchAllData,
     fetchAllData();
   } catch (err) {
     setError('Failed to remove item');
+  }
+};
+
+export const handleCheckInAppointment = async (appointment, setSuccess, setError, fetchAllData) => {
+  try {
+    await checkInAppointment(appointment);
+    setSuccess(`${appointment.customerName} checked in successfully!`);
+    setTimeout(() => setSuccess(''), 3000);
+    fetchAllData();
+  } catch (err) {
+    console.error('Check-in error:', err);
+    setError('Failed to check in appointment: ' + err.message);
   }
 };

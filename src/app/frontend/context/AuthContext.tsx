@@ -3,7 +3,7 @@ import {
   onAuthChange, 
   getCurrentCustomer, 
   registerCustomer, 
-  loginCustomer, 
+  loginWithPhone, 
   logoutCustomer 
 } from '../services/firebaseService';
 
@@ -13,7 +13,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   signup: (email: string, password: string, name: string, phone: string) => Promise<any>;
-  login: (email: string, password: string) => Promise<any>;
+  login: (phone: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   showLoginModal: boolean;
@@ -77,11 +77,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (phone: string, password: string) => {
     try {
       setLoading(true);
       setError(null);
-      const user = await loginCustomer(email, password);
+      const user = await loginWithPhone(phone, password);
       return user;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';

@@ -11,6 +11,7 @@ export const calculateTotals = (visit, discountAmount, discountPercent, amountPa
 
 export const filterVisitsByStatus = (visits, activeSection, searchTerm) => {
   return visits.filter(v => {
+    if (activeSection === 'onreception' && v.status !== 'ON_RECEPTION') return false;
     if (activeSection === 'checkin' && v.status !== 'CHECKED_IN') return false;
     if (activeSection === 'inservice' && v.status !== 'IN_SERVICE') return false;
     if (activeSection === 'checkout' && v.status !== 'READY_FOR_BILLING') return false;

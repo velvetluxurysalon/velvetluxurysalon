@@ -10,6 +10,8 @@ import Dashboard from './pages/Dashboard';
 // @ts-ignore
 import Reception from './pages/Reception';
 // @ts-ignore
+import Appointments from './pages/Appointments';
+// @ts-ignore
 import Services from './pages/Services';
 // @ts-ignore
 import Customers from './pages/Customers';
@@ -28,8 +30,6 @@ import Loyalty from './pages/Loyalty';
 // @ts-ignore
 import Attendance from './pages/Attendance';
 // @ts-ignore
-import Appointments from './pages/Appointments';
-// @ts-ignore
 import HeroContent from './pages/HeroContent';
 // @ts-ignore
 import ContactContent from './pages/ContactContent';
@@ -43,7 +43,7 @@ import FAQsContent from './pages/FAQsContent';
 import OffersContent from './pages/OffersContent';
 // @ts-ignore
 import NewsletterContent from './pages/NewsletterContent';
-import { Scissors, LogOut, Users, ClipboardList, BarChart3, Package, UserCog, Menu, X, Calendar, Gift, Star, Clock, FileText, Phone, Mail, DollarSign } from 'lucide-react';
+import { Scissors, LogOut, Users, ClipboardList, BarChart3, Package, UserCog, Menu, X, Gift, Star, Clock, FileText, Phone, Mail, DollarSign, Calendar } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -84,13 +84,13 @@ const DashboardLayout = () => {
 
   const navItems: NavItem[] = [
     { path: '/admin', icon: ClipboardList, label: 'Reception' },
+    { path: '/admin/appointments', icon: Calendar, label: 'Appointments' },
     { path: '/admin/dashboard', icon: BarChart3, label: 'Dashboard' },
     { path: '/admin/services', icon: Scissors, label: 'Services' },
     { path: '/admin/staff', icon: UserCog, label: 'Staff' },
     { path: '/admin/salary-analytics', icon: DollarSign, label: 'Payroll' },
     { path: '/admin/products', icon: Package, label: 'Inventory' },
     { path: '/admin/customers', icon: Users, label: 'Customers' },
-    { path: '/admin/appointments', icon: Calendar, label: 'Appointments' },
     { path: '/admin/attendance', icon: Clock, label: 'Attendance' },
     { path: '/admin/loyalty', icon: Gift, label: 'Loyalty' },
     { path: '/admin/hero', icon: FileText, label: 'Hero Section' },
@@ -216,6 +216,7 @@ const DashboardLayout = () => {
           <main className="main-content">
             <Routes>
               <Route path="/" element={<Reception />} />
+              <Route path="/appointments" element={<Appointments />} />
               <Route path="/visits/:id" element={<VisitDetail />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/services" element={<Services />} />
@@ -224,7 +225,6 @@ const DashboardLayout = () => {
               <Route path="/salary-analytics" element={<StaffSalaryAnalytics />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/billing" element={<Billing />} />
-              <Route path="/appointments" element={<Appointments />} />
               <Route path="/loyalty" element={<Loyalty />} />
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/hero" element={<HeroContent />} />

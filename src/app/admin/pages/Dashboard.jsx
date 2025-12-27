@@ -35,13 +35,17 @@ const Dashboard = () => {
         avgOrderValue: 0,
         conversionRate: 0,
         peakHour: '10:00 AM',
+        peakService: 'N/A',
+        uniqueCustomers: 0,
+        returningCustomers: 0,
+        hourlyData: [],
         staffAttendance: 0,
         totalRevenue: 0
     });
 
     useEffect(() => {
         fetchAllStats();
-    }, [selectedDate, currentMonth]);
+    }, [selectedDate]);
 
     const fetchAllStats = async () => {
         try {
@@ -72,27 +76,102 @@ const Dashboard = () => {
                 getTodayVisitsSummary()
             ]);
 
-            const totalRevenue = invoicesList?.reduce((sum, inv) => sum + (inv.finalAmount || 0), 0) || 0;
-            const avgOrderValue = invoicesList?.length > 0 ? totalRevenue / invoicesList.length : 0;
-            const todayVisits = visitsList?.filter(v => {
+            // Filter data for selected date
+            const selectedDateStr = selectedDate.toDateString();
+            const selectedDateVisits = visitsList?.filter(v => {
                 const visitDate = new Date(v.date?.toDate?.() || v.date);
-                const today = new Date();
-                return visitDate.toDateString() === today.toDateString();
-            }).length || 0;
+                return visitDate.toDateString() === selectedDateStr;
+            }) || [];
 
-            const monthlyTrend = generateMonthlyTrend(invoicesList);
-            const topServices = dashboardData?.topServices || [];
-            const topProducts = dashboardData?.topProducts || [];
-            const recentTransactions = dashboardData?.recentTransactions || [];
+            const selectedDateInvoices = invoicesList?.filter(inv => {
+                const invDate = new Date(inv.invoiceDate?.toDate?.() || inv.invoiceDate);
+                return invDate.toDateString() === selectedDateStr;
+            }) || [];
+
+            // Calculate daily sales for selected date
+            const dailySalesSelected = selectedDateInvoices.reduce((sum, inv) => sum + (inv.finalAmount || 0), 0) || 0;
+
+            // Calculate monthly sales (entire month of selected date)
+            const monthStr = selectedDate.getFullYear() + '-' + String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const monthlyInvoices = invoicesList?.filter(inv => {
+                const date = inv.invoiceDate?.toDate?.() || new Date(inv.invoiceDate);
+                const dateMonthStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+                return dateMonthStr === monthStr;
+            }) || [];
+            const monthlySales = monthlyInvoices.reduce((sum, inv) => sum + (inv.finalAmount || 0), 0) || 0;
+
+            // Calculate service analytics
+            const serviceStats = {};
+            const productStats = {};
+            selectedDateVisits.forEach(visit => {
+                visit.services?.forEach(service => {
+                    const serviceName = service.name || 'Unknown Service';
+                    serviceStats[serviceName] = (serviceStats[serviceName] || 0) + 1;
+                });
+                visit.products?.forEach(product => {
+                    const productName = product.name || 'Unknown Product';
+                    productStats[productName] = (productStats[productName] || 0) + 1;
+                });
+            });
+
+            const topServices = Object.entries(serviceStats)
+                .map(([name, count]) => ({ name, value: count }))
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 5);
+
+            const topProducts = Object.entries(productStats)
+                .map(([name, count]) => ({ name, value: count }))
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 5);
+
+            // Calculate by-hour analytics for selected date
+            const hourlyStats = {};
+            selectedDateVisits.forEach(visit => {
+                const hour = new Date(visit.date?.toDate?.() || visit.date).getHours();
+                hourlyStats[hour] = (hourlyStats[hour] || 0) + 1;
+            });
+            const hourlyData = Array.from({ length: 24 }, (_, i) => ({
+                hour: `${String(i).padStart(2, '0')}:00`,
+                visits: hourlyStats[i] || 0,
+                revenue: selectedDateVisits
+                    .filter(v => new Date(v.date?.toDate?.() || v.date).getHours() === i)
+                    .reduce((sum, v) => sum + (v.totalAmount || 0), 0)
+            }));
+
+            // Transactions for selected date
+            const recentTransactions = selectedDateInvoices.map(inv => ({
+                id: inv.id,
+                customer: inv.customerName || 'Walk-in',
+                amount: inv.finalAmount || 0,
+                date: inv.invoiceDate?.toDate?.() || inv.invoiceDate,
+                status: inv.status || 'pending',
+                time: new Date(inv.invoiceDate?.toDate?.() || inv.invoiceDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            }));
+
+            // Customer analytics
+            const uniqueCustomersSelected = new Set(selectedDateVisits.map(v => v.customerId)).size;
+
+            // Revenue distribution by hour
+            const avgOrderValue = selectedDateInvoices.length > 0 ? dailySalesSelected / selectedDateInvoices.length : 0;
+
+            // Peak service
+            const peakService = topServices.length > 0 ? topServices[0].name : 'N/A';
+
+            // Customer retention rate (returning customers)
+            const customerVisitCount = {};
+            visitsList?.forEach(v => {
+                customerVisitCount[v.customerId] = (customerVisitCount[v.customerId] || 0) + 1;
+            });
+            const returningCustomers = Object.values(customerVisitCount).filter(count => count > 1).length;
 
             setStats({
-                dailySales: dashboardData?.dailySales || 0,
-                monthlySales: dashboardData?.monthlySales || 0,
-                todayVisits: todayVisits,
+                dailySales: dailySalesSelected,
+                monthlySales: monthlySales,
+                todayVisits: selectedDateVisits.length,
                 totalInvoices: invoicesList?.length || 0,
                 topServices: topServices,
                 topProducts: topProducts,
-                monthlyTrend: monthlyTrend,
+                monthlyTrend: generateMonthlyTrend(monthlyInvoices),
                 recentTransactions: recentTransactions,
                 activeVisits: activeVisitsList?.length || 0,
                 totalCustomers: customerList?.length || 0,
@@ -101,10 +180,14 @@ const Dashboard = () => {
                 totalServices: servicesList?.length || 0,
                 totalProducts: productsList?.length || 0,
                 avgOrderValue: avgOrderValue,
-                conversionRate: calculateConversionRate(todayVisits, customerList?.length || 1),
-                peakHour: calculatePeakHour(visitsList),
+                conversionRate: ((uniqueCustomersSelected / (customerList?.length || 1)) * 100).toFixed(1),
+                peakHour: calculatePeakHour(selectedDateVisits),
+                peakService: peakService,
+                uniqueCustomers: uniqueCustomersSelected,
+                returningCustomers: returningCustomers,
+                hourlyData: hourlyData,
                 staffAttendance: 0,
-                totalRevenue: totalRevenue
+                totalRevenue: monthlySales
             });
         } catch (err) {
             console.error('Error fetching dashboard stats:', err);
@@ -143,28 +226,50 @@ const Dashboard = () => {
         return `${String(peakHour).padStart(2, '0')}:00`;
     };
 
-    const StatCard = ({ title, value, icon: Icon, color = '#d4af37' }) => (
+    const StatCard = ({ title, value, icon: Icon, color = '#d4af37', subtitle = '' }) => (
         <div className="card" style={{
             background: `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`,
-            borderLeft: `4px solid ${color}`,
+            borderLeft: `5px solid ${color}`,
+            transition: 'all 0.3s ease',
+            cursor: 'pointer',
+            position: 'relative',
+            overflow: 'hidden'
+        }} onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-5px)';
+            e.currentTarget.style.boxShadow = `0 15px 40px ${color}30`;
+        }} onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
         }}>
-            <div className="card-content" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            {/* Animated background gradient */}
+            <div style={{
+                position: 'absolute',
+                top: '-50%',
+                right: '-50%',
+                width: '200%',
+                height: '200%',
+                background: `radial-gradient(circle, ${color}10, transparent 70%)`,
+                pointerEvents: 'none'
+            }} />
+            <div className="card-content" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
                 <div style={{ flex: 1 }}>
-                    <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: '500' }}>{title}</p>
-                    <h3 style={{ fontSize: '2.2rem', fontWeight: '700', color: 'var(--foreground)', lineHeight: 1 }}>{value}</h3>
+                    <p style={{ color: 'var(--muted-foreground)', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</p>
+                    <h3 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--foreground)', lineHeight: 1, marginBottom: '0.25rem' }}>{value}</h3>
+                    {subtitle && <p style={{ fontSize: '0.75rem', color: color, fontWeight: '600' }}>{subtitle}</p>}
                 </div>
                 <div style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '12px',
-                    background: `${color}20`,
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '16px',
+                    background: `linear-gradient(135deg, ${color}30, ${color}10)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: color,
-                    flexShrink: 0
+                    flexShrink: 0,
+                    border: `2px solid ${color}20`
                 }}>
-                    <Icon size={28} />
+                    <Icon size={32} />
                 </div>
             </div>
         </div>

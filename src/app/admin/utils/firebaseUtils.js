@@ -13,6 +13,7 @@ import {
   getDoc, 
   collection, 
   getDocs, 
+  collectionGroup,
   query, 
   where, 
   updateDoc, 
@@ -226,23 +227,61 @@ export const restoreDocument = async (collectionName, docId) => {
 // CUSTOMER MANAGEMENT
 // ============================================
 
+// Helper to normalize phone number (remove spaces, dashes, etc., and add +91 country code)
+const normalizePhone = (phone) => {
+  if (!phone) return '';
+  let normalized = phone.replace(/[\s\-()]/g, '').trim();
+  // Add +91 if not already present and starts with valid Indian number
+  if (normalized && !normalized.startsWith('+')) {
+    // If it starts with 91, just prepend +
+    if (normalized.startsWith('91')) {
+      normalized = '+' + normalized;
+    } else {
+      // Otherwise prepend +91
+      normalized = '+91' + normalized;
+    }
+  }
+  return normalized;
+};
+
 export const addCustomer = async (customerData) => {
   try {
-    const customerId = await addDocument('customers', {
-      name: customerData.name,
-      phone: customerData.contactNo || customerData.phone || '',
+    const phone = normalizePhone(customerData.contactNo || customerData.phone || '');
+    
+    if (!phone) {
+      throw new Error('Phone number is required');
+    }
+    
+    // Check if customer with this phone already exists
+    const existingDoc = await getDoc(doc(db, 'customers', phone));
+    if (existingDoc.exists()) {
+      // Return existing customer data
+      return { 
+        id: phone,
+        ...existingDoc.data()
+      };
+    }
+    
+    // Create customer with phone as document ID
+    const customerDoc = {
+      name: customerData.name || '',
+      phone: phone,
       email: customerData.email || '',
       gender: customerData.gender || '',
       isVerified: false,
       loyaltyPoints: 0,
+      coins: 0,
       totalVisits: 0,
       totalSpent: 0,
       deletedAt: null,
-      createdAt: serverTimestamp()
-    });
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    await setDoc(doc(db, 'customers', phone), customerDoc);
     
     // Create loyalty points collection for this customer
-    await addDocument(`customers/${customerId}/pointsHistory`, {
+    await addDoc(collection(db, `customers/${phone}/pointsHistory`), {
       type: 'initial',
       points: 0,
       amount: 0,
@@ -253,18 +292,82 @@ export const addCustomer = async (customerData) => {
     });
     
     return { 
-      id: customerId,
-      name: customerData.name,
-      phone: customerData.phone || customerData.contactNo || '',
-      email: customerData.email || '',
-      gender: customerData.gender || '',
-      isVerified: false,
-      loyaltyPoints: 0,
-      totalVisits: 0,
-      totalSpent: 0
+      id: phone,
+      ...customerDoc
     };
   } catch (error) {
     console.error('Error adding customer:', error);
+    throw error;
+  }
+};
+
+// Get customer by phone number (document ID)
+export const getCustomerByPhone = async (phone) => {
+  try {
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) return null;
+    
+    const docRef = doc(db, 'customers', normalizedPhone);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting customer by phone:', error);
+    return null;
+  }
+};
+
+// Update customer to link with auth UID
+export const linkCustomerToAuth = async (phone, authUid) => {
+  try {
+    const normalizedPhone = normalizePhone(phone);
+    await updateDoc(doc(db, 'customers', normalizedPhone), {
+      authUid: authUid,
+      isVerified: true,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error linking customer to auth:', error);
+    throw error;
+  }
+};
+
+// Update customer details
+export const updateCustomer = async (phone, customerData) => {
+  try {
+    const normalizedPhone = normalizePhone(phone);
+    
+    // If phone is being updated, handle the document ID change
+    const newPhone = customerData.phone ? normalizePhone(customerData.phone) : normalizedPhone;
+    
+    const updateData = {
+      name: customerData.name || '',
+      email: customerData.email || '',
+      phone: newPhone,
+      gender: customerData.gender || '',
+      updatedAt: serverTimestamp()
+    };
+    
+    if (newPhone !== normalizedPhone) {
+      // Phone number changed - need to migrate document
+      // 1. Create new document with updated phone
+      await setDoc(doc(db, 'customers', newPhone), updateData);
+      // 2. Copy subcollections if needed
+      const pointsSnapshot = await getDocs(collection(db, `customers/${normalizedPhone}/pointsHistory`));
+      for (const doc of pointsSnapshot.docs) {
+        await setDoc(doc(db, `customers/${newPhone}/pointsHistory/${doc.id}`), doc.data());
+      }
+      // 3. Delete old document
+      await deleteDoc(doc(db, 'customers', normalizedPhone));
+    } else {
+      // Phone unchanged - simple update
+      await updateDoc(doc(db, 'customers', normalizedPhone), updateData);
+    }
+  } catch (error) {
+    console.error('Error updating customer:', error);
     throw error;
   }
 };
@@ -300,15 +403,6 @@ export const searchCustomers = async (searchTerm) => {
     });
   } catch (error) {
     console.error('Error searching customers:', error);
-    throw error;
-  }
-};
-
-export const updateCustomer = async (customerId, customerData) => {
-  try {
-    await updateDocument('customers', customerId, customerData);
-  } catch (error) {
-    console.error('Error updating customer:', error);
     throw error;
   }
 };
@@ -1872,6 +1966,73 @@ export const getAppointments = async (staffId = null) => {
   }
 };
 
+// Get all frontend bookings from appointments/{date}/bookings subcollections (use collectionGroup for reliability)
+export const getFrontendBookings = async (includeAll = false) => {
+  try {
+    const bookings = [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let q;
+    if (includeAll) {
+      // Fetch all bookings (for appointments management page)
+      q = query(collectionGroup(db, 'bookings'));
+    } else {
+      // Query all 'bookings' subcollections for appointmentDate >= today
+      q = query(
+        collectionGroup(db, 'bookings'),
+        where('appointmentDate', '>=', Timestamp.fromDate(today))
+      );
+    }
+
+    const snapshot = await getDocs(q);
+    console.log('getFrontendBookings - collectionGroup fetched', snapshot.size, 'booking(s)');
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const aptDate = data.appointmentDate?.toDate?.() || new Date(data.appointmentDate);
+      bookings.push({
+        id: doc.id,
+        dateFolder: doc.ref.parent.parent ? doc.ref.parent.parent.id : null,
+        ...data,
+        source: 'frontend',
+        appointmentDate: aptDate
+      });
+    });
+
+    return bookings.sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
+  } catch (error) {
+    console.error('Error getting frontend bookings:', error);
+    return [];
+  }
+};
+
+// Get combined appointments (both admin-created and frontend bookings)
+export const getAllAppointments = async (staffId = null) => {
+  try {
+    const [adminAppointments, frontendBookings] = await Promise.all([
+      getAppointments(staffId),
+      getFrontendBookings()
+    ]);
+    
+    let combined = [...adminAppointments, ...frontendBookings];
+    
+    if (staffId) {
+      combined = combined.filter(apt => apt.stylistId === staffId || apt.staffId === staffId);
+    }
+    
+    return combined.sort((a, b) => {
+      const dateA = a.appointmentDate?.toDate?.() || new Date(a.appointmentDate);
+      const dateB = b.appointmentDate?.toDate?.() || new Date(b.appointmentDate);
+      return dateA - dateB;
+    });
+  } catch (error) {
+    console.error('Error getting all appointments:', error);
+    return [];
+  }
+};
+
 export const getUpcomingAppointments = async (days = 7) => {
   try {
     const now = new Date();
@@ -1888,9 +2049,18 @@ export const getUpcomingAppointments = async (days = 7) => {
   }
 };
 
-export const updateAppointmentStatus = async (appointmentId, status) => {
+export const updateAppointmentStatus = async (dateFolder, appointmentId, status) => {
   try {
-    await updateDocument('appointments', appointmentId, { status: status });
+    // Handle date-wise folder structure: appointments/{dateFolder}/bookings/{appointmentId}
+    if (dateFolder) {
+      await updateDoc(doc(db, `appointments/${dateFolder}/bookings/${appointmentId}`), {
+        status: status,
+        updatedAt: serverTimestamp()
+      });
+    } else {
+      // Fallback for old structure
+      await updateDocument('appointments', appointmentId, { status: status });
+    }
   } catch (error) {
     console.error('Error updating appointment status:', error);
     throw error;
@@ -1905,6 +2075,92 @@ export const cancelAppointment = async (appointmentId) => {
     });
   } catch (error) {
     console.error('Error cancelling appointment:', error);
+    throw error;
+  }
+};
+
+// Check in an appointment directly to visit/reception
+export const checkInAppointment = async (appointment) => {
+  try {
+    // Get or create customer using phone as document ID
+    const normalizedPhone = normalizePhone(appointment.customerPhone);
+    let customerId = normalizedPhone;
+    
+    if (!normalizedPhone) {
+      throw new Error('Customer phone number is required');
+    }
+    
+    // Check if customer exists by phone
+    const existingCustomer = await getCustomerByPhone(normalizedPhone);
+    
+    if (!existingCustomer) {
+      // Create new customer with phone as document ID
+      const newCustomer = await addCustomer({
+        name: appointment.customerName,
+        phone: normalizedPhone,
+        email: appointment.customerEmail || ''
+      });
+      customerId = newCustomer.id;
+    }
+
+    // Create visit record in reception
+    const visitData = {
+      customerId,
+      customerName: appointment.customerName,
+      customerPhone: normalizedPhone,
+      customerEmail: appointment.customerEmail || '',
+      appointmentId: appointment.id,
+      appointmentSource: appointment.source || 'frontend',
+      dateFolder: appointment.dateFolder,
+      services: [{
+        id: appointment.serviceId,
+        name: appointment.serviceName,
+        price: appointment.servicePrice || 0,
+        duration: appointment.serviceDuration || 30,
+        stylistId: appointment.stylistId,
+        stylistName: appointment.stylistName,
+        status: 'PENDING'
+      }],
+      notes: appointment.notes || '',
+      status: 'CHECKED_IN'
+    };
+
+    const visitId = await createVisit(visitData);
+
+    // Update appointment status to checked-in
+    try {
+      const dateFolder = appointment.dateFolder;
+      await updateDoc(doc(db, `appointments/${dateFolder}/bookings/${appointment.id}`), {
+        status: 'checked-in',
+        visitId,
+        checkedInAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.warn('Could not update appointment status:', err);
+    }
+
+    return { visitId, customerId };
+  } catch (error) {
+    console.error('Error checking in appointment:', error);
+    throw error;
+  }
+};
+
+// Cancel a frontend booking
+export const cancelFrontendBooking = async (booking) => {
+  try {
+    if (!booking.dateFolder) {
+      throw new Error('Missing date folder information');
+    }
+
+    await updateDoc(doc(db, `appointments/${booking.dateFolder}/bookings/${booking.id}`), {
+      status: 'cancelled',
+      cancelledAt: serverTimestamp()
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
     throw error;
   }
 };

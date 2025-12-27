@@ -113,14 +113,17 @@ export default function BookingForm({ isOpen = false, onClose, stylistId }: Book
     const stylistId = e.target.value;
     setFormData({ ...formData, stylistId, appointmentTime: "" });
     setStylistAvailability("");
+    setBookedSlots([]); // Reset booked slots
     
     // Fetch booked slots for the selected stylist on the current date
     if (stylistId && formData.appointmentDate) {
       try {
         const booked = await getBookedSlotsForStylist(stylistId, formData.appointmentDate);
         setBookedSlots(booked);
+        console.log('Booked slots for stylist:', booked);
       } catch (err) {
         console.error('Error fetching booked slots:', err);
+        setBookedSlots([]);
       }
     }
   };
@@ -129,7 +132,7 @@ export default function BookingForm({ isOpen = false, onClose, stylistId }: Book
     const date = e.target.value;
     setFormData({ ...formData, appointmentDate: date, appointmentTime: "" });
     setStylistAvailability("");
-    setBookedSlots([]);
+    setBookedSlots([]); // Reset booked slots
     
     // Generate time slots (hourly from 8 AM to 9 PM)
     const slots: Array<{ time: string; value: string }> = [];
@@ -166,13 +169,21 @@ export default function BookingForm({ isOpen = false, onClose, stylistId }: Book
       try {
         const booked = await getBookedSlotsForStylist(formData.stylistId, date);
         setBookedSlots(booked);
+        console.log('Booked slots for date:', date, 'stylist:', formData.stylistId, 'booked:', booked);
       } catch (err) {
         console.error('Error fetching booked slots:', err);
+        setBookedSlots([]);
       }
     }
   };
 
   const handleTimeSelect = async (timeValue: string, timeDisplay: string) => {
+    // Check if the slot is booked before allowing selection
+    if (bookedSlots.includes(timeValue)) {
+      setStylistAvailability(`⚠️ This time slot (${timeDisplay}) is already booked. Please select another time.`);
+      return;
+    }
+
     setFormData({ ...formData, appointmentTime: timeValue });
     
     if (formData.stylistId && formData.appointmentDate) {
@@ -180,6 +191,7 @@ export default function BookingForm({ isOpen = false, onClose, stylistId }: Book
         const isAvailable = await checkStylistAvailability(formData.stylistId, formData.appointmentDate, timeValue);
         if (!isAvailable) {
           setStylistAvailability(`⚠️ This stylist is already booked at ${timeDisplay}. Please select another time slot.`);
+          setFormData({ ...formData, appointmentTime: "" }); // Reset time
         } else {
           setStylistAvailability("");
         }
@@ -224,11 +236,14 @@ export default function BookingForm({ isOpen = false, onClose, stylistId }: Book
       setSubmitLoading(true);
       setError("");
 
+      // Use phone number as customerId (normalized)
+      const normalizedPhone = formData.customerPhone.replace(/[\s\-()]/g, '').trim();
+
       const appointmentData = {
-        customerId: user?.uid,
+        customerId: normalizedPhone, // Use phone as customer ID
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
-        customerPhone: formData.customerPhone,
+        customerPhone: normalizedPhone,
         serviceId: formData.serviceId,
         serviceName: services.find(s => s.id === formData.serviceId)?.name,
         stylistId: formData.stylistId,
@@ -241,28 +256,33 @@ export default function BookingForm({ isOpen = false, onClose, stylistId }: Book
 
       await bookAppointment(appointmentData);
 
-      setSuccess("Appointment booked successfully! We'll confirm via email.");
+      setSuccess("✅ Appointment booked successfully! We'll confirm via email.");
+      setSubmitLoading(false);
       
-      // Keep form visible for 2 seconds to show success message, then close
+      // Auto-close the success popup and form after 4 seconds
       setTimeout(() => {
+        // Reset all form state
         setFormData({
           customerName: user?.displayName || "",
           customerEmail: user?.email || "",
           customerPhone: "",
           serviceId: "",
-          stylistId: "",
+          stylistId: stylistId || "",
           appointmentDate: "",
           appointmentTime: "",
           notes: ""
         });
-        setShowForm(false);
-        onClose?.();
+        setAvailableSlots([]);
+        setBookedSlots([]);
+        setStylistAvailability("");
         setSuccess("");
-      }, 2000);
+        setError("");
+        setShowForm(false);
+        if (onClose) onClose();
+      }, 4000);
     } catch (err) {
       console.error("Error booking appointment:", err);
-      setError("Failed to book appointment. Please try again.");
-    } finally {
+      setError("❌ Failed to book appointment. Please try again.");
       setSubmitLoading(false);
     }
   };
@@ -277,7 +297,41 @@ export default function BookingForm({ isOpen = false, onClose, stylistId }: Book
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4 pt-20">
+    <>
+      {/* Success Popup - Shown above everything */}
+      {success && (
+        <div className="fixed inset-0 flex items-center justify-center z-[2000] pointer-events-auto">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+          
+          {/* Popup Content */}
+          <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 animate-in zoom-in-95 duration-300">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4 animate-bounce">
+                <CheckCircle className="w-12 h-12 text-green-600" />
+              </div>
+              <h2 className="text-3xl font-bold text-green-700 mb-2">Booking Confirmed!</h2>
+              <p className="text-gray-600 mb-4">{success}</p>
+              <div className="w-full bg-green-50 rounded-lg p-3 mb-6">
+                <p className="text-sm text-green-700 font-medium">✓ Your appointment has been successfully scheduled</p>
+              </div>
+              <button
+                onClick={() => {
+                  setSuccess("");
+                  setShowForm(false);
+                  if (onClose) onClose();
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking Form Modal */}
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4 pt-20">
       <Card className="w-full max-w-2xl bg-white p-8 max-h-[85vh] overflow-y-auto my-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-purple-600">Book an Appointment</h2>
@@ -288,13 +342,6 @@ export default function BookingForm({ isOpen = false, onClose, stylistId }: Book
             <X className="w-6 h-6" />
           </button>
         </div>
-
-        {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <p className="text-green-700">{success}</p>
-          </div>
-        )}
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -444,22 +491,26 @@ export default function BookingForm({ isOpen = false, onClose, stylistId }: Book
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                         {availableSlots.map((slot: any) => {
                           const isBooked = bookedSlots.includes(slot.value);
+                          const isSelected = formData.appointmentTime === slot.value;
+                          
                           return (
                             <button
                               key={slot.value}
+                              type="button"
                               onClick={() => !isBooked && handleTimeSelect(slot.value, slot.time)}
                               disabled={isBooked}
                               className={`py-3 px-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                                 isBooked
-                                  ? 'bg-gray-200 text-gray-400 border-2 border-gray-300 cursor-not-allowed opacity-60'
-                                  : formData.appointmentTime === slot.value
+                                  ? 'bg-gray-300 text-gray-500 border-2 border-gray-400 cursor-not-allowed opacity-50'
+                                  : isSelected
                                   ? 'bg-purple-600 text-white shadow-lg ring-2 ring-purple-400 ring-offset-2'
                                   : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-purple-400 hover:shadow-md cursor-pointer'
                               }`}
+                              title={isBooked ? `Already booked at ${slot.time}` : `Select ${slot.time}`}
                             >
                               <div className="text-center">
-                                {slot.time}
-                                {isBooked && <span className="block text-xs mt-1">Booked</span>}
+                                <div>{slot.time}</div>
+                                {isBooked && <span className="block text-xs font-bold">BOOKED</span>}
                               </div>
                             </button>
                           );
@@ -514,5 +565,6 @@ export default function BookingForm({ isOpen = false, onClose, stylistId }: Book
         )}
       </Card>
     </div>
+    </>
   );
 }
