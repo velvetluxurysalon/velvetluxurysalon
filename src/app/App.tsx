@@ -12,6 +12,8 @@ import MembershipPage from "./frontend/components/pages/MembershipPage";
 import BlogPage from "./frontend/components/pages/BlogPage";
 import ReviewsPage from "./frontend/components/pages/ReviewsPage";
 import SpecialOffersPage from "./frontend/components/pages/SpecialOffersPage";
+import AppointmentsPage from "./frontend/components/pages/AppointmentsPage";
+import GoogleProfileCompletionPage from "./frontend/components/pages/GoogleProfileCompletionPage";
 import CustomerLoginPage from "./frontend/pages/CustomerLoginPage";
 import CustomerSignupPage from "./frontend/pages/CustomerSignupPage";
 import ReferralSystemPage from "./frontend/pages/ReferralSystemPage";
@@ -65,6 +67,11 @@ export default function App() {
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/referrals" element={<ReferralSystemPage />} />
                 <Route path="/spin" element={<SpinWheelPage />} />
+                <Route path="/appointments" element={<AppointmentsPage />} />
+                <Route
+                  path="/google-profile-completion"
+                  element={<GoogleProfileCompletionPage />}
+                />
 
                 {/* Receptionist-only routes */}
                 <Route

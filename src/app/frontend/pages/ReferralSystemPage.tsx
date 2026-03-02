@@ -22,6 +22,7 @@ import {
   getCustomerReferralCodes,
   getReferrerReferrals,
   getReferralStats,
+  getReferralCode,
 } from "../services/firebaseService";
 import {
   Copy,
@@ -244,6 +245,64 @@ export default function ReferralSystemPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Validate Referral Code Card */}
+        <Card className="border-0 shadow-lg mb-8 bg-gradient-to-br from-purple-50 to-indigo-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>🔍</span> Test Referral Code
+            </CardTitle>
+            <CardDescription>
+              Validate a referral code to see if it's working properly
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter referral code to test..."
+                  id="testReferralCode"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  defaultValue=""
+                />
+                <Button
+                  onClick={async () => {
+                    const codeInput = document.getElementById(
+                      "testReferralCode",
+                    ) as HTMLInputElement;
+                    const code = codeInput?.value || "";
+
+                    if (!code.trim()) {
+                      alert("Please enter a referral code");
+                      return;
+                    }
+
+                    try {
+                      const referralCode = await getReferralCode(code);
+                      if (referralCode) {
+                        alert(
+                          `✅ Code Found!\n\n${JSON.stringify(referralCode, null, 2)}`,
+                        );
+                      } else {
+                        alert("❌ Referral code not found");
+                      }
+                    } catch (err: any) {
+                      alert(`❌ Error: ${err.message}`);
+                    }
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  Validate
+                </Button>
+              </div>
+              <p className="text-xs text-gray-600">
+                💡 Use this to test if your referral codes are working correctly
+                before sharing them with friends
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="codes" className="space-y-6">

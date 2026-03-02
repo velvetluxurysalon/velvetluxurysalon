@@ -189,7 +189,7 @@ export default function HomePage() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <Link
-              to="/contact"
+              to="/appointments"
               className="group relative px-10 py-5 bg-[#c9a227] text-white text-xs font-black uppercase tracking-widest rounded-sm overflow-hidden shadow-2xl shadow-amber-900/40 hover:shadow-3xl transition-all duration-300 hover:scale-105"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-[#d4b247] to-[#b8941f] opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -359,7 +359,7 @@ export default function HomePage() {
             define your ultimate look.
           </p>
           <Link
-            to="/contact"
+            to="/appointments"
             className="inline-block px-12 py-5 bg-[#c9a227] text-white text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-amber-900/20 hover:bg-[#a68523] transition-all rounded-sm font-sans"
           >
             Schedule Consultation

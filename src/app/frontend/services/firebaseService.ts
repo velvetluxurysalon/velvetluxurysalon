@@ -5,6 +5,8 @@ import {
   updateProfile,
   sendPasswordResetEmail,
   onAuthStateChanged,
+  signInWithPopup,
+  GoogleAuthProvider,
 } from "firebase/auth";
 import { auth, db, storage } from "../../../firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -596,6 +598,13 @@ export const loginWithPhone = async (phone: string, password: string) => {
       customerData.email,
       password,
     );
+
+    // Link the authUid to the customer document after successful login
+    await updateDoc(doc(db, "customers", normalizedPhone), {
+      authUid: userCredential.user.uid,
+      updatedAt: serverTimestamp(),
+    });
+
     return userCredential.user;
   } catch (error: any) {
     if (
@@ -605,6 +614,99 @@ export const loginWithPhone = async (phone: string, password: string) => {
       throw new Error("Incorrect password. Please try again.");
     }
     throw new Error(error?.message || "Login failed");
+  }
+};
+
+export const loginWithGoogle = async () => {
+  try {
+    const googleProvider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+
+    // Check if customer document exists
+    const customersRef = collection(db, "customers");
+
+    // Try to find existing customer by authUid
+    let existingCustomer = null;
+    const q = query(customersRef, where("authUid", "==", user.uid));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const customerDoc = querySnapshot.docs[0];
+      existingCustomer = { id: customerDoc.id, ...customerDoc.data() };
+    }
+
+    // If no customer found, return user info for profile completion
+    if (!existingCustomer) {
+      return {
+        user,
+        isNewUser: true,
+        email: user.email,
+        displayName: user.displayName,
+        needsProfileCompletion: true,
+      };
+    }
+
+    return {
+      user,
+      isNewUser: false,
+      needsProfileCompletion: false,
+    };
+  } catch (error: any) {
+    if (error.code === "auth/popup-closed-by-user") {
+      throw new Error("Sign-in was cancelled");
+    }
+    throw new Error(error?.message || "Google sign-in failed");
+  }
+};
+
+export const completeGoogleProfile = async (
+  uid: string,
+  phone: string,
+  dob: string,
+) => {
+  try {
+    const normalizedPhone = normalizePhone(phone);
+    const user = auth.currentUser;
+
+    if (!user) {
+      throw new Error("No user found. Please sign in again.");
+    }
+
+    // Create or update customer document using phone as document ID
+    const customerRef = doc(db, "customers", normalizedPhone);
+    const customerSnap = await getDoc(customerRef);
+
+    if (customerSnap.exists()) {
+      // Update existing customer
+      await updateDoc(customerRef, {
+        authUid: uid,
+        phone: normalizedPhone,
+        dateOfBirth: dob,
+        isVerified: true,
+        updatedAt: serverTimestamp(),
+      });
+    } else {
+      // Create new customer
+      await setDoc(customerRef, {
+        authUid: uid,
+        email: user.email,
+        name: user.displayName || "User",
+        phone: normalizedPhone,
+        dateOfBirth: dob,
+        gender: "",
+        loyaltyPoints: 0,
+        totalVisits: 0,
+        totalSpent: 0,
+        isVerified: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    }
+
+    return { id: normalizedPhone, phone: normalizedPhone };
+  } catch (error: any) {
+    throw new Error(error?.message || "Failed to complete profile");
   }
 };
 
@@ -1591,6 +1693,30 @@ export const createAppointment = async (
       createdDate: serverTimestamp(),
     });
 
+    // Also save to customers/{customerId}/appointments subcollection
+    const customerAppointmentRef = collection(
+      db,
+      `customers/${appointmentData.customerId}/appointments`,
+    );
+    await addDoc(customerAppointmentRef, {
+      id: appointmentId,
+      customerId: appointmentData.customerId,
+      customerName: appointmentData.customerName,
+      customerPhone: appointmentData.customerPhone,
+      customerEmail: appointmentData.customerEmail,
+      serviceId: appointmentData.serviceId,
+      serviceName: appointmentData.serviceName,
+      staffId: appointmentData.staffId || null,
+      appointmentDate: Timestamp.fromDate(
+        new Date(appointmentData.appointmentDate),
+      ),
+      appointmentTime: appointmentData.appointmentTime,
+      duration: appointmentData.duration || 30,
+      status: "scheduled",
+      notes: appointmentData.notes || "",
+      createdAt: serverTimestamp(),
+    });
+
     return appointmentId;
   } catch (error) {
     console.error("Error creating appointment:", error);
@@ -1724,6 +1850,7 @@ export const bookAppointment = async (appointmentData: any) => {
     const day = String(dateObj.getDate()).padStart(2, "0");
     const dateString = `${year}-${month}-${day}`;
 
+    // 1. Save to appointments/{dateString}/bookings (for admin panel)
     const appointmentRef = collection(
       db,
       `appointments/${dateString}/bookings`,
@@ -1735,8 +1862,12 @@ export const bookAppointment = async (appointmentData: any) => {
       status: "pending",
     });
 
-    const summaryRef = collection(db, "appointments_summary");
-    await addDoc(summaryRef, {
+    // 2. Save to customers/{customerId}/appointments subcollection (for frontend)
+    const customerAppointmentRef = collection(
+      db,
+      `customers/${appointmentData.customerId}/appointments`,
+    );
+    await addDoc(customerAppointmentRef, {
       id: docRef.id,
       customerId: appointmentData.customerId,
       customerName: appointmentData.customerName,
@@ -1748,7 +1879,10 @@ export const bookAppointment = async (appointmentData: any) => {
       stylistName: appointmentData.stylistName,
       appointmentDate: Timestamp.fromDate(dateObj),
       appointmentTime: appointmentData.appointmentTime,
+      duration: appointmentData.duration || 0,
+      notes: appointmentData.notes || "",
       status: "pending",
+      dateFolder: dateString,
       createdAt: Timestamp.now(),
     });
 
@@ -2136,7 +2270,7 @@ export const validateAndApplyReferralCode = async (
       updatedAt: serverTimestamp(),
     });
 
-    // Award points to referrer
+    // Award points to referrer - update directly without complex migrations
     const referrerCustomer = await getCustomerByPhone(
       referralData.createdByPhone,
     );
@@ -2144,8 +2278,11 @@ export const validateAndApplyReferralCode = async (
       const newPoints =
         (referrerCustomer.loyaltyPoints || 0) +
         referralData.bonusPointsForReferrer;
-      await updateCustomer(referralData.createdByPhone, {
+
+      // Update loyalty points directly using updateDoc
+      await updateDoc(doc(db, "customers", referralData.createdByPhone), {
         loyaltyPoints: newPoints,
+        updatedAt: serverTimestamp(),
       });
 
       // Log points history for referrer
@@ -2164,16 +2301,22 @@ export const validateAndApplyReferralCode = async (
           transactionDate: serverTimestamp(),
         },
       );
+      console.log(
+        `✅ Awarded ${referralData.bonusPointsForReferrer} points to referrer`,
+      );
     }
 
-    // Award points to new customer
+    // Award points to new customer - update directly
     const newCustomer = await getCustomerByPhone(normalizedPhone);
     if (newCustomer) {
       const newPoints =
         (newCustomer.loyaltyPoints || 0) +
         referralData.bonusPointsForNewCustomer;
-      await updateCustomer(normalizedPhone, {
+
+      // Update loyalty points directly using updateDoc
+      await updateDoc(doc(db, "customers", normalizedPhone), {
         loyaltyPoints: newPoints,
+        updatedAt: serverTimestamp(),
       });
 
       // Log points history for new customer
@@ -2189,21 +2332,30 @@ export const validateAndApplyReferralCode = async (
           transactionDate: serverTimestamp(),
         },
       );
+      console.log(
+        `✅ Awarded ${referralData.bonusPointsForNewCustomer} points to new customer`,
+      );
     }
 
+    console.log(
+      "✅ Referral code applied successfully:",
+      referralCode,
+      "for customer:",
+      newCustomerName,
+    );
     return {
       success: true,
       discount: referralData.discountPercentage,
       points: referralData.bonusPointsForNewCustomer,
       message: "Referral code applied successfully",
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error validating referral code:", error);
     return {
       success: false,
       discount: 0,
       points: 0,
-      message: "Error validating referral code",
+      message: error.message || "Error validating referral code",
     };
   }
 };
@@ -2635,6 +2787,231 @@ export const validateCoupon = async (
     return {
       valid: false,
       error: (error as Error).message || "Error validating coupon",
+    };
+  }
+};
+// Get appointments for a specific customer
+export const getCustomerAppointments = async (
+  customerId: string,
+): Promise<Appointment[]> => {
+  try {
+    const q = query(
+      collection(db, `customers/${customerId}/appointments`),
+      orderBy("appointmentDate", "desc"),
+    );
+    const querySnapshot = await getDocs(q);
+    const appointments: Appointment[] = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      appointments.push({
+        id: doc.id,
+        ...data,
+        appointmentDate:
+          data.appointmentDate?.toDate?.() || new Date(data.appointmentDate),
+      } as Appointment);
+    });
+
+    return appointments;
+  } catch (error) {
+    console.error("Error getting customer appointments:", error);
+    return [];
+  }
+};
+
+// Cancel an appointment
+export const cancelAppointment = async (
+  appointmentId: string,
+): Promise<boolean> => {
+  try {
+    let customerId: string | null = null;
+
+    // 1. Update in appointments/{dateString}/bookings and get customerId
+    const appointmentsQuery = query(collectionGroup(db, "bookings"));
+    const appointmentsSnapshot = await getDocs(appointmentsQuery);
+
+    appointmentsSnapshot.forEach(async (doc) => {
+      if (doc.id === appointmentId) {
+        const bookingData = doc.data();
+        customerId = bookingData.customerId;
+        await updateDoc(doc.ref, {
+          status: "cancelled",
+          cancelledAt: serverTimestamp(),
+        });
+      }
+    });
+
+    // 2. Update in customers/{customerId}/appointments subcollection
+    if (customerId) {
+      const customerAppointmentsQuery = query(
+        collection(db, `customers/${customerId}/appointments`),
+        where("id", "==", appointmentId),
+      );
+      const customerAppointmentsSnapshot = await getDocs(
+        customerAppointmentsQuery,
+      );
+
+      if (!customerAppointmentsSnapshot.empty) {
+        const customerAptDoc = customerAppointmentsSnapshot.docs[0];
+        await updateDoc(customerAptDoc.ref, {
+          status: "cancelled",
+          cancelledAt: serverTimestamp(),
+        });
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error cancelling appointment:", error);
+    throw error;
+  }
+};
+
+// Confirm an appointment
+export const confirmAppointment = async (
+  appointmentId: string,
+  customerId: string,
+): Promise<boolean> => {
+  try {
+    // 1. Update in appointments/{dateString}/bookings
+    const appointmentsQuery = query(collectionGroup(db, "bookings"));
+    const appointmentsSnapshot = await getDocs(appointmentsQuery);
+
+    appointmentsSnapshot.forEach(async (doc) => {
+      if (doc.id === appointmentId) {
+        await updateDoc(doc.ref, {
+          status: "confirmed",
+          confirmedAt: serverTimestamp(),
+        });
+      }
+    });
+
+    // 2. Update in customers/{customerId}/appointments subcollection
+    const customerAppointmentsQuery = query(
+      collection(db, `customers/${customerId}/appointments`),
+      where("id", "==", appointmentId),
+    );
+    const customerAppointmentsSnapshot = await getDocs(
+      customerAppointmentsQuery,
+    );
+
+    if (!customerAppointmentsSnapshot.empty) {
+      const customerAptDoc = customerAppointmentsSnapshot.docs[0];
+      await updateDoc(customerAptDoc.ref, {
+        status: "confirmed",
+        confirmedAt: serverTimestamp(),
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error confirming appointment:", error);
+    throw error;
+  }
+};
+
+// ============================================
+// APPOINTMENT CONFIRMATION EMAIL
+// ============================================
+
+export const sendAppointmentConfirmationEmail = async (
+  appointmentData: any,
+) => {
+  try {
+    // Prepare the data to send to the email API
+    const emailPayload = {
+      customerName: appointmentData.customerName,
+      customerEmail: appointmentData.customerEmail,
+      customerPhone: appointmentData.customerPhone,
+      serviceName: appointmentData.serviceName,
+      appointmentDate: appointmentData.appointmentDate,
+      appointmentTime: appointmentData.appointmentTime,
+      stylistName: appointmentData.stylistName || null,
+      duration: appointmentData.duration || null,
+      notes: appointmentData.notes || null,
+    };
+
+    // Call the Vercel serverless function to send confirmation email
+    const response = await fetch("/api/send-appointment-confirmation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(emailPayload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to send confirmation email");
+    }
+
+    const result = await response.json();
+    console.log("✅ Confirmation email sent successfully:", result);
+    return result;
+  } catch (error: any) {
+    console.error("Error sending confirmation email:", error);
+    // Don't throw - email sending failure shouldn't block appointment confirmation
+    // Log the error but allow the appointment to be confirmed
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
+// ============================================
+// APPLY REFERRAL CODE ON SIGNUP
+// ============================================
+
+/**
+ * Apply referral code when new customer signs up
+ * This should be called after customer account is created
+ */
+export const applyReferralCodeDuringSignup = async (
+  referralCode: string | null,
+  customerPhone: string,
+  customerName: string,
+): Promise<{
+  success: boolean;
+  message: string;
+  discount?: number;
+  bonusPoints?: number;
+}> => {
+  // If no referral code provided, just return success
+  if (!referralCode || referralCode.trim() === "") {
+    console.log("📝 No referral code provided");
+    return {
+      success: true,
+      message: "No referral code provided",
+    };
+  }
+
+  try {
+    console.log(
+      '🎯 Applying referral code during signup:",',
+      referralCode,
+      "for",
+      customerName,
+    );
+
+    const result = await validateAndApplyReferralCode(
+      referralCode,
+      customerPhone,
+      customerName,
+    );
+
+    return {
+      success: result.success,
+      message: result.message,
+      discount: result.discount,
+      bonusPoints: result.points,
+    };
+  } catch (error: any) {
+    console.error("❌ Error applying referral code during signup:", error);
+    return {
+      success: false,
+      message:
+        "Failed to apply referral code, but account was created successfully",
     };
   }
 };

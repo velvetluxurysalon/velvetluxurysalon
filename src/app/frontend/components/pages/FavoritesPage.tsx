@@ -126,7 +126,7 @@ export default function FavoritesPage() {
                               <Trash2 size={15} />
                             </button>
                             <Link
-                              to="/contact"
+                              to="/appointments"
                               className="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 flex items-center justify-center transition-colors"
                               title="Book"
                             >
@@ -150,7 +150,7 @@ export default function FavoritesPage() {
                     </p>
                   </div>
                   <Link
-                    to="/contact"
+                    to="/appointments"
                     className="px-8 py-3.5 bg-white text-violet-700 text-sm font-bold rounded-xl shadow-lg shadow-black/10 hover:shadow-xl hover:-translate-y-0.5 transition-all flex-shrink-0"
                   >
                     Book Appointment

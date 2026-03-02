@@ -161,7 +161,7 @@ export default function ServicesPage() {
                               <Clock size={12} /> {service.duration} MIN
                             </span>
                             <Link
-                              to="/contact"
+                              to="/appointments"
                               className="text-slate-900 hover:underline flex items-center gap-1"
                             >
                               Reserve <ChevronRight size={12} />

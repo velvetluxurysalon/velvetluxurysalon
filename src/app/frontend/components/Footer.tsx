@@ -344,28 +344,10 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Payment Methods */}
-        <div className="border-t border-white/10 pt-10 mb-10">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <CreditCard className="w-5 h-5 text-purple-400" />
-            <p className="text-sm text-gray-400">We Accept</p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            {displayPaymentMethods.map((method, index) => (
-              <div
-                key={index}
-                className="px-5 py-2.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl text-sm text-gray-300 hover:border-purple-500/50 hover:bg-purple-500/10 transition-all duration-300"
-              >
-                {method}
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-gray-400 flex items-center gap-1">
-            &copy; 2025 Velvet Luxury Salon
+            &copy; 2026 Velvet Luxury Salon
           </p>
           <p className="text-sm text-gray-400">
             Crafted By{" "}

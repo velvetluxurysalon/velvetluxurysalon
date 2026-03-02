@@ -12,7 +12,10 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { registerCustomer } from "../services/firebaseService";
+import {
+  registerCustomer,
+  applyReferralCodeDuringSignup,
+} from "../services/firebaseService";
 import { Eye, EyeOff, AlertCircle, CheckCircle, Sparkles } from "lucide-react";
 
 export default function CustomerSignupPage() {
@@ -121,12 +124,33 @@ export default function CustomerSignupPage() {
 
     setLoading(true);
     try {
+      // 1. Register the customer
       await registerCustomer(
         formData.email,
         formData.password,
         formData.name,
         formData.phone,
       );
+
+      // 2. Apply referral code if provided
+      if (formData.referralCode && formData.referralCode.trim()) {
+        console.log(
+          "🎯 Applying referral code after signup:",
+          formData.referralCode,
+        );
+        const referralResult = await applyReferralCodeDuringSignup(
+          formData.referralCode,
+          formData.phone,
+          formData.name,
+        );
+
+        if (referralResult.success) {
+          console.log("✅ Referral code applied successfully:", referralResult);
+        } else {
+          console.warn("⚠️ Referral code application failed:", referralResult);
+          // Don't block signup if referral code fails
+        }
+      }
 
       setSuccess(true);
       setTimeout(() => {

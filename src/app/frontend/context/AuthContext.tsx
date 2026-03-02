@@ -13,6 +13,8 @@ import {
   logoutCustomer,
   loginUser,
   getCurrentUserRole,
+  loginWithGoogle,
+  completeGoogleProfile,
 } from "../services/firebaseService";
 
 interface AuthContextType {
@@ -29,6 +31,12 @@ interface AuthContextType {
   ) => Promise<any>;
   login: (phone: string, password: string) => Promise<any>;
   loginStaff: (email: string, password: string) => Promise<any>;
+  loginWithGoogle: () => Promise<any>;
+  completeGoogleProfile: (
+    uid: string,
+    phone: string,
+    dob: string,
+  ) => Promise<any>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isReceptionist: boolean;
@@ -144,6 +152,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const loginWithGoogleHandler = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await loginWithGoogle();
+      return result;
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completeGoogleProfileHandler = async (
+    uid: string,
+    phone: string,
+    dob: string,
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await completeGoogleProfile(uid, phone, dob);
+      return result;
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       setLoading(true);
@@ -168,6 +212,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signup,
     login,
     loginStaff,
+    loginWithGoogle: loginWithGoogleHandler,
+    completeGoogleProfile: completeGoogleProfileHandler,
     logout,
     isAuthenticated: !!user,
     isReceptionist: userRole === "receptionist",

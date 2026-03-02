@@ -72,7 +72,7 @@ const receptionistNavItems = [
 const bottomBaseNavItems = [
   { icon: Home, label: "Home", href: "/", id: "home" },
   { icon: Scissors, label: "Services", href: "/services", id: "services" },
-  { icon: Calendar, label: "Book", href: "/contact", id: "contact" },
+  { icon: Calendar, label: "Book", href: "/appointments", id: "appointments" },
   { icon: Package, label: "Products", href: "/products", id: "products" },
   { icon: Users, label: "Profile", href: "/profile", id: "profile" },
 ];
@@ -406,12 +406,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
           {/* Drawer bottom */}
           <div className="px-3 pb-4 space-y-3 border-t border-slate-100 pt-4 mt-auto">
-            <Link
-              to="/contact"
+            <button
+              onClick={() => {
+                navigate("/appointments");
+                setDrawerOpen(false);
+              }}
               className="block w-full text-center px-4 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors"
             >
               Book Appointment
-            </Link>
+            </button>
 
             {/* Mobile Auth Buttons */}
             {!customerData && (
@@ -476,12 +479,30 @@ export default function MainLayout({ children }: MainLayoutProps) {
             )}
 
             <div className="px-1 space-y-1.5">
-              <p className="flex items-center gap-2 text-[11px] text-slate-400">
-                <Phone size={11} /> +1 (555) 123-4567
-              </p>
-              <p className="flex items-center gap-2 text-[11px] text-slate-400">
-                <Mail size={11} /> info@velvetsalon.com
-              </p>
+              <div>
+                <p className="text-[11px] font-medium text-slate-500 mb-0.5">
+                  Email
+                </p>
+                <a
+                  href="mailto:Velvetluxurysalon@gmail.com"
+                  className="flex items-center gap-2 text-[12px] text-slate-600 hover:text-slate-900 transition-colors"
+                >
+                  <Mail size={12} /> Velvetluxurysalon@gmail.com
+                </a>
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-slate-500 mb-0.5">
+                  WhatsApp
+                </p>
+                <a
+                  href="https://wa.me/919345678646"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-[12px] text-slate-600 hover:text-slate-900 transition-colors"
+                >
+                  <Phone size={12} /> 9345678646
+                </a>
+              </div>
             </div>
           </div>
         </aside>
@@ -502,35 +523,39 @@ export default function MainLayout({ children }: MainLayoutProps) {
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeId === item.id;
-            const isCenter = item.id === "contact";
+
+            // Handle appointments button specially with center position
+            if (item.id === "appointments") {
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => navigate("/appointments")}
+                  className={`flex flex-col items-center justify-center transition-all relative -mt-5`}
+                >
+                  <div className="w-[52px] h-[52px] rounded-full bg-slate-900 flex items-center justify-center shadow-sm ring-4 ring-white">
+                    <Icon size={22} className="text-white" />
+                  </div>
+                  <span className="text-[10px] mt-1 font-medium text-slate-900">
+                    {item.label}
+                  </span>
+                </button>
+              );
+            }
+
             return (
               <Link
                 key={item.id}
                 to={item.href}
                 className={`flex flex-col items-center justify-center transition-all ${
-                  isCenter ? "relative -mt-5" : ""
-                } ${
-                  !isCenter && isActive
+                  isActive
                     ? "text-slate-900"
-                    : !isCenter
-                      ? "text-slate-400 hover:text-slate-600"
-                      : ""
+                    : "text-slate-400 hover:text-slate-600"
                 }`}
               >
-                {isCenter ? (
-                  <div className="w-[52px] h-[52px] rounded-full bg-slate-900 flex items-center justify-center shadow-sm ring-4 ring-white">
-                    <Icon size={22} className="text-white" />
-                  </div>
-                ) : (
-                  <Icon size={22} strokeWidth={isActive ? 2.5 : 1.7} />
-                )}
+                <Icon size={22} strokeWidth={isActive ? 2.5 : 1.7} />
                 <span
                   className={`text-[10px] mt-1 font-medium ${
-                    isCenter
-                      ? "text-slate-900 font-medium"
-                      : isActive
-                        ? "text-slate-900"
-                        : "text-slate-400"
+                    isActive ? "text-slate-900" : "text-slate-400"
                   }`}
                 >
                   {item.label}
