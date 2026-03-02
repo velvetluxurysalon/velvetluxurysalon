@@ -134,6 +134,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
   // Close drawer on route change and scroll to top
   useEffect(() => {
     setDrawerOpen(false);
+    // Scroll entire window to top
+    window.scrollTo(0, 0);
+    // Also scroll main content area if available
     if (mainContentRef.current) {
       mainContentRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }

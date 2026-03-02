@@ -482,6 +482,28 @@ export default function SpinWheelPage() {
           </div>
         </div>
       </section>
+
+      {/* Development Disclaimer */}
+      <section className="py-8 px-6 sm:px-10 lg:px-16 bg-amber-50/80 border-t border-b border-amber-200">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex gap-4">
+            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-amber-900 mb-2">
+                ⚠️ Development Notice
+              </h3>
+              <p className="text-sm text-amber-800 leading-relaxed">
+                The Spin Wheel feature is currently under development. All
+                points awarded are provisional and subject to review by our
+                salon receptionist. Please note that points{" "}
+                <strong>may not be valid</strong> until the feature development
+                is fully completed. Thank you for your patience as we refine
+                this exciting new rewards feature!
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

@@ -42,7 +42,7 @@ export default function CustomerSignupPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (customerData) {
-      navigate("/referrals");
+      navigate("/");
     }
   }, [customerData, navigate]);
 

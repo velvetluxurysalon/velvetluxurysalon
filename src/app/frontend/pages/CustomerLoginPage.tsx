@@ -37,7 +37,7 @@ export default function CustomerLoginPage() {
   // Redirect if already logged in or after success
   useEffect(() => {
     if (customerData) {
-      navigate("/referrals");
+      navigate("/");
     }
   }, [customerData, navigate]);
 

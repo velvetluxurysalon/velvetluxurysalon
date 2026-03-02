@@ -2610,6 +2610,89 @@ export const getSpinWheelStats = async (customerId: string) => {
   }
 };
 
+export const getCustomerSpinHistory = async (
+  customerId: string,
+  limitCount = 10,
+) => {
+  try {
+    const userSpinsRef = collection(db, `customers/${customerId}/spins`);
+    const q = query(
+      userSpinsRef,
+      orderBy("timestamp", "desc"),
+      limit(limitCount),
+    );
+    const userSpinsDocs = await getDocs(q);
+
+    return userSpinsDocs.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp:
+          doc.data().timestamp?.toDate?.() || new Date(doc.data().date),
+      }))
+      .sort((a, b) => b.timestamp - a.timestamp);
+  } catch (error) {
+    console.error("Error getting customer spin history:", error);
+    return [];
+  }
+};
+
+export const awardCustomerSpin = async (
+  customerId: string,
+  customerName: string,
+  pointsWon: number,
+  awardedBy?: string,
+) => {
+  try {
+    const timestamp = new Date();
+    const dateKey = timestamp.toDateString();
+
+    const result = await runTransaction(db, async (transaction) => {
+      // Get customer document
+      const customerRef = doc(db, `customers/${customerId}`);
+      const customerDoc = await transaction.get(customerRef);
+
+      if (!customerDoc.exists()) {
+        throw new Error("Customer not found");
+      }
+
+      // Create/update spin record with a timestamp key for flexibility
+      const spinTimeKey = `${dateKey}-${Date.now()}`;
+      const spinDocRef = doc(
+        db,
+        `customers/${customerId}/spins/${spinTimeKey}`,
+      );
+
+      // Record the awarded spin
+      transaction.set(spinDocRef, {
+        timestamp: serverTimestamp(),
+        pointsWon,
+        isJackpot: false,
+        date: dateKey,
+        awardedBy: awardedBy || "admin",
+        awardedManually: true,
+      });
+
+      // Update customer loyalty points
+      const currentPoints = customerDoc.data().loyaltyPoints || 0;
+      transaction.update(customerRef, {
+        loyaltyPoints: currentPoints + pointsWon,
+      });
+
+      return {
+        pointsAwarded: pointsWon,
+        success: true,
+        message: `${pointsWon} points awarded to ${customerName}`,
+      };
+    });
+
+    return result;
+  } catch (error: any) {
+    console.error("Error awarding spin:", error);
+    throw error;
+  }
+};
+
 export const claimSpinReward = async (customerId: string) => {
   try {
     const today = new Date().toDateString();

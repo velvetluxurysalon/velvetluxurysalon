@@ -9,8 +9,11 @@ import {
   CreditCard,
   Settings,
   Award,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { getCustomerSpinHistory } from "../../services/firebaseService";
 import { Button } from "../ui/button";
 import {
   Card,
@@ -25,14 +28,30 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const { customerData, isAuthenticated, logout } = useAuth();
   const [loading, setLoading] = useState(!isAuthenticated);
+  const [spinHistory, setSpinHistory] = useState<any[]>([]);
+  const [loadingSpins, setLoadingSpins] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/customer/login");
     } else {
       setLoading(false);
+      loadSpinHistory();
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, customerData?.id]);
+
+  const loadSpinHistory = async () => {
+    if (!customerData?.id) return;
+    try {
+      setLoadingSpins(true);
+      const history = await getCustomerSpinHistory(customerData.id, 10);
+      setSpinHistory(history);
+    } catch (error) {
+      console.error("Error loading spin history:", error);
+    } finally {
+      setLoadingSpins(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -207,6 +226,80 @@ export default function ProfilePage() {
                   Explore Memberships
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Spin Wheel History */}
+          <Card className="border-gray-100 shadow-sm mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Zap size={20} className="text-amber-600" />
+                Spin Wheel History
+              </CardTitle>
+              <CardDescription>
+                Your recent lucky spins and rewards
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingSpins ? (
+                <div className="text-center py-8 text-gray-500">
+                  Loading spin history...
+                </div>
+              ) : spinHistory.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-4">
+                    You haven't spun the wheel yet! Try your luck today.
+                  </p>
+                  <Button
+                    onClick={() => navigate("/spin-wheel")}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500"
+                  >
+                    <Sparkles size={16} className="mr-2" />
+                    Spin Now
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
+                    {spinHistory.map((spin, index) => (
+                      <div
+                        key={spin.id}
+                        className="flex items-center justify-between p-4 rounded-lg border border-amber-100 bg-amber-50 hover:bg-amber-100/50 transition"
+                      >
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {spin.pointsWon} Points
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              {spin.timestamp instanceof Date
+                                ? spin.timestamp.toLocaleDateString() +
+                                  " " +
+                                  spin.timestamp.toLocaleTimeString()
+                                : new Date(spin.date).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        {spin.isJackpot && (
+                          <div className="px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold">
+                            JACKPOT 🎉
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    onClick={() => navigate("/spin-wheel")}
+                    className="w-full mt-4 bg-gradient-to-r from-amber-500 to-orange-500"
+                  >
+                    <Sparkles size={16} className="mr-2" />
+                    Spin Again
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

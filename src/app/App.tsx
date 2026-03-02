@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import MainLayout from "./frontend/components/layout/MainLayout";
 import HomePage from "./frontend/components/pages/HomePage";
 import ServicesPage from "./frontend/components/pages/ServicesPage";
@@ -41,6 +42,13 @@ function ReceptionistRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const location = useLocation();
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <>
       <Routes>
