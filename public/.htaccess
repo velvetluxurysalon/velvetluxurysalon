@@ -1,0 +1,273 @@
+# ============================================
+# .htaccess Configuration for Velvet Luxury Salon
+# World-Class SEO Optimization
+# Apache Server Configuration
+# Last updated: 2026-02-28
+# ============================================
+
+# Enable GZIP compression - Improves page speed and SEO
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html
+  AddOutputFilterByType DEFLATE text/plain
+  AddOutputFilterByType DEFLATE text/xml
+  AddOutputFilterByType DEFLATE text/css
+  AddOutputFilterByType DEFLATE text/javascript
+  AddOutputFilterByType DEFLATE application/xml
+  AddOutputFilterByType DEFLATE application/xhtml+xml
+  AddOutputFilterByType DEFLATE application/rss+xml
+  AddOutputFilterByType DEFLATE application/javascript
+  AddOutputFilterByType DEFLATE application/x-javascript
+  AddOutputFilterByType DEFLATE application/x-font-ttf
+  AddOutputFilterByType DEFLATE application/x-font-opentype
+  AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# Enable browser caching - Improves Core Web Vitals
+<IfModule mod_expires.c>
+  ExpiresActive On
+  
+  # HTML files - Revalidate constantly
+  ExpiresByType text/html "access plus 1 days"
+  
+  # CSS files
+  ExpiresByType text/css "access plus 1 month"
+  
+  # JavaScript files
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType text/javascript "access plus 1 month"
+  
+  # Image files - Cache for a year
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType image/x-icon "access plus 1 year"
+  
+  # Font files
+  ExpiresByType application/x-font-ttf "access plus 1 year"
+  ExpiresByType application/x-font-opentype "access plus 1 year"
+  ExpiresByType application/vnd.ms-fontobject "access plus 1 year"
+  ExpiresByType font/ttf "access plus 1 year"
+  ExpiresByType font/otf "access plus 1 year"
+  ExpiresByType font/woff "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  
+  # Default
+  ExpiresDefault "access plus 2 days"
+</IfModule>
+
+# Enable HTTP/2 for faster loading - Boosts SEO ranking
+<IfModule mod_http2.c>
+  Protocols h2 http/1.1
+</IfModule>
+
+# Set proper character encoding
+AddDefaultCharset UTF-8
+AddCharset UTF-8 .html .htm .css .js .json .xml .txt
+
+# ============================================
+# SECURITY & PERFORMANCE HEADERS
+# ============================================
+
+<IfModule mod_headers.c>
+  # Security headers
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  
+  # Performance headers
+  Header set X-UA-Compatible "IE=edge"
+  Header set Cache-Control "public, max-age=31536000, immutable"
+  
+  # SEO friendly headers for search engines
+  Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+</IfModule>
+
+# ============================================
+# GZIP Compression for Files
+# ============================================
+
+<IfModule mod_filter.c>
+  FilterDeclare COMPRESS
+  FilterProvider COMPRESS DEFLATE resp=Content-Type $text/html
+  FilterProvider COMPRESS DEFLATE resp=Content-Type $text/css
+  FilterProvider COMPRESS DEFLATE resp=Content-Type $text/plain
+  FilterProvider COMPRESS DEFLATE resp=Content-Type $text/xml
+  FilterProvider COMPRESS DEFLATE resp=Content-Type $text/javascript
+  FilterProvider COMPRESS DEFLATE resp=Content-Type $application/xml
+  FilterProvider COMPRESS DEFLATE resp=Content-Type $application/x-javascript
+  FilterProvider COMPRESS DEFLATE resp=Content-Type $application/javascript
+  FilterChain COMPRESS
+  FilterProtocol COMPRESS DEFLATE change=yes;byteranges=no
+</IfModule>
+
+# ============================================
+# URL REWRITING FOR SEO
+# ============================================
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Remove www for consistency (choose www or non-www and stick with it)
+  # Option 1: Remove www (non-www preference)
+  RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+  RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
+  
+  # Force HTTPS
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  
+  # Remove trailing slashes (except for directories)
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} /$
+  RewriteRule ^ %{REQUEST_URI%/} [R=301,L]
+  
+  # Route all requests to index.html for React Router
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [QSA,L]
+</IfModule>
+
+# ============================================
+# PREVENT DIRECTORY LISTING (SECURITY)
+# ============================================
+
+<IfModule mod_autoindex.c>
+  Options -Indexes
+</IfModule>
+
+# ============================================
+# BLOCK SENSITIVE FILES & DIRECTORIES
+# ============================================
+
+<FilesMatch "^\.">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Block sensitive file types
+<FilesMatch "\.(env|json|log|config|sql|backup|bak|bat|cmd|exe|sh)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Block common vulnerability attempts
+<FilesMatch "(web\.config|web\.config\.bak|\.git|\.github|\.env\.local|composer\.lock)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# ============================================
+# MIME TYPES FOR BETTER DELIVERY
+# ============================================
+
+<IfModule mod_mime.c>
+  # Fonts
+  AddType application/font-woff .woff
+  AddType application/font-woff2 .woff2
+  AddType application/x-font-ttf .ttf
+  AddType application/x-font-opentype .otf
+  AddType application/vnd.ms-fontobject .eot
+  
+  # Media
+  AddType video/mp4 .mp4
+  AddType video/webm .webm
+  AddType audio/mpeg .mp3
+  
+  # JSON and XML
+  AddType application/json .json
+  AddType application/ld+json .jsonld
+  AddType application/xml .xml
+  AddType text/xml .xml
+  
+  # Web manifest
+  AddType application/manifest+json .webmanifest
+  
+  # Modern image formats
+  AddType image/webp .webp
+  AddType image/svg+xml .svg
+</IfModule>
+
+# ============================================
+# ETAG OPTIMIZATION
+# ============================================
+
+<IfModule mod_headers.c>
+  # Remove ETag header (improves caching)
+  Header unset ETag
+  FileETag None
+</IfModule>
+
+# ============================================
+# PREVENT HOTLINKING (PROTECT BANDWIDTH)
+# ============================================
+
+<IfModule mod_rewrite.c>
+  RewriteCond %{HTTP_REFERER} !^$
+  RewriteCond %{HTTP_REFERER} !^https?://velvetluxurysalon\.in [NC]
+  RewriteCond %{HTTP_REFERER} !^https?://www\.velvetluxurysalon\.in [NC]
+  RewriteRule \.(jpg|jpeg|png|gif|webp)$ - [F,NC]
+</IfModule>
+
+# ============================================
+# CUSTOM ERROR PAGES FOR SEO
+# ============================================
+
+ErrorDocument 404 /index.html
+ErrorDocument 410 /index.html
+ErrorDocument 403 /index.html
+ErrorDocument 500 /index.html
+ErrorDocument 502 /index.html
+ErrorDocument 503 /index.html
+
+# ============================================
+# REDIRECTS FOR SEO
+# ============================================
+
+<IfModule mod_rewrite.c>
+  # Redirect old URLs to new ones (301 permanent redirects)
+  # Example: RedirectMatch 301 ^/old-page/?$ /new-page
+  
+  # Redirect trailing slashes
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.+)/$ /$1 [R=301,L]
+</IfModule>
+
+# ============================================
+# PERFORMANCE OPTIMIZATION
+# ============================================
+
+# Disable unnecessary modules if not in use
+# Uncomment if your server has these modules loaded
+# <IfModule mod_dir.c>
+#   DirectoryIndex index.html index.htm
+# </IfModule>
+
+# Enable mod_pagespeed if available
+# <IfModule mod_pagespeed.c>
+#   ModPagespeed on
+#   ModPagespeedEnableFilters combine_css,combine_javascript,recompress_images
+# </IfModule>
+
+# ============================================
+# END OF CONFIGURATION
+# ============================================

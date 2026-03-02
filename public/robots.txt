@@ -1,0 +1,315 @@
+# ===========================================
+# Robots.txt for Velvet Luxury Salon
+# https://velvetluxurysalon.in
+# World-Class SEO Configuration
+# Last updated: 2026-02-28
+# ===========================================
+
+# Global rules - Allow all search engines to crawl
+User-agent: *
+Allow: /
+Allow: /services
+Allow: /gallery
+Allow: /blog
+Allow: /about
+Allow: /contact
+Allow: /location
+Allow: /profile
+Allow: /booking
+Allow: /testimonials
+Allow: /faq
+Allow: /offers
+Allow: /memberships
+Allow: /reviews
+Allow: /referrals
+
+# Explicitly allow Google bot for maximum crawl
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /private/
+
+# Explicitly allow Bingbot
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /private/
+
+# Allow crawling of important pages
+Allow: /services/
+Allow: /blog/
+Allow: /gallery/
+Allow: /testimonials/
+Allow: /offers/
+Allow: /membership/
+
+# Disallow admin and private areas - Security
+Disallow: /admin
+Disallow: /admin/
+Disallow: /private/
+Disallow: /backend/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /.env
+Disallow: /.git
+Disallow: /.gitignore
+Disallow: /config/
+Disallow: /secret/
+
+# Disallow development and build files
+Disallow: /.git/
+Disallow: /node_modules/
+Disallow: /.vscode/
+Disallow: /.idea/
+Disallow: /src/
+Disallow: /dist/
+Disallow: /build/
+Disallow: /coverage/
+Disallow: /*.json$
+Disallow: /*.config.js$
+Disallow: /*.config.ts$
+Disallow: /*.map$
+Disallow: /*.log$
+
+# Disallow query parameters that create duplicate content
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+Disallow: /*?*ref=
+Disallow: /*?*utm_*
+Disallow: /*?*source=
+Disallow: /*?*medium=
+Disallow: /*?*campaign=
+Disallow: /*?*gclid=
+Disallow: /*?*fbclid=
+Disallow: /*?*msclkid=
+
+# Disallow duplicate content patterns
+Disallow: /*?page=
+Disallow: /*&*
+Disallow: /*#*
+
+# Disallow session ID
+Disallow: /*jsessionid=
+Disallow: /*PHPSESSID=
+
+# Allow CSS, JavaScript, and images for rendering
+Allow: *.css$
+Allow: *.js$
+Allow: *.jpg$
+Allow: *.jpeg$
+Allow: *.png$
+Allow: *.gif$
+Allow: *.svg$
+Allow: *.webp$
+Allow: *.ico$
+Allow: *.ttf$
+Allow: *.woff$
+Allow: *.woff2$
+
+# ===========================================
+# Crawl Rate and Delays
+# ===========================================
+
+# Google bot specific settings
+User-agent: Googlebot
+Crawl-delay: 0
+Request-rate: 100/1h
+
+# Bing bot specific settings
+User-agent: Bingbot
+Crawl-delay: 0
+Request-rate: 50/1h
+
+# Default crawl delay (ms) for other bots
+Crawl-delay: 1
+
+# ===========================================
+# Sitemaps
+# ===========================================
+
+Sitemap: https://velvetluxurysalon.in/sitemap.xml
+Sitemap: https://velvetluxurysalon.in/sitemap-services.xml
+Sitemap: https://velvetluxurysalon.in/sitemap-blog.xml
+Sitemap: https://velvetluxurysalon.in/sitemap-gallery.xml
+
+# ===========================================
+# Special Rules for Specific Crawlers
+# ===========================================
+
+# Instagram bot can crawl for social sharing
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+# Pinterest bot
+User-agent: pinterestbot
+Allow: /
+
+# LinkedIn bot
+User-agent: Linkedinbot
+Allow: /
+
+# WhatsApp bot
+User-agent: WhatsApp
+Allow: /
+
+# Slack bot
+User-agent: Twitterbot
+User-agent: facebookexternalhit
+Allow: /
+
+# Bad bots - Disallow
+User-agent: SemrushBot
+User-agent: AhrefsBot
+User-agent: MJ12bot
+Disallow: /
+
+# ===========================================
+# Comments and Notes
+# ===========================================
+# This robots.txt follows best practices for:
+# - SEO optimization
+# - Preventing crawling of sensitive areas
+# - Controlling bot behavior
+# - Protecting security
+# - Allowing legitimate bots for social sharing
+#
+# Last modified: 2026-02-28
+# Contact: velvetluxurysalon@gmail.com
+# ===========================================
+
+
+User-agent: Googlebot-Image
+Allow: /
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.gif$
+Allow: /*.webp$
+Allow: /*.svg$
+
+User-agent: Googlebot-Video
+Allow: /
+Allow: /*.mp4$
+Allow: /*.webm$
+
+# ===========================================
+# Bing Bot
+# ===========================================
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: MSNBot
+Allow: /
+
+# ===========================================
+# Yahoo Bot
+# ===========================================
+User-agent: Slurp
+Allow: /
+
+# ===========================================
+# DuckDuckGo Bot
+# ===========================================
+User-agent: DuckDuckBot
+Allow: /
+
+# ===========================================
+# Yandex Bot
+# ===========================================
+User-agent: Yandex
+Allow: /
+
+# ===========================================
+# Social Media Bots (Allow for rich previews)
+# ===========================================
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Pinterest
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+# ===========================================
+# SEO & Analytics Tools
+# ===========================================
+User-agent: Screaming Frog SEO Spider
+Allow: /
+
+User-agent: Semrushbot
+Allow: /
+
+User-agent: AhrefsBot
+Allow: /
+Crawl-delay: 2
+
+User-agent: MJ12bot
+Allow: /
+Crawl-delay: 5
+
+# ===========================================
+# Block Bad Bots & Scrapers
+# ===========================================
+User-agent: SemrushBot-SA
+Disallow: /
+
+User-agent: AhrefsSiteAudit
+Disallow: /
+
+User-agent: MauiBot
+Disallow: /
+
+User-agent: SeznamBot
+Disallow: /
+
+User-agent: dotbot
+Disallow: /
+
+User-agent: rogerbot
+Disallow: /
+
+User-agent: Exabot
+Disallow: /
+
+User-agent: MegaIndex
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+# ===========================================
+# Sitemap Location
+# ===========================================
+Sitemap: https://velvetluxurysalon.in/sitemap.xml
+
+# ===========================================
+# Host Directive (for preferred domain)
+# ===========================================
+Host: https://velvetluxurysalon.in
+
+# ===========================================
+# Crawl Delay for general bots
+# ===========================================
+# Note: Google ignores crawl-delay, but other bots respect it
+Crawl-delay: 1
+

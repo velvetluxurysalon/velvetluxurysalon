@@ -1,0 +1,392 @@
+import { useState } from "react";
+import { Mail, Lock, User, Phone, AlertCircle, ArrowRight } from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { useAuth } from "../context/AuthContext";
+
+interface AuthPageProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function AuthPage({ open, onClose }: AuthPageProps) {
+  const [mode, setMode] = useState<"customer-login" | "staff-login" | "signup">(
+    "customer-login",
+  );
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login, loginStaff, signup } = useAuth();
+
+  const handleCustomerLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!phone.trim()) {
+      setError("Phone number is required");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await login(phone, password);
+      setPhone("");
+      setPassword("");
+      onClose();
+    } catch (err: any) {
+      setError(
+        err.message ||
+          "Failed to login. Please check your phone number and password.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStaffLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!email.trim()) {
+      setError("Email is required");
+      return;
+    }
+    if (!password.trim()) {
+      setError("Password is required");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await loginStaff(email, password);
+      setEmail("");
+      setPassword("");
+      onClose();
+    } catch (err: any) {
+      setError(
+        err.message || "Failed to login. Please check your email and password.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // Validation
+    if (!name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    if (!email.trim()) {
+      setError("Email is required");
+      return;
+    }
+    if (!phone.trim()) {
+      setError("Phone number is required");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await signup(email, password, name, phone);
+      setName("");
+      setEmail("");
+      setPhone("");
+      setPassword("");
+      setConfirmPassword("");
+      onClose();
+    } catch (err: any) {
+      setError(err.message || "Failed to create account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const switchMode = () => {
+    setError("");
+    if (mode === "customer-login") {
+      setPhone("");
+      setPassword("");
+      setMode("signup");
+    } else if (mode === "signup") {
+      setName("");
+      setEmail("");
+      setPhone("");
+      setPassword("");
+      setConfirmPassword("");
+      setMode("customer-login");
+    } else if (mode === "staff-login") {
+      setEmail("");
+      setPassword("");
+      setMode("customer-login");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {mode === "customer-login"
+              ? "Customer Sign In"
+              : mode === "staff-login"
+                ? "Staff Sign In"
+                : "Create Your Account"}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form
+          onSubmit={
+            mode === "customer-login"
+              ? handleCustomerLoginSubmit
+              : mode === "staff-login"
+                ? handleStaffLoginSubmit
+                : handleSignupSubmit
+          }
+          className="space-y-4"
+        >
+          {error && (
+            <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {mode === "signup" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="pl-10"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          )}
+
+          {mode === "customer-login" ? (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Phone Number
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Input
+                  type="tel"
+                  placeholder="9876543210"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="pl-10"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          )}
+
+          {mode === "signup" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Phone Number
+              </label>
+              <div className="flex border border-gray-300 rounded-md overflow-hidden">
+                <span className="bg-gray-100 px-3 py-2 text-gray-700 font-medium flex items-center">
+                  +91
+                </span>
+                <Input
+                  type="tel"
+                  placeholder="9876543210"
+                  value={phone}
+                  onChange={(e) => {
+                    // Only allow digits
+                    const digitsOnly = e.target.value.replace(/\D/g, "");
+                    setPhone(digitsOnly);
+                  }}
+                  maxLength={10}
+                  className="border-0 pl-2 focus:ring-0 flex-1"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10"
+                required
+                disabled={loading}
+              />
+            </div>
+            {mode === "signup" && (
+              <p className="text-xs text-gray-500">Minimum 6 characters</p>
+            )}
+          </div>
+
+          {mode === "signup" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-10"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            disabled={loading}
+          >
+            {loading ? (
+              mode === "signup" ? (
+                "Creating account..."
+              ) : (
+                "Signing in..."
+              )
+            ) : mode === "signup" ? (
+              <>
+                Sign Up
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </>
+            ) : (
+              <>
+                Sign In
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </>
+            )}
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">or</span>
+            </div>
+          </div>
+
+          {mode === "customer-login" ? (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setError("");
+                  setEmail("");
+                  setPassword("");
+                  setMode("staff-login");
+                }}
+                className="w-full px-4 py-2.5 text-center font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+              >
+                Staff/Receptionist Login
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setError("");
+                  setPhone("");
+                  setPassword("");
+                  setMode("signup");
+                }}
+                className="w-full px-4 py-2.5 text-center font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+              >
+                New here? Create an account
+              </button>
+            </div>
+          ) : mode === "staff-login" ? (
+            <button
+              type="button"
+              onClick={() => {
+                setError("");
+                setEmail("");
+                setPassword("");
+                setMode("customer-login");
+              }}
+              className="w-full px-4 py-2.5 text-center font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+            >
+              Back to Customer Login
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setError("");
+                setName("");
+                setEmail("");
+                setPhone("");
+                setPassword("");
+                setConfirmPassword("");
+                setMode("customer-login");
+              }}
+              className="w-full px-4 py-2.5 text-center font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+            >
+              Already have an account? Sign In
+            </button>
+          )}
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
