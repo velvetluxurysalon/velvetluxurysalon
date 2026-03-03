@@ -24,13 +24,18 @@ import { db, storage } from "../../../firebaseConfig";
 // HERO SECTION MANAGEMENT
 // ============================================
 
-export interface HeroContent {
-  id?: string;
+export interface HeroSlide {
+  id: string;
   title: string;
   subtitle: string;
   image: string;
-  ctaButtonText: string;
-  ctaButtonLink: string;
+  ctaButtonText?: string;
+  ctaButtonLink?: string;
+  order: number;
+}
+
+export interface HeroContent {
+  slides: HeroSlide[];
   updatedAt?: any;
 }
 
@@ -38,7 +43,29 @@ export const getHeroContent = async (): Promise<HeroContent | null> => {
   try {
     const docRef = doc(db, "websiteContent", "hero");
     const docSnap = await getDoc(docRef);
-    return docSnap.exists() ? (docSnap.data() as HeroContent) : null;
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      // Support both old and new formats
+      if (data.slides) {
+        return data as HeroContent;
+      } else {
+        // Convert old format to new
+        return {
+          slides: [
+            {
+              id: "slide-1",
+              title: data.title,
+              subtitle: data.subtitle,
+              image: data.image,
+              ctaButtonText: data.ctaButtonText,
+              ctaButtonLink: data.ctaButtonLink,
+              order: 0,
+            },
+          ],
+        };
+      }
+    }
+    return null;
   } catch (error) {
     console.error("Error fetching hero content:", error);
     throw error;
@@ -50,8 +77,10 @@ export const updateHeroContent = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, "websiteContent", "hero");
+    // Ensure slides are sorted by order
+    const sortedSlides = [...content.slides].sort((a, b) => a.order - b.order);
     await setDoc(docRef, {
-      ...content,
+      slides: sortedSlides,
       updatedAt: serverTimestamp(),
     });
   } catch (error) {

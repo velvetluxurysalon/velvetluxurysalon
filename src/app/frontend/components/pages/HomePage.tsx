@@ -11,6 +11,7 @@ import {
   getFAQs,
   FAQ,
 } from "../../services/contentService";
+import HeroCarousel from "../HeroCarousel";
 import TestimonialsSection from "../TestimonialsSection";
 import WhyChooseUs from "../WhyChooseUs";
 import SpecialOffers from "../SpecialOffers";
@@ -76,13 +77,6 @@ export default function HomePage() {
     loadData();
   }, []);
 
-  const defaultHero = {
-    title: "Where Luxury Meets Beauty",
-    subtitle: "Experience world-class beauty and wellness treatments",
-    image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1400&h=800&fit=crop",
-  };
-
   const defaultStats = {
     experience: "15+",
     happyClients: "5,000+",
@@ -96,127 +90,34 @@ export default function HomePage() {
     phone: "+1 (555) 123-4567",
   };
 
-  const hero = heroContent || defaultHero;
   const stats = siteSettings?.stats || defaultStats;
   const quickInfoPhone = contactInfo?.phone || defaultQuickInfo.phone;
   const quickInfoLocation = contactInfo
     ? `${contactInfo.address}, ${contactInfo.city}`
     : defaultQuickInfo.location;
-  const quickInfoHours = contactInfo?.hours?.monday
-    ? `Mon - Sun: ${contactInfo.hours.monday}`
-    : defaultQuickInfo.hours;
 
   return (
     <>
-      {/* ── HERO ── */}
-      <section className="relative overflow-hidden pt-20 pb-32 px-6 lg:px-16 min-h-[90vh] flex items-center justify-center">
-        {/* Background Image with Overlay */}
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: `linear-gradient(135deg, rgba(26, 26, 46, 0.85) 0%, rgba(26, 26, 46, 0.75) 50%, rgba(201, 162, 39, 0.15) 100%), url('https://images.unsplash.com/photo-1552591092-a248c67e0d0c?w=1600&h=900&fit=crop')`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundAttachment: "fixed",
-          }}
+      {/* ── HERO CAROUSEL ── */}
+      {heroContent?.slides && heroContent.slides.length > 0 ? (
+        <HeroCarousel slides={heroContent.slides} contactInfo={contactInfo} />
+      ) : (
+        <HeroCarousel
+          slides={[
+            {
+              id: "default-1",
+              title: "Where Luxury Meets Beauty",
+              subtitle: "Experience world-class beauty and wellness treatments",
+              image:
+                "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1400&h=800&fit=crop",
+              ctaButtonText: "Reserve Your Moment",
+              ctaButtonLink: "/appointments",
+              order: 0,
+            },
+          ]}
+          contactInfo={contactInfo}
         />
-
-        {/* Animated gradient orbs */}
-        <div className="absolute top-20 right-10 w-72 h-72 bg-[#c9a227] rounded-full blur-3xl opacity-20 animate-pulse z-0"></div>
-        <div className="absolute bottom-10 left-20 w-96 h-96 bg-amber-400 rounded-full blur-3xl opacity-10 z-0"></div>
-
-        {/* Content */}
-        <div className="max-w-5xl mx-auto relative z-10 text-center">
-          {/* Top Info Bar - Hidden on mobile */}
-          <div className="hidden lg:flex items-center justify-center gap-8 mb-12 text-[9px] font-light text-white/60 uppercase tracking-[0.2em]">
-            <div className="flex items-center gap-2 px-4 py-2 border border-white/20 rounded-full hover:border-[#c9a227]/50 transition">
-              <Clock size={14} className="text-[#c9a227]" />
-              <span>{quickInfoHours}</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 border border-white/20 rounded-full hover:border-[#c9a227]/50 transition">
-              <MapPin size={14} className="text-[#c9a227]" />
-              <span>{quickInfoLocation}</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 border border-white/20 rounded-full hover:border-[#c9a227]/50 transition">
-              <Phone size={14} className="text-[#c9a227]" />
-              <span>{quickInfoPhone}</span>
-            </div>
-          </div>
-
-          {/* Brand Tag */}
-          <div className="inline-flex items-center gap-3 mb-8">
-            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#c9a227]"></div>
-            <span className="text-[#c9a227] text-[10px] font-black uppercase tracking-[0.3em] font-sans">
-              Velvet Luxury Salon
-            </span>
-            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#c9a227]"></div>
-          </div>
-
-          {/* Main Headline */}
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-serif font-bold tracking-tight text-white mb-6 leading-[1.15] drop-shadow-lg">
-            {hero.title.split(" ").map((word, i) =>
-              word.toLowerCase() === "luxury" ||
-              word.toLowerCase() === "beauty" ? (
-                <span
-                  key={i}
-                  className="text-[#c9a227] italic font-serif font-light block md:inline"
-                >
-                  {word}{" "}
-                </span>
-              ) : (
-                <span key={i}>{word} </span>
-              ),
-            )}
-          </h1>
-
-          {/* Decorative Line */}
-          <div className="flex items-center justify-center gap-4 my-10">
-            <div className="h-px w-16 bg-gradient-to-r from-transparent to-[#c9a227]"></div>
-            <div className="w-2 h-2 bg-[#c9a227] rounded-full"></div>
-            <div className="h-px w-16 bg-gradient-to-l from-transparent to-[#c9a227]"></div>
-          </div>
-
-          {/* Subtitle */}
-          <p className="text-white/90 text-lg sm:text-xl lg:text-2xl max-w-3xl mx-auto leading-relaxed mb-6 font-light">
-            {hero.subtitle}
-          </p>
-
-          {/* Secondary Tagline */}
-          <p className="text-[#c9a227]/80 text-sm lg:text-base max-w-2xl mx-auto mb-12 font-sans font-light tracking-wide">
-            Book appointments instantly • Expert artists • Luxury experiences
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <Link
-              to="/appointments"
-              className="group relative px-10 py-5 bg-[#c9a227] text-white text-xs font-black uppercase tracking-widest rounded-sm overflow-hidden shadow-2xl shadow-amber-900/40 hover:shadow-3xl transition-all duration-300 hover:scale-105"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-[#d4b247] to-[#b8941f] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <span className="relative flex items-center gap-2">
-                Reserve Your Moment
-                <ArrowRight
-                  size={16}
-                  className="group-hover:translate-x-1 transition-transform"
-                />
-              </span>
-            </Link>
-
-            <Link
-              to="/services"
-              className="group px-10 py-5 border-2 border-[#c9a227] text-[#c9a227] text-xs font-black uppercase tracking-widest rounded-sm hover:bg-[#c9a227]/10 backdrop-blur transition-all duration-300 hover:shadow-xl shadow-amber-900/20"
-            >
-              <span className="flex items-center gap-2">
-                The Collection
-                <ArrowRight
-                  size={16}
-                  className="group-hover:translate-x-1 transition-transform"
-                />
-              </span>
-            </Link>
-          </div>
-        </div>
-      </section>
+      )}
 
       {/* ── STATS ── */}
       <section className="bg-white py-12 border-b border-amber-50">
