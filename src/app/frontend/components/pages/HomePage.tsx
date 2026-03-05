@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Clock, MapPin, Phone, Plus } from "lucide-react";
+import { Clock, MapPin, Phone, Plus } from "lucide-react";
 import {
   getServices,
   getHeroContent,
@@ -47,11 +47,11 @@ interface ContactInfo {
 
 export default function HomePage() {
   const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
-  const [services, setServices] = useState<Service[]>([]);
+  const [, setServices] = useState<Service[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
@@ -77,20 +77,12 @@ export default function HomePage() {
     loadData();
   }, []);
 
-  const defaultStats = {
-    experience: "15+",
-    happyClients: "5,000+",
-    stylists: "25+",
-    treatments: "50+",
-  };
-
   const defaultQuickInfo = {
     hours: "Mon – Sun: 9 AM – 9 PM",
     location: "123 Luxury Lane, City Center",
     phone: "+1 (555) 123-4567",
   };
 
-  const stats = siteSettings?.stats || defaultStats;
   const quickInfoPhone = contactInfo?.phone || defaultQuickInfo.phone;
   const quickInfoLocation = contactInfo
     ? `${contactInfo.address}, ${contactInfo.city}`
@@ -118,123 +110,6 @@ export default function HomePage() {
           contactInfo={contactInfo}
         />
       )}
-
-      {/* ── STATS ── */}
-      <section className="bg-white py-12 border-b border-amber-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-            {[
-              {
-                num: stats.experience,
-                label: "Years of Artistry",
-                color: "text-[#c9a227]",
-              },
-              {
-                num: stats.happyClients,
-                label: "Delighted Guests",
-                color: "text-[#c9a227]",
-              },
-              {
-                num: stats.stylists,
-                label: "Master Artists",
-                color: "text-[#c9a227]",
-              },
-              {
-                num: stats.treatments,
-                label: "Luxury Rituals",
-                color: "text-[#c9a227]",
-              },
-            ].map((s, i) => (
-              <div key={i} className="text-center group">
-                <p
-                  className={`text-4xl lg:text-5xl font-serif font-bold mb-3 ${s.color} group-hover:scale-110 transition-transform duration-500`}
-                >
-                  {s.num}
-                </p>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 font-sans">
-                  {s.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FEATURED SERVICES ── */}
-      <section className="py-24 px-6 sm:px-10 lg:px-16 bg-[#fdfbf7]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-[10px] font-black tracking-[0.3em] uppercase text-[#c9a227] mb-4 font-sans">
-              Curated Selection
-            </p>
-            <h2 className="text-4xl lg:text-5xl font-serif font-bold text-slate-900 leading-tight">
-              Premium <span className="italic font-light">Rituals</span>
-            </h2>
-            <div className="h-1 w-20 bg-amber-100 mx-auto mt-6"></div>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-56 bg-slate-200 rounded-sm animate-pulse"
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {services.map((s) => (
-                <Link
-                  to="/services"
-                  key={s.id}
-                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-2xl border border-amber-50 transition-all duration-500 hover:-translate-y-2"
-                >
-                  <div className="relative h-56 overflow-hidden">
-                    {s.image && (
-                      <img
-                        src={s.image}
-                        alt={s.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute bottom-4 left-4 right-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                      <span className="px-3 py-1.5 bg-white/95 backdrop-blur text-[10px] font-black text-slate-900 rounded-lg shadow-sm font-sans uppercase tracking-widest">
-                        From {s.price}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-serif font-bold text-slate-900 mb-3 group-hover:text-[#c9a227] transition-colors leading-tight">
-                      {s.name}
-                    </h3>
-                    <p className="text-sm text-slate-500 line-clamp-2 font-sans font-medium mb-4">
-                      {s.description}
-                    </p>
-                    <div className="flex items-center text-[#c9a227] text-[10px] font-black uppercase tracking-widest gap-2">
-                      Experience{" "}
-                      <ArrowRight
-                        size={14}
-                        className="group-hover:translate-x-1 transition-transform"
-                      />
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          <div className="text-center mt-16">
-            <Link
-              to="/services"
-              className="inline-flex items-center gap-4 px-12 py-5 border-2 border-[#c9a227] text-[#c9a227] text-[11px] font-black uppercase tracking-[0.25em] hover:bg-amber-50 transition-all rounded-sm font-sans shadow-lg shadow-amber-50"
-            >
-              The Full Collection <ArrowRight size={18} />
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* ── WHY CHOOSE US ── */}
       <WhyChooseUs />

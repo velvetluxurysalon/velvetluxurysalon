@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Footer from "../Footer";
+import OfferScroller from "../OfferScroller";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -153,36 +154,28 @@ export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="flex flex-col h-screen bg-[#FAFAFA]">
       {/* ═══════════ TOP APP BAR ═══════════ */}
-      <header className="sticky top-0 z-50 bg-white border-b border-slate-100 h-16">
+      <header className="sticky top-0 z-50 bg-black border-b border-slate-800 h-16">
         <div className="flex items-center justify-between h-16 px-4 lg:px-6">
           {/* Left — hamburger + logo */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setDrawerOpen(!drawerOpen)}
-              className="p-2 -ml-2 rounded-lg hover:bg-slate-100 active:bg-slate-200 transition-colors lg:hidden"
+              className="p-2 -ml-2 rounded-lg hover:bg-slate-700 active:bg-slate-600 transition-colors lg:hidden"
               aria-label="Toggle menu"
             >
               {drawerOpen ? (
-                <X size={22} className="text-slate-700" />
+                <X size={22} className="text-white" />
               ) : (
-                <Menu size={22} className="text-slate-700" />
+                <Menu size={22} className="text-white" />
               )}
             </button>
 
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center">
-                <span className="text-white font-light text-[15px] leading-none">
-                  V
-                </span>
-              </div>
-              <div className="leading-none">
-                <p className="text-[15px] font-serif font-light text-slate-900 tracking-tight">
-                  Velvet
-                </p>
-                <p className="text-[10px] font-medium text-slate-500 tracking-[0.12em] uppercase">
-                  Luxury Salon
-                </p>
-              </div>
+              <img
+                src="/velvet_logo.png"
+                alt="Velvet Luxury Salon"
+                className="h-12 w-auto"
+              />
             </Link>
           </div>
 
@@ -194,8 +187,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 to={item.href}
                 className={`px-3.5 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                   activeId === item.id
-                    ? "bg-slate-100 text-slate-900"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    ? "bg-slate-700 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
                 }`}
               >
                 {item.label}
@@ -207,10 +200,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-lg hover:bg-slate-700 transition-colors"
               aria-label="Search"
             >
-              <Search size={20} className="text-slate-600" />
+              <Search size={20} className="text-white" />
             </button>
 
             {/* Customer Auth Menu */}
@@ -218,13 +211,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
               <div className="relative">
                 <button
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-700 transition-colors"
                   title={customerData.name}
                 >
-                  <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white text-xs font-medium">
+                  <div className="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center text-white text-xs font-medium">
                     {customerData.name?.charAt(0)?.toUpperCase() || "U"}
                   </div>
-                  <span className="hidden sm:inline text-sm font-medium text-slate-700">
+                  <span className="hidden sm:inline text-sm font-medium text-white">
                     {customerData.name?.split(" ")[0] || "User"}
                   </span>
                 </button>
@@ -302,14 +295,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigate("/customer/login")}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors text-sm font-medium"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
                 >
                   <LogIn size={16} />
                   <span className="hidden md:inline">Login</span>
                 </button>
                 <button
                   onClick={() => navigate("/customer/signup")}
-                  className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors"
+                  className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 transition-colors"
                 >
                   <UserPlus size={16} />
                   <span className="hidden md:inline">Sign Up</span>
@@ -319,7 +312,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
             <a
               href="tel:+15551234567"
-              className="hidden sm:flex items-center gap-2 ml-1 px-4 py-2 rounded-lg bg-slate-900 text-white text-[13px] font-medium hover:bg-slate-800 transition-colors"
+              className="hidden sm:flex items-center gap-2 ml-1 px-4 py-2 rounded-lg bg-amber-600 text-white text-[13px] font-medium hover:bg-amber-700 transition-colors"
             >
               <Phone size={14} />
               <span className="hidden md:inline">Call Now</span>
@@ -339,7 +332,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 autoFocus
                 type="text"
                 placeholder="Search services, treatments…"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
               />
             </div>
           </div>
@@ -362,7 +355,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <aside
           className={`
             fixed top-16 left-0 bottom-0 w-[272px] bg-white border-r border-slate-100
-            z-40 flex flex-col overflow-y-auto
+            z-[60] flex flex-col overflow-y-auto
             transform transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
             lg:static lg:w-[272px] lg:flex-shrink-0 lg:border-r lg:overflow-y-auto lg:h-auto
             ${drawerOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}
@@ -515,6 +508,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           ref={mainContentRef}
           className="flex-1 overflow-y-auto pb-[76px] lg:pb-0"
         >
+          <OfferScroller />
           <div className="w-full">{children}</div>
           <Footer />
         </main>
