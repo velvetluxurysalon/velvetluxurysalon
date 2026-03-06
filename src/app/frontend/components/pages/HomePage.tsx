@@ -14,6 +14,7 @@ import {
 import HeroCarousel from "../HeroCarousel";
 import TestimonialsSection from "../TestimonialsSection";
 import WhyChooseUs from "../WhyChooseUs";
+import ExploreServices from "../ExploreServices";
 import SpecialOffers from "../SpecialOffers";
 
 interface SiteSettings {
@@ -110,6 +111,9 @@ export default function HomePage() {
           contactInfo={contactInfo}
         />
       )}
+
+      {/* ── EXPLORE SERVICES ── */}
+      <ExploreServices />
 
       {/* ── WHY CHOOSE US ── */}
       <WhyChooseUs />

@@ -515,7 +515,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       </div>
 
       {/* ═══════════ BOTTOM NAV BAR — mobile & tablet ═══════════ */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 z-50">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-slate-800 z-50">
         <div className="flex items-center justify-around h-[68px] max-w-lg mx-auto px-2">
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
@@ -529,10 +529,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   onClick={() => navigate("/appointments")}
                   className={`flex flex-col items-center justify-center transition-all relative -mt-5`}
                 >
-                  <div className="w-[52px] h-[52px] rounded-full bg-slate-900 flex items-center justify-center shadow-sm ring-4 ring-white">
+                  <div className="w-[52px] h-[52px] rounded-full bg-[#c9a227] flex items-center justify-center shadow-sm ring-4 ring-black">
                     <Icon size={22} className="text-white" />
                   </div>
-                  <span className="text-[10px] mt-1 font-medium text-slate-900">
+                  <span className="text-[10px] mt-1 font-medium text-white">
                     {item.label}
                   </span>
                 </button>
@@ -545,14 +545,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 to={item.href}
                 className={`flex flex-col items-center justify-center transition-all ${
                   isActive
-                    ? "text-slate-900"
-                    : "text-slate-400 hover:text-slate-600"
+                    ? "text-white"
+                    : "text-slate-400 hover:text-slate-300"
                 }`}
               >
                 <Icon size={22} strokeWidth={isActive ? 2.5 : 1.7} />
                 <span
                   className={`text-[10px] mt-1 font-medium ${
-                    isActive ? "text-slate-900" : "text-slate-400"
+                    isActive ? "text-white" : "text-slate-400"
                   }`}
                 >
                   {item.label}

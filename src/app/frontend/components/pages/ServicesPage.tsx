@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Clock, ChevronRight } from "lucide-react";
 import {
   getServicesGroupedByCategory,
@@ -15,6 +15,7 @@ export default function ServicesPage() {
   const [grouped, setGrouped] = useState<GroupedService[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [searchParams] = useSearchParams();
 
   const mainCategories = [
     { id: "men", name: "Men" },
@@ -28,6 +29,17 @@ export default function ServicesPage() {
         const grp = await getServicesGroupedByCategory();
         const reorganized = organizeServicesByMainCategories(grp);
         setGrouped(reorganized);
+
+        // Check for category query parameter
+        const categoryParam = searchParams.get("category");
+        if (categoryParam) {
+          const matchingCategory = reorganized.find(
+            (g) => g.category.id === categoryParam,
+          );
+          if (matchingCategory) {
+            setActiveCategory(matchingCategory.category.name);
+          }
+        }
       } catch (error) {
         console.error("Error loading services:", error);
       } finally {
@@ -35,7 +47,7 @@ export default function ServicesPage() {
       }
     };
     loadData();
-  }, []);
+  }, [searchParams]);
 
   const organizeServicesByMainCategories = (
     groupedServices: GroupedService[],
