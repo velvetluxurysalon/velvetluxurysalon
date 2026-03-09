@@ -8,7 +8,6 @@ import {
   Mail,
   Sparkles,
   Clock,
-  CreditCard,
   ArrowRight,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -49,9 +48,9 @@ export default function Footer() {
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
+  const [, setPaymentMethods] = useState<string[]>([]);
   const [newsletterContent, setNewsletterContent] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     loadFooterData();
@@ -128,10 +127,6 @@ export default function Footer() {
   const displaySocialLinks =
     socialLinks.length > 0 ? socialLinks : defaultSocialLinks;
   const displayServices = services.length > 0 ? services : [];
-  const displayPaymentMethods =
-    paymentMethods.length > 0
-      ? paymentMethods
-      : ["Visa", "Mastercard", "American Express", "Apple Pay", "Google Pay"];
 
   const quickLinks = [
     { label: "Home", href: "#home" },
@@ -247,7 +242,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-white font-bold mb-6 flex items-center gap-2">
+            <h4 className="text-slate-900 font-bold mb-6 flex items-center gap-2">
               <ArrowRight className="w-4 h-4 text-purple-400" />
               Quick Links
             </h4>
@@ -268,7 +263,7 @@ export default function Footer() {
 
           {/* Services */}
           <div>
-            <h4 className="text-white font-bold mb-6 flex items-center gap-2">
+            <h4 className="text-slate-900 font-bold mb-6 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-400" />
               Popular Services
             </h4>
@@ -293,7 +288,7 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="text-white font-bold mb-6 flex items-center gap-2">
+            <h4 className="text-slate-900 font-bold mb-6 flex items-center gap-2">
               <Mail className="w-4 h-4 text-purple-400" />
               Contact Us
             </h4>
@@ -335,7 +330,9 @@ export default function Footer() {
             <div className="mt-6 p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="w-4 h-4 text-purple-400" />
-                <p className="text-sm font-medium text-white">Business Hours</p>
+                <p className="text-sm font-medium text-slate-900">
+                  Business Hours
+                </p>
               </div>
               <p className="text-xs text-gray-400">
                 Mon-Sun: {contactInfo?.hours?.monday || "8:00 AM - 9:00 PM"}

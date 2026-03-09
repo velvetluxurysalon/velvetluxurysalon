@@ -24,14 +24,26 @@ import { db, storage } from "../../../firebaseConfig";
 // HERO SECTION MANAGEMENT
 // ============================================
 
+export interface HeroLayer {
+  id: string;
+  type: "image" | "video" | "color";
+  content: string; // URL or hex color
+  opacity: number; // 0-1
+  order: number; // z-index
+}
+
 export interface HeroSlide {
   id: string;
-  title: string;
-  subtitle: string;
-  image: string;
+  heading: string; // Main text
+  subheading: string; // Secondary text
+  layers: HeroLayer[]; // Multi-layer support
   ctaButtonText?: string;
   ctaButtonLink?: string;
   order: number;
+  // Legacy fields for backward compatibility
+  title?: string;
+  subtitle?: string;
+  image?: string;
 }
 
 export interface HeroContent {
@@ -46,20 +58,64 @@ export const getHeroContent = async (): Promise<HeroContent | null> => {
     if (docSnap.exists()) {
       const data = docSnap.data();
       // Support both old and new formats
-      if (data.slides) {
-        return data as HeroContent;
-      } else {
-        // Convert old format to new
+      if (data.slides && data.slides.length > 0) {
+        // Normalize slides to ensure all have layers
+        const normalizedSlides = data.slides.map((slide: any) => {
+          if (slide.layers && Array.isArray(slide.layers)) {
+            // Already in new format
+            return slide as HeroSlide;
+          } else {
+            // Convert from old format to new
+            const layers: HeroLayer[] = [];
+            if (slide.image) {
+              layers.push({
+                id: `layer-${slide.id}-image`,
+                type: "image",
+                content: slide.image,
+                opacity: 1,
+                order: 0,
+              });
+            }
+            return {
+              id: slide.id,
+              heading: slide.heading || slide.title || "",
+              subheading: slide.subheading || slide.subtitle || "",
+              layers,
+              ctaButtonText: slide.ctaButtonText,
+              ctaButtonLink: slide.ctaButtonLink,
+              order: slide.order || 0,
+              title: slide.title,
+              subtitle: slide.subtitle,
+              image: slide.image,
+            } as HeroSlide;
+          }
+        });
+        return { slides: normalizedSlides };
+      } else if (data.image || data.title) {
+        // Convert old single-slide format to new
+        const layers: HeroLayer[] = [];
+        if (data.image) {
+          layers.push({
+            id: "layer-hero-image",
+            type: "image",
+            content: data.image,
+            opacity: 1,
+            order: 0,
+          });
+        }
         return {
           slides: [
             {
               id: "slide-1",
-              title: data.title,
-              subtitle: data.subtitle,
-              image: data.image,
+              heading: data.heading || data.title || "",
+              subheading: data.subheading || data.subtitle || "",
+              layers,
               ctaButtonText: data.ctaButtonText,
               ctaButtonLink: data.ctaButtonLink,
               order: 0,
+              title: data.title,
+              subtitle: data.subtitle,
+              image: data.image,
             },
           ],
         };

@@ -4,7 +4,6 @@ import {
   Calendar,
   DollarSign,
   Sparkles,
-  CheckCircle,
 } from "lucide-react";
 
 const highlights = [
@@ -63,34 +62,70 @@ export default function WhyChooseUs() {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
-          {highlights.map((highlight, index) => {
-            const Icon = highlight.icon;
-            return (
-              <div
-                key={index}
-                className="group relative bg-[#fdfbf7]/50 rounded-none p-10 hover:bg-white hover:shadow-2xl transition-all duration-700 border border-slate-100 hover:border-[#c9a227]/30 overflow-hidden"
-              >
-                {/* Icon container */}
-                <div className="relative w-14 h-14 rounded-none bg-white border border-slate-100 flex items-center justify-center mb-8 group-hover:bg-[#1a1a2e] group-hover:border-[#1a1a2e] transition-all duration-500 shadow-sm">
-                  <Icon className="w-6 h-6 text-[#c9a227] group-hover:text-white transition-colors duration-500" />
-                </div>
+        <div className="mb-24">
+          {/* Mobile Horizontal Scroll */}
+          <div className="md:hidden overflow-x-auto pb-4 -mx-4 px-4">
+            <div className="flex gap-6 w-max">
+              {highlights.map((highlight, index) => {
+                const Icon = highlight.icon;
+                return (
+                  <div
+                    key={index}
+                    className="flex-shrink-0 w-72 group relative bg-[#fdfbf7]/50 rounded-none p-10 hover:bg-white hover:shadow-2xl transition-all duration-700 border border-slate-100 hover:border-[#c9a227]/30 overflow-hidden"
+                  >
+                    {/* Icon container */}
+                    <div className="relative w-14 h-14 rounded-none bg-white border border-slate-100 flex items-center justify-center mb-8 group-hover:bg-[#1a1a2e] group-hover:border-[#1a1a2e] transition-all duration-500 shadow-sm">
+                      <Icon className="w-6 h-6 text-[#c9a227] group-hover:text-white transition-colors duration-500" />
+                    </div>
 
-                <h3 className="text-xl font-serif font-bold mb-4 text-slate-900 group-hover:text-[#c9a227] transition-colors">
-                  {highlight.title}
-                </h3>
-                <p className="text-slate-500 leading-relaxed text-sm font-sans">
-                  {highlight.description}
-                </p>
+                    <h3 className="text-xl font-serif font-bold mb-4 text-slate-900 group-hover:text-[#c9a227] transition-colors">
+                      {highlight.title}
+                    </h3>
+                    <p className="text-slate-500 leading-relaxed text-sm font-sans">
+                      {highlight.description}
+                    </p>
 
-                {/* Decorative corner */}
-                <div className="absolute top-0 right-0 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <div className="absolute top-0 right-0 w-[1px] h-full bg-[#c9a227]" />
-                  <div className="absolute top-0 right-0 w-full h-[1px] bg-[#c9a227]" />
+                    {/* Decorative corner */}
+                    <div className="absolute top-0 right-0 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      <div className="absolute top-0 right-0 w-[1px] h-full bg-[#c9a227]" />
+                      <div className="absolute top-0 right-0 w-full h-[1px] bg-[#c9a227]" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Desktop Grid */}
+          <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {highlights.map((highlight, index) => {
+              const Icon = highlight.icon;
+              return (
+                <div
+                  key={index}
+                  className="group relative bg-[#fdfbf7]/50 rounded-none p-10 hover:bg-white hover:shadow-2xl transition-all duration-700 border border-slate-100 hover:border-[#c9a227]/30 overflow-hidden"
+                >
+                  {/* Icon container */}
+                  <div className="relative w-14 h-14 rounded-none bg-white border border-slate-100 flex items-center justify-center mb-8 group-hover:bg-[#1a1a2e] group-hover:border-[#1a1a2e] transition-all duration-500 shadow-sm">
+                    <Icon className="w-6 h-6 text-[#c9a227] group-hover:text-white transition-colors duration-500" />
+                  </div>
+
+                  <h3 className="text-xl font-serif font-bold mb-4 text-slate-900 group-hover:text-[#c9a227] transition-colors">
+                    {highlight.title}
+                  </h3>
+                  <p className="text-slate-500 leading-relaxed text-sm font-sans">
+                    {highlight.description}
+                  </p>
+
+                  {/* Decorative corner */}
+                  <div className="absolute top-0 right-0 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div className="absolute top-0 right-0 w-[1px] h-full bg-[#c9a227]" />
+                    <div className="absolute top-0 right-0 w-full h-[1px] bg-[#c9a227]" />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         {/* Stats Section */}
