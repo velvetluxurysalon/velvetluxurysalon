@@ -11,7 +11,6 @@ import {
   Phone,
   Menu,
   X,
-  Search,
   ChevronRight,
   Calendar,
   BookOpen,
@@ -54,7 +53,7 @@ const baseNavItems = [
   {
     icon: Sparkles,
     label: "Special Offers",
-    href: "/#special-offers",
+    href: "/special-offers",
     id: "special-offers",
   },
 ];
@@ -75,7 +74,12 @@ const bottomBaseNavItems = [
   { icon: Scissors, label: "Services", href: "/services", id: "services" },
   { icon: Calendar, label: "Book", href: "/appointments", id: "appointments" },
   { icon: Package, label: "Products", href: "/products", id: "products" },
-  { icon: Users, label: "Profile", href: "/profile", id: "profile" },
+  {
+    icon: Crown,
+    label: "Memberships",
+    href: "/memberships",
+    id: "memberships",
+  },
 ];
 
 function getActiveId(pathname: string, sideNavItems: any[]): string {
@@ -91,7 +95,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   const mainContentRef = useRef<HTMLElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -196,101 +199,121 @@ export default function MainLayout({ children }: MainLayoutProps) {
             ))}
           </nav>
 
-          {/* Right — search + call + auth */}
+          {/* Right — profile + call + auth */}
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 rounded-lg hover:bg-slate-700 transition-colors"
-              aria-label="Search"
-            >
-              <Search size={20} className="text-white" />
-            </button>
-
             {/* Customer Auth Menu */}
             {customerData ? (
-              <div className="relative">
-                <button
-                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-700 transition-colors"
-                  title={customerData.name}
-                >
-                  <div className="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center text-white text-xs font-medium">
-                    {customerData.name?.charAt(0)?.toUpperCase() || "U"}
-                  </div>
-                  <span className="hidden sm:inline text-sm font-medium text-white">
-                    {customerData.name?.split(" ")[0] || "User"}
-                  </span>
-                </button>
+              <>
+                <div className="relative">
+                  <button
+                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-700 transition-colors"
+                    title={customerData.name}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center text-white text-xs font-medium">
+                      {customerData.name?.charAt(0)?.toUpperCase() || "U"}
+                    </div>
+                    <span className="hidden sm:inline text-sm font-medium text-white">
+                      {customerData.name?.split(" ")[0] || "User"}
+                    </span>
+                  </button>
 
-                {/* Profile Dropdown */}
-                {profileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-sm border border-slate-100 z-50">
-                    <div className="px-4 py-3 border-b border-slate-100">
-                      <p className="text-sm font-medium text-slate-900">
-                        {customerData.name}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {customerData.email}
-                      </p>
+                  {/* Profile Dropdown */}
+                  {profileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-sm border border-slate-100 z-50">
+                      <div className="px-4 py-3 border-b border-slate-100">
+                        <p className="text-sm font-medium text-slate-900">
+                          {customerData.name}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {customerData.email}
+                        </p>
+                      </div>
+                      <div className="py-2">
+                        <button
+                          onClick={() => {
+                            navigate("/profile");
+                            setProfileMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 flex items-center gap-2"
+                        >
+                          <Users size={16} />
+                          My Profile
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate("/referrals");
+                            setProfileMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 flex items-center gap-2"
+                        >
+                          <Gift size={16} />
+                          Referral Program
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate("/spin");
+                            setProfileMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 flex items-center gap-2"
+                        >
+                          <Zap size={16} />
+                          Daily Spin Wheel
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate("/memberships");
+                            setProfileMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 flex items-center gap-2"
+                        >
+                          <Crown size={16} />
+                          My Memberships
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate("/favorites");
+                            setProfileMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 flex items-center gap-2"
+                        >
+                          <Heart size={16} />
+                          Favorites
+                        </button>
+                      </div>
+                      <div className="py-2 border-t border-slate-100">
+                        <button
+                          onClick={async () => {
+                            await logout();
+                            setProfileMenuOpen(false);
+                            navigate("/");
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        >
+                          <LogOut size={16} />
+                          Logout
+                        </button>
+                      </div>
                     </div>
-                    <div className="py-2">
-                      <button
-                        onClick={() => {
-                          navigate("/referrals");
-                          setProfileMenuOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 flex items-center gap-2"
-                      >
-                        <Gift size={16} />
-                        Referral Program
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigate("/spin");
-                          setProfileMenuOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 flex items-center gap-2"
-                      >
-                        <Zap size={16} />
-                        Daily Spin Wheel
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigate("/memberships");
-                          setProfileMenuOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 flex items-center gap-2"
-                      >
-                        <Crown size={16} />
-                        My Memberships
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigate("/favorites");
-                          setProfileMenuOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-slate-50 flex items-center gap-2"
-                      >
-                        <Heart size={16} />
-                        Favorites
-                      </button>
-                    </div>
-                    <div className="py-2 border-t border-slate-100">
-                      <button
-                        onClick={async () => {
-                          await logout();
-                          setProfileMenuOpen(false);
-                          navigate("/");
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                      >
-                        <LogOut size={16} />
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => navigate("/profile")}
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                  title="Go to Profile"
+                >
+                  <Users size={18} />
+                  <span className="hidden md:inline">Profile</span>
+                </button>
+                <button
+                  onClick={() => navigate("/memberships")}
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                  title="Go to Memberships"
+                >
+                  <Crown size={18} />
+                  <span className="hidden md:inline">Memberships</span>
+                </button>
+              </>
             ) : (
               <div className="flex items-center gap-2">
                 <button
@@ -319,24 +342,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
             </a>
           </div>
         </div>
-
-        {/* Expandable search */}
-        {searchOpen && (
-          <div className="px-4 pb-3 lg:px-6">
-            <div className="relative">
-              <Search
-                size={18}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-              />
-              <input
-                autoFocus
-                type="text"
-                placeholder="Search services, treatments…"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all"
-              />
-            </div>
-          </div>
-        )}
       </header>
 
       {/* ═══════════ BODY WRAPPER ═══════════ */}

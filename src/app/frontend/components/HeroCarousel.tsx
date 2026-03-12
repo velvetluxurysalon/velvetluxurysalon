@@ -60,7 +60,22 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
     : [];
 
   return (
-    <section className="relative group overflow-hidden h-screen w-full flex items-end justify-center bg-[#1a1a2e]">
+    <section
+      className="relative group overflow-hidden w-full flex items-end justify-center bg-[#1a1a2e]"
+      style={{
+        height: "calc(var(--hero-height, 100svh) - 64px)",
+      }}
+    >
+      <style>{`
+        :root {
+          --hero-height: 100svh;
+        }
+        @media (max-width: 640px) {
+          :root {
+            --hero-height: 75svh;
+          }
+        }
+      `}</style>
       {/* Multi-Layer Background */}
       <div className="absolute inset-0">
         {sortedLayers.map((layer, layerIndex) => (
@@ -127,11 +142,11 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
       </div>
 
       {/* Content - At Bottom with Simple Layout */}
-      <div className="relative z-50 w-full px-4 sm:px-6 lg:px-16 pb-24 text-center">
+      <div className="relative z-50 w-full px-4 sm:px-6 lg:px-16 pb-20 sm:pb-24 text-center">
         {/* Brand Tag */}
-        <div className="inline-flex items-center gap-2 mx-auto mb-8">
+        <div className="inline-flex items-center gap-2 mx-auto mb-4 sm:mb-8">
           <div className="h-px w-6 bg-[#c9a227]"></div>
-          <span className="text-[#c9a227] text-xs font-black uppercase tracking-widest font-sans">
+          <span className="text-[#c9a227] text-[10px] sm:text-xs font-black uppercase tracking-widest font-sans">
             Velvet Luxury
           </span>
           <div className="h-px w-6 bg-[#c9a227]"></div>
@@ -140,49 +155,49 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
         {/* Main Heading */}
         <h1
           key={currentSlideData.id}
-          className={`transition-all duration-1000 ease-out font-serif font-bold tracking-tight text-white drop-shadow-lg leading-tight mb-4
-            text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl`}
+          className={`transition-all duration-1000 ease-out font-serif font-bold tracking-tight text-white drop-shadow-lg leading-tight mb-2 sm:mb-4
+            text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl`}
         >
           {currentSlideData.heading || currentSlideData.title}
         </h1>
 
         {/* Decorative Accent */}
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="h-px w-12 bg-[#c9a227]/60"></div>
+        <div className="flex items-center justify-center gap-3 mb-4 sm:mb-6">
+          <div className="h-px w-8 sm:w-12 bg-[#c9a227]/60"></div>
           <div className="w-1.5 h-1.5 bg-[#c9a227] rounded-full"></div>
-          <div className="h-px w-12 bg-[#c9a227]/60"></div>
+          <div className="h-px w-8 sm:w-12 bg-[#c9a227]/60"></div>
         </div>
 
         {/* Subheading */}
         <p
           key={`${currentSlideData.id}-sub`}
-          className={`transition-all duration-1000 ease-out text-white/85 text-sm sm:text-base md:text-lg font-light max-w-2xl mx-auto leading-relaxed mb-8`}
+          className={`transition-all duration-1000 ease-out text-white/85 text-xs sm:text-base md:text-lg font-light max-w-2xl mx-auto leading-relaxed mb-6 sm:mb-8`}
         >
           {currentSlideData.subheading || currentSlideData.subtitle}
         </p>
       </div>
 
       {/* Slide Controls - Fixed at bottom */}
-      <div className="absolute bottom-8 left-0 right-0 z-50 flex items-center justify-center gap-4">
+      <div className="absolute bottom-4 sm:bottom-8 left-0 right-0 z-50 flex items-center justify-center gap-2 sm:gap-4">
         {/* Previous Button */}
         <button
           onClick={handlePrev}
-          className="group relative p-3 rounded-full border-2 border-white/30 hover:border-[#c9a227] text-white hover:text-[#c9a227] transition-all duration-300 hover:bg-white/10 backdrop-blur"
+          className="group relative p-2 sm:p-3 rounded-full border border-white/30 hover:border-[#c9a227] text-white hover:text-[#c9a227] transition-all duration-300 hover:bg-white/10 backdrop-blur"
           aria-label="Previous slide"
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
         {/* Slide Indicators */}
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2">
           {slides.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`h-2 rounded-full transition-all duration-500 ${
+              className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 ${
                 index === currentSlide
-                  ? "w-12 bg-[#c9a227]"
-                  : "w-2 bg-white/30 hover:bg-white/60"
+                  ? "w-8 sm:w-12 bg-[#c9a227]"
+                  : "w-1.5 sm:w-2 bg-white/30 hover:bg-white/60"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -192,10 +207,10 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
         {/* Next Button */}
         <button
           onClick={handleNext}
-          className="group relative p-3 rounded-full border-2 border-white/30 hover:border-[#c9a227] text-white hover:text-[#c9a227] transition-all duration-300 hover:bg-white/10 backdrop-blur"
+          className="group relative p-2 sm:p-3 rounded-full border border-white/30 hover:border-[#c9a227] text-white hover:text-[#c9a227] transition-all duration-300 hover:bg-white/10 backdrop-blur"
           aria-label="Next slide"
         >
-          <ChevronRight size={20} />
+          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
     </section>

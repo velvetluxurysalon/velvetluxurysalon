@@ -76,6 +76,7 @@ export default function App() {
                 <Route path="/referrals" element={<ReferralSystemPage />} />
                 <Route path="/spin" element={<SpinWheelPage />} />
                 <Route path="/appointments" element={<AppointmentsPage />} />
+                <Route path="/special-offers" element={<SpecialOffersPage />} />
                 <Route
                   path="/google-profile-completion"
                   element={<GoogleProfileCompletionPage />}
@@ -87,14 +88,6 @@ export default function App() {
                   element={
                     <ReceptionistRoute>
                       <ReviewsPage />
-                    </ReceptionistRoute>
-                  }
-                />
-                <Route
-                  path="/special-offers"
-                  element={
-                    <ReceptionistRoute>
-                      <SpecialOffersPage />
                     </ReceptionistRoute>
                   }
                 />

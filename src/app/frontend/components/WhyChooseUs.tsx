@@ -32,13 +32,6 @@ const highlights = [
   },
 ];
 
-const stats = [
-  { value: "10+", label: "Years Experience" },
-  { value: "5000+", label: "Happy Clients" },
-  { value: "50+", label: "Expert Staff" },
-  { value: "100+", label: "Services" },
-];
-
 export default function WhyChooseUs() {
   return (
     <section className="py-24 px-4 bg-white border-y border-[#c9a227]/10 relative overflow-hidden">
@@ -125,32 +118,6 @@ export default function WhyChooseUs() {
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* Stats Section */}
-        <div className="bg-[#1a1a2e] border-none rounded-none p-12 md:p-20 relative overflow-hidden group">
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 1px 1px, #c9a227 1px, transparent 0)",
-              backgroundSize: "30px 30px",
-            }}
-          />
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#c9a227] to-transparent" />
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-8 text-center relative z-10">
-            {stats.map((stat, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <div className="text-4xl md:text-6xl font-serif font-bold text-white mb-4 group-hover:text-[#c9a227] transition-colors duration-500">
-                  {stat.value}
-                </div>
-                <div className="text-[#c9a227] text-[10px] font-black uppercase tracking-[0.3em] font-sans">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>

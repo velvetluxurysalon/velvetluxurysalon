@@ -111,13 +111,8 @@ export default function HomePage() {
       {/* ── EXPLORE SERVICES ── */}
       <ExploreServices />
 
-      {/* ── WHY CHOOSE US ── */}
-      <WhyChooseUs />
-
       {/* ── TESTIMONIALS ── */}
       <TestimonialsSection />
-
-      <SpecialOffers id="special-offers" />
     </>
   );
 }
