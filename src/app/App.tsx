@@ -21,6 +21,7 @@ import ReferralSystemPage from "./frontend/pages/ReferralSystemPage";
 import SpinWheelPage from "./frontend/pages/SpinWheelPage";
 import { Toaster } from "./frontend/components/ui/sonner";
 import { useAuth } from "./frontend/context/AuthContext";
+import LoginPopup from "./frontend/components/LoginPopup";
 
 // Protected route component for receptionist-only pages
 function ReceptionistRoute({ children }: { children: React.ReactNode }) {
@@ -96,6 +97,7 @@ export default function App() {
           }
         />
       </Routes>
+      <LoginPopup />
       <Toaster />
     </>
   );

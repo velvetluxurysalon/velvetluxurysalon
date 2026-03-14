@@ -12,23 +12,13 @@ import {
 } from "../components/ui/card";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../components/ui/tabs";
-import {
-  createReferralCode,
-  getCustomerReferralCodes,
   getReferrerReferrals,
   getReferralStats,
-  getReferralCode,
 } from "../services/firebaseService";
 import {
   Copy,
   Share2,
   Gift,
-  TrendingUp,
   Users,
   AlertCircle,
   CheckCircle,
@@ -37,13 +27,11 @@ import {
 export default function ReferralSystemPage() {
   const navigate = useNavigate();
   const { customerData, isAuthenticated } = useAuth();
-  const [referralCodes, setReferralCodes] = useState<any[]>([]);
   const [referrals, setReferrals] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [generatingCode, setGeneratingCode] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Redirect if not authenticated
@@ -58,17 +46,15 @@ export default function ReferralSystemPage() {
   }, [customerData]);
 
   const loadReferralData = async () => {
-    if (!customerData?.id) return;
+    if (!customerData?.phone) return;
 
     setLoading(true);
     try {
-      const [codes, referralsData, statsData] = await Promise.all([
-        getCustomerReferralCodes(customerData.id),
-        getReferrerReferrals(customerData.id),
-        getReferralStats(customerData.id),
+      const [referralsData, statsData] = await Promise.all([
+        getReferrerReferrals(customerData.phone),
+        getReferralStats(customerData.phone),
       ]);
 
-      setReferralCodes(codes);
       setReferrals(referralsData);
       setStats(statsData);
     } catch (err: any) {
@@ -79,34 +65,6 @@ export default function ReferralSystemPage() {
     }
   };
 
-  const handleGenerateCode = async () => {
-    if (!customerData?.id) return;
-
-    setGeneratingCode(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      await createReferralCode(
-        customerData.id,
-        customerData.name,
-        10, // 10% discount
-        5, // max 5 uses
-        500, // 500 points for referrer
-        300, // 300 points for new customer
-      );
-
-      setSuccess("Referral code generated successfully!");
-      await loadReferralData();
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err: any) {
-      setError(err.message || "Failed to generate referral code");
-      console.error("Error creating referral code:", err);
-    } finally {
-      setGeneratingCode(false);
-    }
-  };
-
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
@@ -114,7 +72,7 @@ export default function ReferralSystemPage() {
   };
 
   const handleShareCode = (code: string) => {
-    const shareText = `Join Velvet Luxury Salon using my referral code: ${code}\nGet 10% discount and 300 bonus loyalty points!\n`;
+    const shareText = `Join Velvet Luxury Salon using my referral code: ${code}\nGet 10% discount and 300 bonus loyalty points!\nhttps://velvetluxurysalon.com`;
 
     if (navigator.share) {
       navigator
@@ -139,6 +97,8 @@ export default function ReferralSystemPage() {
     );
   }
 
+  const referralCode = customerData?.phone || "";
+
   return (
     <div className="w-full py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
@@ -148,7 +108,8 @@ export default function ReferralSystemPage() {
             Referral Program
           </h1>
           <p className="text-gray-600 font-sans">
-            Earn rewards by sharing your referral code with friends
+            Earn rewards by sharing your phone number as a referral code with
+            friends
           </p>
         </div>
 
@@ -172,7 +133,7 @@ export default function ReferralSystemPage() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="border-0 shadow-lg bg-white/50 backdrop-blur-sm hover:translate-y-[-2px] transition-transform">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -226,246 +187,105 @@ export default function ReferralSystemPage() {
               </div>
             </CardContent>
           </Card>
-
-          <Card className="border-0 shadow-lg bg-white/50 backdrop-blur-sm hover:translate-y-[-2px] transition-transform">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">
-                    Active Codes
-                  </p>
-                  <p className="text-3xl font-bold text-[#c9a227]">
-                    {stats?.activeReferralCodes || 0}
-                  </p>
-                </div>
-                <div className="p-3 bg-amber-50 rounded-xl">
-                  <TrendingUp className="h-8 w-8 text-[#c9a227]" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
-        {/* Validate Referral Code Card */}
-        <Card className="border-0 shadow-lg mb-8 bg-gradient-to-br from-purple-50 to-indigo-50">
+        {/* Your Referral Code Card */}
+        <Card className="border-0 shadow-lg mb-8 bg-gradient-to-br from-amber-50 to-orange-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <span>🔍</span> Test Referral Code
+              <span className="text-2xl">🎁</span> Your Referral Code
             </CardTitle>
             <CardDescription>
-              Validate a referral code to see if it's working properly
+              Share this code with friends to earn rewards
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Enter referral code to test..."
-                  id="testReferralCode"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                  defaultValue=""
-                />
-                <Button
-                  onClick={async () => {
-                    const codeInput = document.getElementById(
-                      "testReferralCode",
-                    ) as HTMLInputElement;
-                    const code = codeInput?.value || "";
-
-                    if (!code.trim()) {
-                      alert("Please enter a referral code");
-                      return;
-                    }
-
-                    try {
-                      const referralCode = await getReferralCode(code);
-                      if (referralCode) {
-                        alert(
-                          `✅ Code Found!\n\n${JSON.stringify(referralCode, null, 2)}`,
-                        );
-                      } else {
-                        alert("❌ Referral code not found");
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-lg border-2 border-amber-200">
+                <Label className="text-gray-600 text-xs uppercase tracking-widest font-sans">
+                  Phone Number (Referral Code)
+                </Label>
+                <div className="flex items-center gap-2 mt-4">
+                  <code className="flex-1 bg-amber-50 p-4 rounded-lg font-mono text-lg font-bold text-[#c9a227]">
+                    {referralCode}
+                  </code>
+                  <button
+                    onClick={() => handleCopyCode(referralCode)}
+                    className="p-2 hover:bg-amber-100 rounded-lg transition-colors"
+                    title="Copy code"
+                  >
+                    <Copy
+                      size={24}
+                      className={
+                        copiedCode === referralCode
+                          ? "text-green-600"
+                          : "text-[#c9a227]"
                       }
-                    } catch (err: any) {
-                      alert(`❌ Error: ${err.message}`);
-                    }
-                  }}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  Validate
-                </Button>
+                    />
+                  </button>
+                </div>
+                {copiedCode === referralCode && (
+                  <p className="text-sm text-green-600 mt-2">✓ Copied!</p>
+                )}
               </div>
-              <p className="text-xs text-gray-600">
-                💡 Use this to test if your referral codes are working correctly
-                before sharing them with friends
-              </p>
+
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Gift className="h-4 w-4 text-[#c9a227]" />
+                    <span>
+                      <strong>10% discount</strong> for new customers
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Gift className="h-4 w-4 text-[#c9a227]" />
+                    <span>
+                      <strong>300 loyalty points</strong> for new customers
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Gift className="h-4 w-4 text-[#c9a227]" />
+                    <span>
+                      <strong>500 loyalty points</strong> for you per successful
+                      referral
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              <Button
+                onClick={() => handleShareCode(referralCode)}
+                className="w-full bg-gradient-to-r from-[#c9a227] to-[#e8c547] hover:opacity-90 text-white font-semibold py-3 rounded-lg transition-all h-auto"
+              >
+                <Share2 size={18} className="mr-2" />
+                Share Referral Code
+              </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="codes" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="codes">Your Referral Codes</TabsTrigger>
-            <TabsTrigger value="referrals">Referral History</TabsTrigger>
-          </TabsList>
-
-          {/* Referral Codes Tab */}
-          <TabsContent value="codes" className="space-y-6">
-            {/* Generate New Code Card */}
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Generate Referral Code</CardTitle>
-                <CardDescription>
-                  Create a new referral code to share with friends
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <Gift className="h-4 w-4 text-[#c9a227]" />
-                        <span>
-                          <strong>10% discount</strong> for new customers
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Gift className="h-4 w-4 text-[#c9a227]" />
-                        <span>
-                          <strong>300 loyalty points</strong> for new customers
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Gift className="h-4 w-4 text-[#c9a227]" />
-                        <span>
-                          <strong>500 loyalty points</strong> for you per
-                          referral
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <Button
-                    onClick={handleGenerateCode}
-                    disabled={generatingCode || referralCodes.length >= 5}
-                    className="w-full bg-gradient-to-r from-[#c9a227] to-[#e8c547] hover:opacity-90 text-white font-semibold py-2 rounded-lg transition-all"
-                  >
-                    {generatingCode ? "Generating..." : "Generate New Code"}
-                  </Button>
-
-                  {referralCodes.length >= 5 && (
-                    <p className="text-sm text-amber-600">
-                      You can have a maximum of 5 active referral codes at a
-                      time
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Existing Codes */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Your Active Codes
-              </h3>
-              {referralCodes.length === 0 ? (
-                <Card className="border-0 shadow-lg">
-                  <CardContent className="pt-6 text-center text-gray-600">
-                    No referral codes generated yet. Create one above!
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {referralCodes.map((codeData) => (
-                    <Card
-                      key={codeData.id}
-                      className="border-0 shadow-lg hover:shadow-xl transition-shadow"
-                    >
-                      <CardContent className="pt-6">
-                        <div className="space-y-4">
-                          <div>
-                            <Label className="text-gray-600 text-xs uppercase tracking-widest font-sans">
-                              Referral Code
-                            </Label>
-                            <div className="flex items-center gap-2 mt-2">
-                              <code className="flex-1 bg-amber-50 p-3 rounded-lg font-mono text-sm font-bold text-[#c9a227]">
-                                {codeData.code}
-                              </code>
-                              <button
-                                onClick={() => handleCopyCode(codeData.code)}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                title="Copy code"
-                              >
-                                <Copy
-                                  size={20}
-                                  className={
-                                    copiedCode === codeData.code
-                                      ? "text-green-600"
-                                      : "text-gray-600"
-                                  }
-                                />
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <p className="text-gray-600">Uses</p>
-                              <p className="font-bold text-gray-900">
-                                {codeData.currentUses}/{codeData.maxUses}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Status</p>
-                              <p
-                                className={`font-bold ${
-                                  codeData.status === "active"
-                                    ? "text-green-600"
-                                    : "text-red-600"
-                                }`}
-                              >
-                                {codeData.status.charAt(0).toUpperCase() +
-                                  codeData.status.slice(1)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <Button
-                            onClick={() => handleShareCode(codeData.code)}
-                            variant="outline"
-                            className="w-full"
-                          >
-                            <Share2 size={16} className="mr-2" />
-                            Share Code
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Referral History Tab */}
-          <TabsContent value="referrals" className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Referral History
-            </h3>
+        {/* Referral History */}
+        <Card className="border-0 shadow-lg mb-8">
+          <CardHeader>
+            <CardTitle>Referral History</CardTitle>
+            <CardDescription>
+              Track your successful referrals and rewards
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             {referrals.length === 0 ? (
-              <Card className="border-0 shadow-lg">
-                <CardContent className="pt-6 text-center text-gray-600">
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-600">
                   No referrals yet. Share your code to start earning rewards!
-                </CardContent>
-              </Card>
+                </p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {referrals.map((referral) => (
                   <Card
                     key={referral.id}
-                    className="border-0 shadow-lg hover:shadow-xl transition-shadow"
+                    className="border border-gray-200 hover:shadow-md transition-shadow"
                   >
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between gap-4">
@@ -476,23 +296,27 @@ export default function ReferralSystemPage() {
                           <p className="text-sm text-gray-600">
                             {referral.newCustomerPhone}
                           </p>
-                          <p className="text-sm text-gray-500 mt-2">
-                            Code:{" "}
-                            <code className="bg-gray-100 px-2 py-1 rounded">
-                              {referral.referralCode}
-                            </code>
-                          </p>
+                          {referral.createdAt && (
+                            <p className="text-xs text-gray-500 mt-2">
+                              Referred:{" "}
+                              {new Date(
+                                referral.createdAt.seconds
+                                  ? referral.createdAt.seconds * 1000
+                                  : referral.createdAt,
+                              ).toLocaleDateString()}
+                            </p>
+                          )}
                         </div>
 
                         <div className="text-right">
                           <div className="flex items-center gap-1 justify-end mb-2">
-                            <Gift className="h-4 w-4 text-purple-600" />
-                            <span className="font-bold text-purple-600">
+                            <Gift className="h-4 w-4 text-[#c9a227]" />
+                            <span className="font-bold text-[#c9a227]">
                               +{referral.referrerRewardPoints} pts
                             </span>
                           </div>
                           <div
-                            className={`text-xs font-semibold px-2 py-1 rounded ${
+                            className={`text-xs font-semibold px-3 py-1 rounded ${
                               referral.status === "completed"
                                 ? "bg-green-100 text-green-800"
                                 : "bg-yellow-100 text-yellow-800"
@@ -503,29 +327,16 @@ export default function ReferralSystemPage() {
                           </div>
                         </div>
                       </div>
-
-                      <div className="mt-4 pt-4 border-t text-xs text-gray-500">
-                        {referral.createdAt && (
-                          <p>
-                            Created:{" "}
-                            {new Date(
-                              referral.createdAt.seconds
-                                ? referral.createdAt.seconds * 1000
-                                : referral.createdAt,
-                            ).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             )}
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
 
         {/* How it Works Section */}
-        <Card className="border-0 shadow-lg mt-8">
+        <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle>How the Referral Program Works</CardTitle>
           </CardHeader>
@@ -533,41 +344,25 @@ export default function ReferralSystemPage() {
             <div className="space-y-4">
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-purple-600 text-white font-bold">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-[#c9a227] text-white font-bold">
                     1
                   </div>
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">
-                    Generate Your Code
+                    Share Your Phone Number
                   </h4>
                   <p className="text-sm text-gray-600">
-                    Click "Generate New Code" to create a unique referral code
+                    Your phone number is your referral code. Copy and share it
+                    with friends
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-purple-600 text-white font-bold">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-[#c9a227] text-white font-bold">
                     2
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">
-                    Share With Friends
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    Share your code with friends via messaging, email, or social
-                    media
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-purple-600 text-white font-bold">
-                    3
                   </div>
                 </div>
                 <div>
@@ -575,23 +370,23 @@ export default function ReferralSystemPage() {
                     Friend Signs Up
                   </h4>
                   <p className="text-sm text-gray-600">
-                    Your friend creates a new account and enters your referral
-                    code
+                    Your friend creates a new account and enters your phone
+                    number as their referral code
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-purple-600 text-white font-bold">
-                    4
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-[#c9a227] text-white font-bold">
+                    3
                   </div>
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">Earn Rewards</h4>
                   <p className="text-sm text-gray-600">
                     You both get loyalty points immediately and your friend gets
-                    10% off their first visit
+                    10% off their first service
                   </p>
                 </div>
               </div>

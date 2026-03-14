@@ -360,19 +360,21 @@ export default function CustomerSignupPage() {
 
               {/* Referral Code Field */}
               <div className="space-y-2">
-                <Label htmlFor="referralCode">Referral Code (Optional)</Label>
+                <Label htmlFor="referralCode">
+                  Referral Phone Number (Optional)
+                </Label>
                 <Input
                   id="referralCode"
                   name="referralCode"
-                  type="text"
-                  placeholder="e.g., REF98765432"
+                  type="tel"
+                  placeholder="e.g., +91 9876543210"
                   value={formData.referralCode}
                   onChange={handleChange}
                   disabled={loading}
-                  className="uppercase"
                 />
                 <p className="text-xs text-gray-500">
-                  If you have a referral code, enter it here to claim rewards
+                  Enter a friend's phone number to claim referral rewards and
+                  get 10% discount
                 </p>
               </div>
 

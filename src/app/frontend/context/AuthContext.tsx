@@ -61,6 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthChange(async (authUser) => {
@@ -98,6 +99,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return unsubscribe;
   }, []);
+
+  // Show login popup on initial load if user is not authenticated
+  useEffect(() => {
+    if (isInitialLoad && !loading && !user) {
+      setShowLoginModal(true);
+      setIsInitialLoad(false);
+    } else if (loading === false && isInitialLoad) {
+      setIsInitialLoad(false);
+    }
+  }, [loading, user, isInitialLoad]);
 
   const signup = async (
     email: string,

@@ -461,6 +461,9 @@ export const addCustomer = async (customerData: any): Promise<Customer> => {
       transactionDate: serverTimestamp(),
     });
 
+    // Automatically create phone-based referral code
+    await createPhoneBasedReferralCode(phone, customerData.name);
+
     return {
       id: phone,
       ...customerDoc,
@@ -549,6 +552,9 @@ export const registerCustomer = async (
         },
       );
     }
+
+    // Automatically create phone-based referral code
+    await createPhoneBasedReferralCode(normalizedPhone, name);
 
     return user;
   } catch (error: any) {
@@ -2099,18 +2105,12 @@ export interface Referral {
   completedAt?: any;
 }
 
-export const generateReferralCode = (phone: string): string => {
-  const cleanPhone = phone.replace(/\D/g, "").slice(-8);
-  const timestamp = Date.now().toString().slice(-6);
-  const code = `REF${cleanPhone}${timestamp}`.toUpperCase();
-  return code;
-};
-
-export const createReferralCode = async (
+// Create a referral code using phone number as the code (automatic for every user)
+export const createPhoneBasedReferralCode = async (
   customerPhone: string,
   customerName: string,
   discountPercentage: number = 10,
-  maxUses: number = 5,
+  maxUses: number = 999, // Unlimited uses for phone-based codes
   bonusPointsForReferrer: number = 500,
   bonusPointsForNewCustomer: number = 300,
 ): Promise<ReferralCode> => {
@@ -2120,7 +2120,14 @@ export const createReferralCode = async (
       throw new Error("Phone number is required");
     }
 
-    const code = generateReferralCode(normalizedPhone);
+    // Use the normalized phone as the referral code
+    const code = normalizedPhone;
+
+    // Check if already exists
+    const existingCode = await getReferralCode(code);
+    if (existingCode) {
+      return existingCode;
+    }
 
     const referralCodeDoc: ReferralCode = {
       code,
@@ -2139,17 +2146,40 @@ export const createReferralCode = async (
 
     await setDoc(doc(db, "referralCodes", code), referralCodeDoc);
 
-    // Add to customer's referralCodes subcollection
-    await addDoc(collection(db, `customers/${normalizedPhone}/referralCodes`), {
-      code,
-      createdAt: serverTimestamp(),
-    });
-
     return referralCodeDoc;
   } catch (error) {
-    console.error("Error creating referral code:", error);
+    console.error("Error creating phone-based referral code:", error);
     throw error;
   }
+};
+
+export const generateReferralCode = (phone: string): string => {
+  const cleanPhone = phone.replace(/\D/g, "").slice(-8);
+  const timestamp = Date.now().toString().slice(-6);
+  const code = `REF${cleanPhone}${timestamp}`.toUpperCase();
+  return code;
+};
+
+// Create custom referral codes (deprecated - no longer used)
+export const createReferralCode = async (
+  customerPhone: string,
+  customerName: string,
+  discountPercentage: number = 10,
+  maxUses: number = 5,
+  bonusPointsForReferrer: number = 500,
+  bonusPointsForNewCustomer: number = 300,
+): Promise<ReferralCode> => {
+  console.warn(
+    "createReferralCode is deprecated. Use createPhoneBasedReferralCode instead.",
+  );
+  return createPhoneBasedReferralCode(
+    customerPhone,
+    customerName,
+    discountPercentage,
+    maxUses,
+    bonusPointsForReferrer,
+    bonusPointsForNewCustomer,
+  );
 };
 
 export const getReferralCode = async (

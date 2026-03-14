@@ -347,14 +347,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
       {/* ═══════════ BODY WRAPPER ═══════════ */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Mobile overlay */}
-        <div
-          className={`fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 transition-opacity duration-300 lg:hidden ${
-            drawerOpen
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
-          }`}
-          onClick={() => setDrawerOpen(false)}
-        />
+        {drawerOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 lg:hidden"
+            onClick={() => setDrawerOpen(false)}
+          />
+        )}
 
         {/* ═══════════ SIDE DRAWER ═══════════ */}
         <aside
