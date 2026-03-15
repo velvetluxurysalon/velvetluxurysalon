@@ -10,10 +10,9 @@ import {
   FAQ,
 } from "../../services/contentService";
 import HeroCarousel from "../HeroCarousel";
+import AvailablePointsSection from "../AvailablePointsSection";
 import TestimonialsSection from "../TestimonialsSection";
-import WhyChooseUs from "../WhyChooseUs";
 import ExploreServices from "../ExploreServices";
-import SpecialOffers from "../SpecialOffers";
 
 interface SiteSettings {
   stats?: {
@@ -107,6 +106,9 @@ export default function HomePage() {
           contactInfo={contactInfo}
         />
       )}
+
+      {/* ── AVAILABLE POINTS SECTION ── */}
+      <AvailablePointsSection />
 
       {/* ── EXPLORE SERVICES ── */}
       <ExploreServices />

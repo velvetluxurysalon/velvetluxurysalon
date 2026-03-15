@@ -1,7 +1,7 @@
 {
-  "name": "Velvet Luxury Salon - Premium Hair & Beauty Services",
+  "name": "Velvet Premium Unisex Salon - Premium Hair & Beauty Services",
   "short_name": "Velvet Salon",
-  "description": "Experience the finest luxury hair and beauty services at Velvet Luxury Salon Bhavani, Erode. Expert stylists, premium treatments, and personalized care. Book your appointment today!",
+  "description": "Experience the finest luxury hair and beauty services at Velvet Premium Unisex Salon Bhavani, Erode. Expert stylists, premium treatments, and personalized care. Book your appointment today!",
   "start_url": "/?utm_source=pwa&utm_medium=homescreen",
   "scope": "/",
   "id": "velvet-luxury-salon",
@@ -21,7 +21,7 @@
       "sizes": "540x720",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Velvet Luxury Salon Homepage"
+      "label": "Velvet Premium Unisex Salon Homepage"
     },
     {
       "src": "/screenshot-2.png",

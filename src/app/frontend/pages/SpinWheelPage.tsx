@@ -16,10 +16,12 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  Gift,
 } from "lucide-react";
 import {
   recordDailySpins,
   getSpinWheelStats,
+  getReferralSettings,
 } from "../services/firebaseService";
 import "./SpinWheel.css";
 
@@ -47,6 +49,7 @@ export default function SpinWheelPage() {
   );
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [redemptionRate, setRedemptionRate] = useState(20); // Default: 20 points = ₹1
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -55,22 +58,28 @@ export default function SpinWheelPage() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Load spin stats on mount
+  // Load spin stats and redemption rate on mount
   useEffect(() => {
-    const loadStats = async () => {
+    const loadData = async () => {
       if (customerData?.id) {
         try {
           const wheelStats = await getSpinWheelStats(customerData.id);
           setStats(wheelStats);
           setHasSpunToday(wheelStats.hasSpunToday || false);
+
+          // Fetch redemption rate from admin settings
+          const settings = await getReferralSettings();
+          if (settings.redemptionRate) {
+            setRedemptionRate(settings.redemptionRate);
+          }
         } catch (error) {
-          console.error("Error loading spin stats:", error);
+          console.error("Error loading data:", error);
         } finally {
           setLoading(false);
         }
       }
     };
-    loadStats();
+    loadData();
   }, [customerData]);
 
   const handleSpin = async () => {
@@ -112,7 +121,7 @@ export default function SpinWheelPage() {
 
           if (reward.isJackpotWinner) {
             setMessage(
-              "🎉 LEGENDARY JACKPOT! You won 5000 points! You're the chosen one! 🏆",
+              `🎉 LEGENDARY JACKPOT! You won ${reward.pointsAwarded} points! You're the chosen one! 🏆`,
             );
             setMessageType("success");
           } else if (winningSegment.isJackpot) {
@@ -122,7 +131,7 @@ export default function SpinWheelPage() {
             setMessageType("info");
           } else {
             setMessage(
-              `You won ${reward.pointsAwarded} points! Come back tomorrow for another spin! ✨`,
+              `✨ Congratulations! You've earned ${reward.pointsAwarded} points! Come back tomorrow! ✨`,
             );
             setMessageType("success");
           }
@@ -177,6 +186,34 @@ export default function SpinWheelPage() {
 
       <section className="py-12 md:py-16 px-6 sm:px-10 lg:px-16 bg-[#fdfbf7]">
         <div className="max-w-6xl mx-auto">
+          {/* Available Points Card */}
+          <div className="mb-8">
+            <Card className="border-0 shadow-xl overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 border-l-4 border-l-[#c9a227]">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-[#c9a227] uppercase tracking-widest mb-2">
+                      Your Available Points
+                    </p>
+                    <p className="text-5xl font-serif font-black text-[#c9a227]">
+                      {customerData?.loyaltyPoints || 0}
+                    </p>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Worth ₹
+                      {(
+                        (customerData?.loyaltyPoints || 0) / redemptionRate
+                      ).toFixed(1)}{" "}
+                      in rewards
+                    </p>
+                  </div>
+                  <div className="p-6 bg-white rounded-2xl shadow-md">
+                    <Gift className="w-12 h-12 text-[#c9a227]" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Wheel Section */}
             <div className="lg:col-span-2">
@@ -411,21 +448,21 @@ export default function SpinWheelPage() {
               {/* Spin Status */}
               {message && (
                 <Alert
-                  className={`border-none shadow-2xl spin-message rounded-none px-6 py-5 ${
+                  className={`border-none shadow-2xl spin-message rounded-lg px-6 py-5 ${
                     messageType === "success"
-                      ? "bg-[#c9a227] text-white"
+                      ? "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white border-2 border-green-400"
                       : messageType === "error"
-                        ? "bg-red-900/80 text-white"
-                        : "bg-[#1a1a2e] text-white"
+                        ? "bg-gradient-to-r from-red-500 to-pink-500 text-white border-2 border-red-400"
+                        : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-2 border-blue-400"
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     {messageType === "success" ? (
-                      <CheckCircle className="h-6 w-6 text-white" />
+                      <CheckCircle className="h-7 w-7 text-white flex-shrink-0" />
                     ) : (
-                      <AlertCircle className="h-6 w-6 text-[#c9a227]" />
+                      <AlertCircle className="h-7 w-7 flex-shrink-0" />
                     )}
-                    <AlertDescription className="font-black text-[10px] uppercase tracking-widest">
+                    <AlertDescription className="font-black text-sm uppercase tracking-widest">
                       {message}
                     </AlertDescription>
                   </div>

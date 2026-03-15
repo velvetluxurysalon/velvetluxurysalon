@@ -1,6 +1,6 @@
-# Velvet Luxury Salon - Frontend
+# Velvet Premium Unisex Salon - Frontend
 
-This is the customer-facing frontend for Velvet Luxury Salon website.
+This is the customer-facing frontend for Velvet Premium Unisex Salon website.
 
 ## Quick Start
 

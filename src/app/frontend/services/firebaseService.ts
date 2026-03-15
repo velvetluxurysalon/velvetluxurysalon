@@ -3128,3 +3128,38 @@ export const applyReferralCodeDuringSignup = async (
     };
   }
 };
+// ============================================
+// SETTINGS MANAGEMENT
+// ============================================
+
+interface ReferralSettings {
+  pointsPerRupee?: number;
+  redemptionRate?: number;
+  referrerRewardType?: string;
+}
+
+export const getReferralSettings = async (): Promise<ReferralSettings> => {
+  try {
+    const docRef = doc(db, "settings", "referralSettings");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return docSnap.data() as ReferralSettings;
+    }
+
+    // Default settings if none exist
+    return {
+      pointsPerRupee: 1.0,
+      redemptionRate: 20, // 20 points = ₹1
+      referrerRewardType: "match_referee",
+    };
+  } catch (error) {
+    console.error("Error getting referral settings:", error);
+    // Return default settings on error
+    return {
+      pointsPerRupee: 1.0,
+      redemptionRate: 20,
+      referrerRewardType: "match_referee",
+    };
+  }
+};

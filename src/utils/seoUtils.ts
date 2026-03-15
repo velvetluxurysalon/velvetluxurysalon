@@ -476,7 +476,7 @@ export const createProductSchema = (product: {
   image: product.image,
   brand: {
     "@type": "Brand",
-    name: "Velvet Luxury Salon",
+    name: "Velvet Premium Unisex Salon",
   },
   offers: {
     "@type": "Offer",
@@ -511,7 +511,7 @@ export const createEventSchema = (event: {
   endDate: event.endDate,
   location: {
     "@type": "Place",
-    name: "Velvet Luxury Salon",
+    name: "Velvet Premium Unisex Salon",
     address: {
       "@type": "PostalAddress",
       addressLocality: event.location,
@@ -519,7 +519,7 @@ export const createEventSchema = (event: {
   },
   organizer: {
     "@type": "Organization",
-    name: "Velvet Luxury Salon",
+    name: "Velvet Premium Unisex Salon",
     url: "https://velvetluxurysalon.in",
   },
 });
@@ -558,7 +558,7 @@ export const createFAQSchema = (
 export const getOrganizationSchema = () => ({
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Velvet Luxury Salon",
+  name: "Velvet Premium Unisex Salon",
   url: "https://velvetluxurysalon.in",
   logo: "https://velvetluxurysalon.in/logo.png",
   sameAs: [
@@ -595,5 +595,5 @@ export const generateOpenGraphTags = (config: {
   "og:image": config.image,
   "og:url": config.url,
   "og:type": config.type || "website",
-  "og:site_name": "Velvet Luxury Salon",
+  "og:site_name": "Velvet Premium Unisex Salon",
 });

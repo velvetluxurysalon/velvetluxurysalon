@@ -27,16 +27,16 @@ export const generateMetaTags = (config: MetaTagsConfig): string => {
     title,
     description,
     url,
-    image = 'https://velvetluxurysalon.in/og-image.jpg',
+    image = "https://velvetluxurysalon.in/og-image.jpg",
     imageWidth = 1200,
     imageHeight = 630,
-    imageType = 'image/jpeg',
-    author = 'Velvet Luxury Salon',
+    imageType = "image/jpeg",
+    author = "Velvet Premium Unisex Salon",
     publishedDate,
     modifiedDate,
     articleTag = [],
-    locale = 'en_IN',
-    siteName = 'Velvet Luxury Salon'
+    locale = "en_IN",
+    siteName = "Velvet Premium Unisex Salon",
   } = config;
 
   let metaTags = `
@@ -90,7 +90,7 @@ export const generateMetaTags = (config: MetaTagsConfig): string => {
   }
 
   if (articleTag.length > 0) {
-    articleTag.forEach(tag => {
+    articleTag.forEach((tag) => {
       metaTags += `\n    <meta property="article:tag" content="${tag}" />`;
     });
   }
@@ -103,11 +103,11 @@ export const generateMetaTags = (config: MetaTagsConfig): string => {
  */
 export function escapeHtml(unsafe: string): string {
   return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 /**
@@ -117,43 +117,45 @@ export const generateSchema = {
   /**
    * Business schema
    */
-  business: (config: {
-    name?: string;
-    url?: string;
-    phone?: string;
-    email?: string;
-    address?: {
-      streetAddress: string;
-      addressLocality: string;
-      addressRegion: string;
-      postalCode: string;
-      addressCountry: string;
-    };
-    image?: string;
-    priceRange?: string;
-    rating?: number;
-    reviewCount?: number;
-    hours?: string;
-  } = {}) => ({
+  business: (
+    config: {
+      name?: string;
+      url?: string;
+      phone?: string;
+      email?: string;
+      address?: {
+        streetAddress: string;
+        addressLocality: string;
+        addressRegion: string;
+        postalCode: string;
+        addressCountry: string;
+      };
+      image?: string;
+      priceRange?: string;
+      rating?: number;
+      reviewCount?: number;
+      hours?: string;
+    } = {},
+  ) => ({
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": config.name || "Velvet Luxury Salon",
-    "url": config.url || "https://velvetluxurysalon.in",
-    "telephone": config.phone || "+91-9345678646",
-    "email": config.email || "info@velvetluxurysalon.in",
-    "address": {
+    name: config.name || "Velvet Premium Unisex Salon",
+    url: config.url || "https://velvetluxurysalon.in",
+    telephone: config.phone || "+91-9345678646",
+    email: config.email || "info@velvetluxurysalon.in",
+    address: {
       "@type": "PostalAddress",
-      ...config.address
+      ...config.address,
     },
-    "image": config.image || "https://velvetluxurysalon.in/logo.png",
-    "priceRange": config.priceRange || "₹500 - ₹5000",
+    image: config.image || "https://velvetluxurysalon.in/logo.png",
+    priceRange: config.priceRange || "₹500 - ₹5000",
     ...(config.rating && {
-      "aggregateRating": {
+      aggregateRating: {
         "@type": "AggregateRating",
-        "ratingValue": config.rating.toString(),
-        "reviewCount": (config.reviewCount || 0).toString()
-      }
-    })
+        ratingValue: config.rating.toString(),
+        reviewCount: (config.reviewCount || 0).toString(),
+      },
+    }),
   }),
 
   /**
@@ -168,23 +170,23 @@ export const generateSchema = {
   }) => ({
     "@context": "https://schema.org",
     "@type": "Service",
-    "name": service.name,
-    "description": service.description,
-    "image": service.image || "https://velvetluxurysalon.in/service-default.jpg",
+    name: service.name,
+    description: service.description,
+    image: service.image || "https://velvetluxurysalon.in/service-default.jpg",
     ...(service.price && {
-      "offers": {
+      offers: {
         "@type": "Offer",
-        "price": service.price.toString(),
-        "priceCurrency": "INR"
-      }
+        price: service.price.toString(),
+        priceCurrency: "INR",
+      },
     }),
     ...(service.duration && {
-      "duration": service.duration
+      duration: service.duration,
     }),
-    "provider": {
+    provider: {
       "@type": "LocalBusiness",
-      "name": "Velvet Luxury Salon"
-    }
+      name: "Velvet Luxury Salon",
+    },
   }),
 
   /**
@@ -201,26 +203,26 @@ export const generateSchema = {
   }) => ({
     "@context": "https://schema.org",
     "@type": "Product",
-    "name": product.name,
-    "description": product.description,
-    "image": product.image,
-    "brand": {
+    name: product.name,
+    description: product.description,
+    image: product.image,
+    brand: {
       "@type": "Brand",
-      "name": "Velvet Luxury Salon"
+      name: "Velvet Premium Unisex Salon",
     },
-    "offers": {
+    offers: {
       "@type": "Offer",
-      "price": product.price.toString(),
-      "priceCurrency": "INR",
-      "availability": product.availability || "https://schema.org/InStock"
+      price: product.price.toString(),
+      priceCurrency: "INR",
+      availability: product.availability || "https://schema.org/InStock",
     },
     ...(product.rating && {
-      "aggregateRating": {
+      aggregateRating: {
         "@type": "AggregateRating",
-        "ratingValue": product.rating.toString(),
-        "ratingCount": (product.reviewCount || 0).toString()
-      }
-    })
+        ratingValue: product.rating.toString(),
+        ratingCount: (product.reviewCount || 0).toString(),
+      },
+    }),
   }),
 
   /**
@@ -240,25 +242,25 @@ export const generateSchema = {
   }) => ({
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    "headline": article.title,
-    "description": article.description,
-    "image": article.image,
-    "url": article.url,
-    "datePublished": article.datePublished,
-    "dateModified": article.dateModified,
-    "author": {
+    headline: article.title,
+    description: article.description,
+    image: article.image,
+    url: article.url,
+    datePublished: article.datePublished,
+    dateModified: article.dateModified,
+    author: {
       "@type": "Organization",
-      "name": article.author?.name || "Velvet Luxury Salon",
-      ...(article.author?.url && { "url": article.author.url })
+      name: article.author?.name || "Velvet Premium Unisex Salon",
+      ...(article.author?.url && { url: article.author.url }),
     },
-    "publisher": {
+    publisher: {
       "@type": "Organization",
-      "name": "Velvet Luxury Salon",
-      "logo": {
+      name: "Velvet Premium Unisex Salon",
+      logo: {
         "@type": "ImageObject",
-        "url": "https://velvetluxurysalon.in/logo.png"
-      }
-    }
+        url: "https://velvetluxurysalon.in/logo.png",
+      },
+    },
   }),
 
   /**
@@ -267,14 +269,14 @@ export const generateSchema = {
   faq: (faqs: Array<{ question: string; answer: string }>) => ({
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    "mainEntity": faqs.map(faq => ({
+    mainEntity: faqs.map((faq) => ({
       "@type": "Question",
-      "name": faq.question,
-      "acceptedAnswer": {
+      name: faq.question,
+      acceptedAnswer: {
         "@type": "Answer",
-        "text": faq.answer
-      }
-    }))
+        text: faq.answer,
+      },
+    })),
   }),
 
   /**
@@ -283,12 +285,12 @@ export const generateSchema = {
   breadcrumb: (items: Array<{ name: string; url: string }>) => ({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": items.map((item, index) => ({
+    itemListElement: items.map((item, index) => ({
       "@type": "ListItem",
-      "position": (index + 1).toString(),
-      "name": item.name,
-      "item": item.url
-    }))
+      position: (index + 1).toString(),
+      name: item.name,
+      item: item.url,
+    })),
   }),
 
   /**
@@ -305,23 +307,23 @@ export const generateSchema = {
   }) => ({
     "@context": "https://schema.org",
     "@type": "Event",
-    "name": event.name,
-    "description": event.description,
-    "image": event.image,
-    "url": event.url,
-    "startDate": event.startDate,
-    "endDate": event.endDate,
+    name: event.name,
+    description: event.description,
+    image: event.image,
+    url: event.url,
+    startDate: event.startDate,
+    endDate: event.endDate,
     ...(event.location && {
-      "location": {
+      location: {
         "@type": "Place",
-        "name": event.location
-      }
+        name: event.location,
+      },
     }),
-    "organizer": {
+    organizer: {
       "@type": "Organization",
-      "name": "Velvet Luxury Salon"
-    }
-  })
+      name: "Velvet Luxury Salon",
+    },
+  }),
 };
 
 /**
@@ -338,5 +340,5 @@ export const generateSocialLinks = (config: {
   whatsapp: `https://wa.me/?text=${encodeURIComponent(`${config.title}\n${config.url}`)}`,
   email: `mailto:?subject=${encodeURIComponent(config.title)}&body=${encodeURIComponent(config.description || config.title)} ${config.url}`,
   linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(config.url)}`,
-  pinterest: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(config.url)}&media=${encodeURIComponent(config.image || '')}&description=${encodeURIComponent(config.title)}`
+  pinterest: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(config.url)}&media=${encodeURIComponent(config.image || "")}&description=${encodeURIComponent(config.title)}`,
 });

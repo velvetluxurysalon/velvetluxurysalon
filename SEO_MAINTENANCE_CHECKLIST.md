@@ -1,4 +1,4 @@
-# ✅ Velvet Luxury Salon - SEO Maintenance Checklist
+# ✅ Velvet Premium Unisex Salon - SEO Maintenance Checklist
 
 **Updated:** February 28, 2026  
 **Domain:** velvetluxurysalon.in

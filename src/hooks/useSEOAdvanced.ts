@@ -179,7 +179,7 @@ export const useServiceSEO = (serviceConfig: {
   const location = useLocation();
 
   useEffect(() => {
-    const title = `${serviceConfig.name} | Velvet Luxury Salon`;
+    const title = `${serviceConfig.name} | Velvet Premium Unisex Salon`;
     const canonicalUrl = `${SEO_CONFIG.site.url}${location.pathname}`;
 
     updatePageSEO({
@@ -339,7 +339,7 @@ export const useProductSEO = (productConfig: {
     const canonicalUrl = `${SEO_CONFIG.site.url}${location.pathname}`;
 
     updatePageSEO({
-      title: `${productConfig.name} | Velvet Luxury Salon`,
+      title: `${productConfig.name} | Velvet Premium Unisex Salon`,
       description: productConfig.description,
       canonical: canonicalUrl,
       ogImage: productConfig.image || SEO_CONFIG.site.image,

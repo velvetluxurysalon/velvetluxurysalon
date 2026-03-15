@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Frontend website for Velvet Luxury Salon",
+  "description": "Frontend website for Velvet Premium Unisex Salon",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -28,6 +28,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import Footer from "../Footer";
 import OfferScroller from "../OfferScroller";
+import FloatingActionButtons from "../FloatingActionButtons";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -176,7 +177,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <Link to="/" className="flex items-center gap-2.5">
               <img
                 src="/velvet_logo.png"
-                alt="Velvet Luxury Salon"
+                alt="Velvet Premium Unisex Salon"
                 className="h-12 w-auto"
               />
             </Link>
@@ -343,7 +344,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
           </div>
         </div>
       </header>
-
       {/* ═══════════ BODY WRAPPER ═══════════ */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Mobile overlay */}
@@ -516,7 +516,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <Footer />
         </main>
       </div>
-
       {/* ═══════════ BOTTOM NAV BAR — mobile & tablet ═══════════ */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-slate-800 z-50">
         <div className="flex items-center justify-around h-[68px] max-w-lg mx-auto px-2">
@@ -565,6 +564,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
           })}
         </div>
       </nav>
+      {/* ═══════════ FLOATING ACTION BUTTONS ═══════════ */}
+      <FloatingActionButtons />{" "}
     </div>
   );
 }
