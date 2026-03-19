@@ -196,9 +196,11 @@ export default function Footer() {
           {/* About */}
           <div>
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-10 h-10 bg-slate-900 rounded-sm flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="Velvet Luxury"
+                className="h-10 w-auto object-contain"
+              />
               <h3 className="text-slate-900 text-xl font-serif font-light">
                 Velvet Luxury
               </h3>

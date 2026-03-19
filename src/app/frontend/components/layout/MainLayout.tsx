@@ -139,11 +139,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
   // Close drawer on route change and scroll to top
   useEffect(() => {
     setDrawerOpen(false);
-    // Scroll entire window to top
-    window.scrollTo(0, 0);
-    // Also scroll main content area if available
+    // Scroll main content area to top (don't scroll window - main is the scroll container)
     if (mainContentRef.current) {
-      mainContentRef.current.scrollTo({ top: 0, behavior: "smooth" });
+      mainContentRef.current.scrollTop = 0;
     }
   }, [location.pathname]);
 
@@ -158,7 +156,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="flex flex-col h-screen bg-[#FAFAFA]">
       {/* ═══════════ TOP APP BAR ═══════════ */}
-      <header className="sticky top-0 z-50 bg-black border-b border-slate-800 h-16">
+      <header className="sticky top-0 z-40 bg-black border-b border-slate-800 h-16">
         <div className="flex items-center justify-between h-16 px-4 lg:px-6">
           {/* Left — hamburger + logo */}
           <div className="flex items-center gap-3">
@@ -221,7 +219,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
                   {/* Profile Dropdown */}
                   {profileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-sm border border-slate-100 z-50">
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-sm border border-slate-100 z-[999]">
                       <div className="px-4 py-3 border-b border-slate-100">
                         <p className="text-sm font-medium text-slate-900">
                           {customerData.name}
@@ -357,10 +355,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
         {/* ═══════════ SIDE DRAWER ═══════════ */}
         <aside
           className={`
-            fixed top-16 left-0 bottom-0 w-[272px] bg-white border-r border-slate-100
+            fixed top-16 left-0 bottom-[68px] w-[272px] bg-white border-r border-slate-100
             z-[60] flex flex-col overflow-y-auto
             transform transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-            lg:static lg:w-[272px] lg:flex-shrink-0 lg:border-r lg:overflow-y-auto lg:h-auto
+            lg:static lg:bottom-auto lg:w-[272px] lg:flex-shrink-0 lg:border-r lg:overflow-y-auto lg:h-full
             ${drawerOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}
             lg:translate-x-0 lg:shadow-none
           `}
@@ -509,7 +507,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         {/* ═══════════ MAIN CONTENT ═══════════ */}
         <main
           ref={mainContentRef}
-          className="flex-1 overflow-y-auto pb-[76px] lg:pb-0"
+          className="flex-1 overflow-y-auto pb-[76px] lg:pb-0 scroll-smooth"
         >
           <OfferScroller />
           <div className="w-full">{children}</div>
@@ -517,7 +515,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </main>
       </div>
       {/* ═══════════ BOTTOM NAV BAR — mobile & tablet ═══════════ */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-slate-800 z-50">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-slate-800 z-[100]">
         <div className="flex items-center justify-around h-[68px] max-w-lg mx-auto px-2">
           {bottomNavItems.map((item) => {
             const Icon = item.icon;

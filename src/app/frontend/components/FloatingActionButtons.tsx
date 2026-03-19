@@ -8,7 +8,7 @@ export default function FloatingActionButtons() {
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
-    <div className="fixed bottom-20 lg:bottom-6 right-6 z-40 flex flex-col gap-3 items-end">
+    <div className="fixed bottom-[76px] lg:bottom-6 right-6 z-[999] flex flex-col gap-3 items-end">
       {/* Spin Wheel Button - Roulette/Spinning Wheel Icon */}
       <button
         onClick={() => navigate("/spin")}

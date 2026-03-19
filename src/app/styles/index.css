@@ -1,3 +1,12 @@
+/* Global Root Constraints */
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Custom horizontal carousel for services */
 .custom-horizontal-carousel {
   display: flex;
@@ -231,13 +240,14 @@
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 80px; /* Account for fixed navigation */
-  overflow-y: scroll; /* Always show scrollbar to prevent layout shift */
+  overflow-y: auto; /* Let browser handle, but content scrolls in main container on mobile */
 }
 
 body {
   overflow-x: hidden; /* Prevent horizontal scroll */
   width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Line clamp utilities */

@@ -70,15 +70,70 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
       <style>{`
         @media (max-width: 640px) {
           section {
-            height: clamp(300px, 75svh - 64px, 75svh) !important;
+            height: clamp(280px, 70svh - 64px, 70svh) !important;
+            min-height: 280px;
           }
           .hero-bg-image {
             background-attachment: scroll !important;
           }
+          .hero-content {
+            padding-bottom: 3rem !important;
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+          }
+          .hero-heading {
+            font-size: 1.5rem !important;
+            line-height: 1.2 !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .hero-subheading {
+            font-size: 0.8rem !important;
+            line-height: 1.4 !important;
+            margin-bottom: 1rem !important;
+          }
+          .hero-accent {
+            margin-bottom: 0.75rem !important;
+            gap: 0.5rem !important;
+          }
+          .hero-accent-line {
+            width: 1rem !important;
+          }
+          .hero-accent-dot {
+            width: 0.5rem !important;
+            height: 0.5rem !important;
+          }
+          .hero-controls {
+            bottom: 0.75rem !important;
+            gap: 0.75rem !important;
+            padding: 0 0.5rem !important;
+          }
+          .hero-nav-button {
+            padding: 0.6rem !important;
+            min-width: 32px !important;
+            min-height: 32px !important;
+          }
+          .hero-indicators {
+            gap: 0.5rem !important;
+          }
+          .hero-indicator {
+            min-height: 6px !important;
+          }
+          .hero-indicator.active {
+            width: 1.5rem !important;
+          }
+          .hero-indicator.inactive {
+            width: 0.5rem !important;
+          }
         }
         @media (min-width: 641px) and (max-width: 1024px) {
           section {
-            height: clamp(400px, 90svh - 64px, 90svh) !important;
+            height: clamp(350px, 85svh - 64px, 85svh) !important;
+          }
+          .hero-heading {
+            font-size: 2.5rem !important;
+          }
+          .hero-subheading {
+            font-size: 0.95rem !important;
           }
         }
         @media (min-width: 1025px) {
@@ -158,53 +213,53 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
       </div>
 
       {/* Content - At Bottom with Simple Layout */}
-      <div className="relative z-50 w-full px-3 sm:px-6 lg:px-16 pb-12 sm:pb-20 lg:pb-24 text-center max-w-full">
+      <div className="hero-content relative z-50 w-full px-3 sm:px-6 lg:px-16 pb-12 sm:pb-20 lg:pb-24 text-center max-w-full">
         {/* Main Heading */}
         <h1
           key={currentSlideData.id}
-          className={`transition-all duration-1000 ease-out font-serif font-bold tracking-tight text-white drop-shadow-lg leading-tight mb-2 sm:mb-3 lg:mb-4 w-full
+          className={`hero-heading transition-all duration-1000 ease-out font-serif font-bold tracking-tight text-white drop-shadow-lg leading-tight mb-2 sm:mb-3 lg:mb-4 w-full
             text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl break-words`}
         >
           {currentSlideData.heading || currentSlideData.title}
         </h1>
 
         {/* Decorative Accent */}
-        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6">
-          <div className="h-px w-6 sm:w-8 lg:w-12 bg-[#c9a227]/60"></div>
-          <div className="w-1 sm:w-1.5 h-1 sm:h-1.5 bg-[#c9a227] rounded-full flex-shrink-0"></div>
-          <div className="h-px w-6 sm:w-8 lg:w-12 bg-[#c9a227]/60"></div>
+        <div className="hero-accent flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6">
+          <div className="hero-accent-line h-px w-6 sm:w-8 lg:w-12 bg-[#c9a227]/60"></div>
+          <div className="hero-accent-dot w-1 sm:w-1.5 h-1 sm:h-1.5 bg-[#c9a227] rounded-full flex-shrink-0"></div>
+          <div className="hero-accent-line h-px w-6 sm:w-8 lg:w-12 bg-[#c9a227]/60"></div>
         </div>
 
         {/* Subheading */}
         <p
           key={`${currentSlideData.id}-sub`}
-          className={`transition-all duration-1000 ease-out text-white/85 text-xs sm:text-sm md:text-base lg:text-lg font-light max-w-xs sm:max-w-xl lg:max-w-3xl mx-auto leading-relaxed mb-4 sm:mb-6 lg:mb-8 line-clamp-3 sm:line-clamp-4 md:line-clamp-none`}
+          className={`hero-subheading transition-all duration-1000 ease-out text-white/85 text-xs sm:text-sm md:text-base lg:text-lg font-light max-w-xs sm:max-w-xl lg:max-w-3xl mx-auto leading-relaxed mb-4 sm:mb-6 lg:mb-8 line-clamp-3 sm:line-clamp-4 md:line-clamp-none`}
         >
           {currentSlideData.subheading || currentSlideData.subtitle}
         </p>
       </div>
 
       {/* Slide Controls - Fixed at bottom */}
-      <div className="absolute bottom-2 sm:bottom-4 lg:bottom-8 left-0 right-0 z-50 flex items-center justify-center gap-1.5 sm:gap-2 lg:gap-4 px-2">
+      <div className="hero-controls absolute bottom-2 sm:bottom-4 lg:bottom-8 left-0 right-0 z-50 flex items-center justify-center gap-1.5 sm:gap-2 lg:gap-4 px-2">
         {/* Previous Button */}
         <button
           onClick={handlePrev}
-          className="group relative p-1.5 sm:p-2 lg:p-3 rounded-full border border-white/30 hover:border-[#c9a227] text-white hover:text-[#c9a227] transition-all duration-300 hover:bg-white/10 backdrop-blur flex-shrink-0"
+          className="hero-nav-button group relative p-1.5 sm:p-2 lg:p-3 rounded-full border border-white/30 hover:border-[#c9a227] text-white hover:text-[#c9a227] transition-all duration-300 hover:bg-white/10 backdrop-blur flex-shrink-0"
           aria-label="Previous slide"
         >
           <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
         </button>
 
         {/* Slide Indicators */}
-        <div className="flex gap-1 sm:gap-1.5 lg:gap-2">
+        <div className="hero-indicators flex gap-1 sm:gap-1.5 lg:gap-2">
           {slides.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`h-1 sm:h-1.5 lg:h-2 rounded-full transition-all duration-500 flex-shrink-0 ${
+              className={`hero-indicator rounded-full transition-all duration-500 flex-shrink-0 ${
                 index === currentSlide
-                  ? "w-6 sm:w-8 lg:w-12 bg-[#c9a227]"
-                  : "w-1 sm:w-1.5 lg:w-2 bg-white/30 hover:bg-white/60"
+                  ? "active w-6 sm:w-8 lg:w-12 bg-[#c9a227]"
+                  : "inactive w-1 sm:w-1.5 lg:w-2 bg-white/30 hover:bg-white/60"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -214,7 +269,7 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
         {/* Next Button */}
         <button
           onClick={handleNext}
-          className="group relative p-1.5 sm:p-2 lg:p-3 rounded-full border border-white/30 hover:border-[#c9a227] text-white hover:text-[#c9a227] transition-all duration-300 hover:bg-white/10 backdrop-blur flex-shrink-0"
+          className="hero-nav-button group relative p-1.5 sm:p-2 lg:p-3 rounded-full border border-white/30 hover:border-[#c9a227] text-white hover:text-[#c9a227] transition-all duration-300 hover:bg-white/10 backdrop-blur flex-shrink-0"
           aria-label="Next slide"
         >
           <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
