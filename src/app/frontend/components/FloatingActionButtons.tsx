@@ -54,7 +54,7 @@ export default function FloatingActionButtons() {
         </svg>
       </button>
 
-      {/* WhatsApp Button - Official WhatsApp CDN Icon */}
+      {/* WhatsApp Button - Official Icon from CDN */}
       <a
         href={whatsappUrl}
         target="_blank"
@@ -63,9 +63,9 @@ export default function FloatingActionButtons() {
         className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 active:scale-95"
       >
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/240px-WhatsApp.svg.png"
+          src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/whatsapp.svg"
           alt="WhatsApp"
-          className="w-8 h-8"
+          className="w-8 h-8 brightness-0 invert"
         />
       </a>
     </div>

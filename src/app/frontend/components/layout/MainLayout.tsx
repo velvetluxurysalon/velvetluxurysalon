@@ -507,7 +507,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         {/* ═══════════ MAIN CONTENT ═══════════ */}
         <main
           ref={mainContentRef}
-          className="flex-1 overflow-y-auto pb-[76px] lg:pb-0 scroll-smooth"
+          className="flex-1 overflow-y-auto pb-24 lg:pb-8 scroll-smooth w-full"
         >
           <OfferScroller />
           <div className="w-full">{children}</div>

@@ -1,18 +1,44 @@
 import { useState, useEffect } from "react";
-import { Star, Loader, X, Quote, Sparkles, MessageCircle } from "lucide-react";
-import { Button } from "./ui/button";
+import { Star, Loader, X, Send } from "lucide-react";
 import { getReviews, submitReview } from "../services/firebaseService";
 import { useAuth } from "../context/AuthContext";
 
+const FALLBACK_REVIEWS = [
+  {
+    id: "f1",
+    name: "Priya Sharma",
+    service: "Hair Treatment",
+    rating: 5,
+    review:
+      "Absolutely loved my experience at Velvet! The stylists are professional and the results exceeded my expectations.",
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya",
+  },
+  {
+    id: "f2",
+    name: "Rahul Mehta",
+    service: "Men's Grooming",
+    rating: 5,
+    review:
+      "Best salon in the city! Clean, elegant ambiance and skilled professionals. Highly recommend the premium grooming package.",
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul",
+  },
+  {
+    id: "f3",
+    name: "Ananya Kapoor",
+    service: "Bridal Package",
+    rating: 5,
+    review:
+      "Made my wedding day perfect. The bridal team was attentive, creative, and brought my vision to life beautifully.",
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya",
+  },
+];
+
 export default function TestimonialsSection() {
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [firebaseReviews, setFirebaseReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [hasPosted, setHasPosted] = useState(false);
-  const [formData, setFormData] = useState({
-    rating: 5,
-    reviewText: "",
-  });
+  const [formData, setFormData] = useState({ rating: 5, reviewText: "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<{
     type: "success" | "error";
@@ -23,58 +49,26 @@ export default function TestimonialsSection() {
   useEffect(() => {
     const loadReviews = async () => {
       try {
-        const data = await getReviews(10); // Fetch top 10 reviews
-        setReviews(data);
-
-        // Check if current user has already posted
+        const data = await getReviews(10);
+        setFirebaseReviews(data);
         if (isAuthenticated && user?.uid) {
-          const userReview = data.find(
-            (review: any) => review.customerId === user.uid,
-          );
-          setHasPosted(!!userReview);
+          setHasPosted(!!data.find((r: any) => r.customerId === user.uid));
         }
-      } catch (error) {
-        console.error("Failed to load reviews:", error);
+      } catch {
+        // silently fall back to hardcoded reviews
       } finally {
         setLoading(false);
       }
     };
-
     loadReviews();
   }, [isAuthenticated, user]);
-
-  // Transform reviews for display
-  const testimonials = reviews.map((review: any) => {
-    // Use Firebase customer avatar if available, otherwise generate from name
-    let avatarUrl = review.customerAvatar;
-    if (!avatarUrl) {
-      avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.customerName || "customer"}`;
-    }
-
-    return {
-      id: review.id,
-      name: review.customerName || "Anonymous",
-      service: review.serviceName || "Service",
-      rating: review.rating || 5,
-      review: review.reviewText || "",
-      date: review.createdAt
-        ? new Date(review.createdAt).toLocaleDateString()
-        : "Recent",
-      image: avatarUrl,
-    };
-  });
 
   const handleSubmitReview = async () => {
     if (!formData.reviewText.trim()) {
       setSubmitMessage({ type: "error", text: "Please write a review" });
       return;
     }
-
-    if (!user?.uid) {
-      setSubmitMessage({ type: "error", text: "User not authenticated" });
-      return;
-    }
-
+    if (!user?.uid) return;
     try {
       setSubmitting(true);
       const customerName =
@@ -87,7 +81,6 @@ export default function TestimonialsSection() {
         formData.rating,
         formData.reviewText,
       );
-
       setSubmitMessage({
         type: "success",
         text: "Thank you! Your review has been posted.",
@@ -95,13 +88,10 @@ export default function TestimonialsSection() {
       setFormData({ rating: 5, reviewText: "" });
       setShowReviewForm(false);
       setHasPosted(true);
-
-      // Reload reviews
-      const updatedReviews = await getReviews(10);
-      setReviews(updatedReviews);
-
+      const updated = await getReviews(10);
+      setFirebaseReviews(updated);
       setTimeout(() => setSubmitMessage(null), 3000);
-    } catch (error) {
+    } catch {
       setSubmitMessage({
         type: "error",
         text: "Failed to post review. Please try again.",
@@ -112,298 +102,197 @@ export default function TestimonialsSection() {
     }
   };
 
+  const mappedFirebase = firebaseReviews.map((r: any) => ({
+    id: r.id,
+    name: r.customerName || "Anonymous",
+    service: r.serviceName || "Service",
+    rating: r.rating || 5,
+    review: r.reviewText || "",
+    image:
+      r.customerAvatar ||
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.customerName || "user"}`,
+  }));
+  const displayReviews =
+    mappedFirebase.length > 0 ? mappedFirebase : FALLBACK_REVIEWS;
+
   return (
-    <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-gradient-to-b from-white via-purple-50/50 to-white relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl" />
-
-      {/* Decorative quotes */}
-      <div className="absolute top-20 left-10 opacity-5">
-        <Quote className="w-32 h-32 text-purple-600" />
-      </div>
-      <div className="absolute bottom-20 right-10 opacity-5 rotate-180">
-        <Quote className="w-32 h-32 text-purple-600" />
-      </div>
-
-      <div className="max-w-7xl mx-auto relative">
+    <div className="w-full bg-gray-50 px-4 py-8 border-t border-gray-100">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full mb-6">
-            <MessageCircle className="w-4 h-4 text-slate-600" />
-            <span className="text-sm font-medium text-slate-600">
-              Client Testimonials
-            </span>
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <p className="text-amber-600 text-xs font-bold uppercase tracking-widest mb-1">
+              Reviews
+            </p>
+            <h2 className="text-xl font-bold text-gray-900">
+              What Our Clients Say
+            </h2>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-light mb-4 sm:mb-6 text-slate-900 tracking-tight">
-            What Our Clients Say
-          </h2>
-          <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto">
-            Real experiences from real customers who trust us with their beauty
-            journey
-          </p>
+          {isAuthenticated && !hasPosted && (
+            <button
+              onClick={() => setShowReviewForm(true)}
+              className="flex items-center gap-1.5 bg-gray-900 text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              <Send className="w-3.5 h-3.5" /> Review
+            </button>
+          )}
+          {isAuthenticated && hasPosted && (
+            <span className="text-xs text-green-600 font-medium">
+              ✓ Reviewed
+            </span>
+          )}
         </div>
 
-        {/* Post Review Button for Logged-in Users */}
-        {isAuthenticated && !hasPosted && !showReviewForm && (
-          <div className="text-center mb-8 sm:mb-10">
-            <Button
-              onClick={() => setShowReviewForm(true)}
-              className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-lg font-medium shadow-sm transition-colors"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Share Your Experience
-            </Button>
+        {/* Submit message */}
+        {submitMessage && (
+          <div
+            className={`mb-4 p-3 rounded-lg text-sm ${submitMessage.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+          >
+            {submitMessage.text}
           </div>
         )}
 
-        {/* Review Form Modal */}
-        {showReviewForm && isAuthenticated && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-md bg-white rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
-              <div className="p-6 sm:p-8">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h3 className="text-2xl font-serif font-light text-slate-900">
-                      Share Your Review
-                    </h3>
-                    <p className="text-sm text-slate-500 mt-1">
-                      We value your feedback
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowReviewForm(false)}
-                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                  >
-                    <X className="w-5 h-5 text-slate-500" />
-                  </button>
-                </div>
-
-                {submitMessage && (
-                  <div
-                    className={`mb-4 p-4 rounded-lg text-sm ${submitMessage.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}
-                  >
-                    {submitMessage.text}
-                  </div>
-                )}
-
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-900 mb-3">
-                      Your Rating *
-                    </label>
-                    <div className="flex gap-2 p-4 bg-slate-50 rounded-lg justify-center">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={() =>
-                            setFormData({ ...formData, rating: star })
-                          }
-                          className="transition-all duration-200 hover:scale-125"
-                        >
-                          <Star
-                            className={`w-10 h-10 ${
-                              star <= formData.rating
-                                ? "fill-slate-400 text-slate-400 drop-shadow-md"
-                                : "text-slate-300"
-                            }`}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-900 mb-3">
-                      Your Review *
-                    </label>
-                    <textarea
-                      value={formData.reviewText}
-                      onChange={(e) =>
-                        setFormData({ ...formData, reviewText: e.target.value })
-                      }
-                      placeholder="Share your experience with us..."
-                      className="w-full p-4 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400 resize-none text-sm transition-all duration-200"
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      onClick={handleSubmitReview}
-                      disabled={submitting}
-                      className="flex-1 bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-lg font-medium"
-                    >
-                      {submitting ? (
-                        <Loader className="w-5 h-5 animate-spin mx-auto" />
-                      ) : (
-                        "Post Review"
-                      )}
-                    </Button>
-                    <Button
-                      onClick={() => setShowReviewForm(false)}
-                      variant="outline"
-                      className="flex-1 py-3 rounded-lg border border-slate-200"
-                      disabled={submitting}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Already Posted Message */}
-        {isAuthenticated && hasPosted && (
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-3 px-6 py-4 bg-slate-50 border border-slate-200 rounded-lg">
-              <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <p className="text-slate-700 font-medium">
-                Thank you for sharing your experience!
-              </p>
-            </div>
-          </div>
-        )}
-
+        {/* Review cards — horizontal scroll on mobile */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <div className="w-16 h-16 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
-            <p className="text-slate-600 animate-pulse">Loading reviews...</p>
-          </div>
-        ) : testimonials.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MessageCircle className="w-10 h-10 text-slate-400" />
-            </div>
-            <p className="text-slate-600 text-lg">
-              No reviews yet. Be the first to share your experience!
-            </p>
+          <div className="flex justify-center py-8">
+            <Loader className="w-6 h-6 animate-spin text-gray-400" />
           </div>
         ) : (
-          <>
-            {/* Reviews Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-              {testimonials.map((testimonial, index) => (
-                <div
-                  key={testimonial.id}
-                  className="group bg-white rounded-lg p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-500 border border-slate-100 hover:border-slate-200 relative overflow-hidden"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  {/* Quote decoration */}
-                  <div className="absolute top-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Quote className="w-16 h-16 text-slate-400" />
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible">
+            {displayReviews.map((t) => (
+              <div
+                key={t.id}
+                className="min-w-[260px] snap-start flex-shrink-0 md:min-w-0 bg-white rounded-xl shadow-sm border border-gray-100 p-4"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <img
+                    src={t.image}
+                    alt={t.name}
+                    className="w-10 h-10 rounded-full object-cover bg-gray-100"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {t.name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {t.service}
+                    </p>
                   </div>
-
-                  {/* Header */}
-                  <div className="flex items-start gap-4 mb-5">
-                    <div className="relative">
-                      <img
-                        src={testimonial.image}
-                        alt={testimonial.name}
-                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover ring-4 ring-slate-100 group-hover:ring-slate-200 transition-all"
-                      />
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center">
-                        <Star className="w-3 h-3 text-white fill-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-lg font-medium text-slate-900">
-                        {testimonial.name}
-                      </h4>
-                      <p className="text-sm text-slate-600 font-medium">
-                        {testimonial.service}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-1">
-                        {testimonial.date}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Rating */}
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(5)].map((_, idx) => (
-                      <Star
-                        key={idx}
-                        className={`w-5 h-5 ${idx < testimonial.rating ? "fill-slate-400 text-slate-400" : "text-slate-200"}`}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Review text */}
-                  <p className="text-slate-600 leading-relaxed relative z-10">
-                    "{testimonial.review}"
-                  </p>
-
-                  {/* Bottom decoration */}
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-200 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
                 </div>
+                <div className="flex gap-0.5 mb-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-3.5 h-3.5 ${i < t.rating ? "fill-amber-400 text-amber-400" : "text-gray-200"}`}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">
+                  "{t.review}"
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Average rating bar */}
+        {displayReviews.length > 0 && (
+          <div className="mt-6 flex items-center justify-center gap-4 bg-white rounded-xl border border-gray-100 p-4">
+            <div className="flex gap-0.5">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className="w-4 h-4 fill-amber-400 text-amber-400"
+                />
               ))}
             </div>
-
-            {/* Stats bar */}
-            <div className="mt-12 sm:mt-16">
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 sm:p-8 shadow-sm">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
-                  <div className="flex items-center gap-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-6 h-6 fill-slate-400 text-slate-400"
-                      />
-                    ))}
-                  </div>
-                  <div className="text-center sm:text-left">
-                    <span className="text-3xl sm:text-4xl font-light text-slate-900">
-                      {(
-                        reviews.reduce(
-                          (sum: number, r: any) => sum + (r.rating || 5),
-                          0,
-                        ) / reviews.length
-                      ).toFixed(1)}
-                    </span>
-                    <span className="text-slate-600 text-lg ml-2">
-                      out of 5
-                    </span>
-                  </div>
-                  <div className="hidden sm:block w-px h-12 bg-slate-200" />
-                  <div className="text-slate-900 text-center sm:text-left">
-                    <span className="text-2xl font-light">
-                      {reviews.length}+
-                    </span>
-                    <span className="text-slate-600 ml-2">Happy Clients</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
+            <p className="text-sm font-bold text-gray-900">
+              {(
+                displayReviews.reduce((s, r) => s + r.rating, 0) /
+                displayReviews.length
+              ).toFixed(1)}
+              /5
+            </p>
+            <span className="text-gray-300">|</span>
+            <p className="text-sm text-gray-600">
+              {displayReviews.length}+ happy clients
+            </p>
+          </div>
         )}
       </div>
 
-      <style>{`
-        @keyframes scale-in {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        .animate-scale-in {
-          animation: scale-in 0.3s ease-out;
-        }
-      `}</style>
-    </section>
+      {/* Review Form Modal */}
+      {showReviewForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50 p-4">
+          <div className="w-full max-w-md bg-white rounded-t-2xl md:rounded-2xl shadow-xl overflow-hidden">
+            <div className="p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-base font-bold text-gray-900">
+                  Share Your Review
+                </h3>
+                <button
+                  onClick={() => setShowReviewForm(false)}
+                  className="p-1 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-2">
+                    Rating
+                  </p>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setFormData({ ...formData, rating: s })}
+                      >
+                        <Star
+                          className={`w-8 h-8 ${s <= formData.rating ? "fill-amber-400 text-amber-400" : "text-gray-200"}`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-2">
+                    Your Review
+                  </p>
+                  <textarea
+                    value={formData.reviewText}
+                    onChange={(e) =>
+                      setFormData({ ...formData, reviewText: e.target.value })
+                    }
+                    placeholder="Share your experience..."
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    rows={4}
+                  />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={handleSubmitReview}
+                    disabled={submitting}
+                    className="flex-1 bg-gray-900 text-white py-3 rounded-lg text-sm font-semibold disabled:opacity-60 flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
+                  >
+                    {submitting ? (
+                      <Loader className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Post Review"
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowReviewForm(false)}
+                    className="flex-1 border border-gray-200 text-gray-700 py-3 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

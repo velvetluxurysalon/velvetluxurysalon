@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Clock, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import {
   getServicesGroupedByCategory,
   ServiceCategory,
@@ -168,13 +168,10 @@ export default function ServicesPage() {
                           <p className="text-slate-500 text-sm leading-relaxed mb-4 line-clamp-2">
                             {service.description}
                           </p>
-                          <div className="flex items-center text-[11px] font-bold uppercase tracking-widest text-slate-400 space-x-4">
-                            <span className="flex items-center gap-1.5">
-                              <Clock size={12} /> {service.duration} MIN
-                            </span>
+                          <div className="flex items-center">
                             <Link
                               to="/appointments"
-                              className="text-slate-900 hover:underline flex items-center gap-1"
+                              className="text-slate-900 hover:underline flex items-center gap-1 text-sm font-medium"
                             >
                               Reserve <ChevronRight size={12} />
                             </Link>
